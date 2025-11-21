@@ -1,0 +1,519 @@
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Table,
+  Form,
+  Button,
+  Alert,
+  Badge,
+  Modal,
+  InputGroup,
+  Tabs,
+  Tab
+} from "react-bootstrap";
+import { useParams } from "react-router-dom";
+import api from "../services/api.js";
+import LoadingSpinner from "../components/LoadingSpinner.jsx";
+
+export default function CourseView() {
+  const { id } = useParams();
+  const [course, setCourse] = useState(null);
+  const [configs, setConfigs] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingConfig, setEditingConfig] = useState(null);
+  const [activePeriod, setActivePeriod] = useState(1);
+
+  const hasCreatedDefault = useRef(false);
+
+  const [newColumn, setNewColumn] = useState({
+    nombre: "",
+    peso: "",
+    periodo: 1
+  });
+
+  const periodos = [
+    { id: 1, nombre: "Periodo 1" },
+    { id: 2, nombre: "Periodo 2" },
+    { id: 3, nombre: "Periodo 3" },
+    { id: 4, nombre: "Periodo 4" }
+  ];
+
+  const loadAll = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [coursesRes, configsRes, studentsRes] = await Promise.all([
+        api.get("/cursos"),
+        api.get(`/Notas/curso/${id}/config`),
+        api.get(`/Notas/curso/${id}`)
+      ]);
+
+      const c = coursesRes.data.find((x) => x.id === Number(id));
+      setCourse(c || null);
+      setConfigs(configsRes.data || []);
+      setStudents(studentsRes.data || []);
+    } catch (err) {
+      setError(err.response?.data || "Error cargando datos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const init = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [coursesRes, configsRes, studentsRes] = await Promise.all([
+          api.get("/cursos"),
+          api.get(`/Notas/curso/${id}/config`),
+          api.get(`/Notas/curso/${id}`)
+        ]);
+
+        if (!isMounted) return;
+
+        const c = coursesRes.data.find((x) => x.id === Number(id));
+        setCourse(c || null);
+        setConfigs(configsRes.data || []);
+        setStudents(studentsRes.data || []);
+
+        if ((configsRes.data || []).length === 0 && !hasCreatedDefault.current) {
+          hasCreatedDefault.current = true;
+          
+          await api.post(`/Notas/curso/${id}/config`, {
+            nombre: "Nota 1",
+            orden: 1,
+            peso: 100,
+            periodo: 1
+          });
+
+          const newConfigsRes = await api.get(`/Notas/curso/${id}/config`);
+          if (isMounted) {
+            setConfigs(newConfigsRes.data || []);
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.response?.data || "Error cargando datos");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    hasCreatedDefault.current = false;
+    init();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  const handleAddColumn = async () => {
+    if (!newColumn.nombre || !newColumn.peso) {
+      alert("Completa todos los campos");
+      return;
+    }
+
+    try {
+      const configsInPeriod = configs.filter((c) => c.periodo === activePeriod);
+      const maxOrden = configsInPeriod.length > 0 
+        ? Math.max(...configsInPeriod.map((c) => c.orden)) 
+        : 0;
+
+      await api.post(`/Notas/curso/${id}/config`, {
+        nombre: newColumn.nombre,
+        orden: maxOrden + 1,
+        peso: Number(newColumn.peso),
+        periodo: activePeriod
+      });
+
+      setNewColumn({ nombre: "", peso: "", periodo: activePeriod });
+      setShowAddModal(false);
+      await loadAll();
+    } catch (err) {
+      setError(err.response?.data || "Error creando columna");
+    }
+  };
+
+  const handleEditWeight = async () => {
+    if (!editingConfig || !editingConfig.peso || !editingConfig.nombre) {
+      alert("Completa todos los campos");
+      return;
+    }
+
+    try {
+      await api.put(`/Notas/config/${editingConfig.id}`, {
+        nombre: editingConfig.nombre,
+        orden: editingConfig.orden,
+        peso: Number(editingConfig.peso),
+        periodo: editingConfig.periodo
+      });
+
+      setShowEditModal(false);
+      setEditingConfig(null);
+      await loadAll();
+    } catch (err) {
+      setError(err.response?.data || "Error actualizando columna");
+    }
+  };
+
+  const handleDeleteColumn = async (configId) => {
+    if (!window.confirm("¿Eliminar esta columna y todas sus notas?")) return;
+
+    try {
+      await api.delete(`/Notas/config/${configId}`);
+      await loadAll();
+    } catch (err) {
+      setError(err.response?.data || "Error eliminando columna");
+    }
+  };
+
+  const handleGradeChange = (estudianteId, notaConfigId, valor) => {
+    setStudents((prev) =>
+      prev.map((est) => {
+        if (est.id === estudianteId) {
+          return {
+            ...est,
+            notas: est.notas.map((n) =>
+              n.notaConfigId === notaConfigId
+                ? { ...n, valor: valor === "" ? null : Number(valor) }
+                : n
+            )
+          };
+        }
+        return est;
+      })
+    );
+  };
+
+  const handleSaveAll = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+
+      for (const est of students) {
+        for (const nota of est.notas) {
+          await api.put("/Notas", {
+            estudianteId: est.id,
+            notaConfigId: nota.notaConfigId,
+            valor: nota.valor
+          });
+        }
+      }
+
+      alert("Notas guardadas exitosamente");
+      await loadAll();
+    } catch (err) {
+      setError(err.response?.data || "Error guardando notas");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleExport = () => {
+    window.open(`/api/Exports/course/${id}/xlsx`, "_blank");
+  };
+
+  const getGradeColor = (grade) => {
+    if (grade == null) return "";
+    if (grade >= 4.5) return "var(--grade-excellent)";
+    if (grade >= 4.0) return "var(--grade-good)";
+    if (grade >= 3.5) return "var(--grade-average)";
+    if (grade >= 3.0) return "var(--grade-poor)";
+    return "var(--grade-fail)";
+  };
+
+  const configsInPeriod = configs.filter((c) => c.periodo === activePeriod);
+  const totalPesosPeriod = configsInPeriod.reduce((sum, c) => sum + c.peso, 0);
+
+  if (loading) return <LoadingSpinner message="Cargando curso..." />;
+
+  return (
+    <Container fluid>
+      <Row className="mb-3">
+        <Col>
+          {course && (
+            <>
+              <h3>{course.nombre}</h3>
+              <p className="text-muted">
+                Grado: {course.gradoNombre || course.grado || "Sin grado"} | Docente: {course.docenteNombre || "Sin asignar"}
+              </p>
+            </>
+          )}
+        </Col>
+        <Col xs="auto">
+          <Button className="primary-btn" size="sm" onClick={handleExport}>
+            Exportar Excel
+          </Button>
+        </Col>
+      </Row>
+
+      {error && (
+        <Row className="mb-3">
+          <Col>
+            <Alert variant="danger" dismissible onClose={() => setError(null)}>
+              {String(error)}
+            </Alert>
+          </Col>
+        </Row>
+      )}
+
+      <Row className="mb-2">
+        <Col>
+          <small className="text-muted">
+            Estudiantes: <strong>{students.length}</strong>
+          </small>
+        </Col>
+      </Row>
+
+      <Tabs
+        activeKey={activePeriod}
+        onSelect={(k) => setActivePeriod(Number(k))}
+        className="mb-3"
+      >
+        {periodos.map((periodo) => {
+          const configsPeriodo = configs.filter((c) => c.periodo === periodo.id);
+          const totalPesos = configsPeriodo.reduce((sum, c) => sum + c.peso, 0);
+
+          return (
+            <Tab
+              key={periodo.id}
+              eventKey={periodo.id}
+              title={
+                <span>
+                  {periodo.nombre}{" "}
+                  <Badge bg={totalPesos === 100 ? "success" : "warning"}>
+                    {totalPesos}%
+                  </Badge>
+                </span>
+              }
+            >
+              <Card className="shadow-sm">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <small className="text-muted">
+                      Suma de pesos: <strong>{totalPesos}%</strong>
+                      {totalPesos !== 100 && (
+                        <Badge bg="warning" text="dark" className="ms-2">
+                          Se recomienda 100%
+                        </Badge>
+                      )}
+                    </small>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => setShowAddModal(true)}
+                    >
+                      + Agregar columna
+                    </Button>
+                  </div>
+
+                  <div style={{ overflowX: "auto" }}>
+                    <Table striped hover responsive size="sm">
+                      <thead>
+                        <tr>
+                          <th style={{ minWidth: "180px" }}>Estudiante</th>
+                          <th style={{ minWidth: "120px" }}>Documento</th>
+                          {configsPeriodo.map((cfg) => (
+                            <th key={cfg.id} style={{ minWidth: "120px" }}>
+                              <div className="d-flex justify-content-between align-items-center mb-3">
+                                <span>
+                                  {cfg.nombre}
+                                  <br />
+                                  <small className="text-muted">({cfg.peso}%)</small>
+                                </span>
+                                <div>
+                                  <Button
+                                    size="sm"
+                                    variant="link"
+                                    className="p-0 me-1"
+                                    onClick={() => {
+                                      setEditingConfig(cfg);
+                                      setShowEditModal(true);
+                                    }}
+                                  >
+                                    ✏️
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="link"
+                                    className="p-0 text-danger"
+                                    onClick={() => handleDeleteColumn(cfg.id)}
+                                  >
+                                    🗑️
+                                  </Button>
+                                </div>
+                              </div>
+                            </th>
+                          ))}
+                          <th style={{ minWidth: "100px" }}>Promedio</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {students.length === 0 ? (
+                          <tr>
+                            <td colSpan={configsPeriodo.length + 3} className="text-center text-muted">
+                              No hay estudiantes en este curso.
+                            </td>
+                          </tr>
+                        ) : (
+                          students.map((est) => (
+                            <tr key={est.id}>
+                              <td>{est.nombre}</td>
+                              <td>{est.documento}</td>
+                              {configsPeriodo.map((cfg) => {
+                                const nota = est.notas.find((n) => n.notaConfigId === cfg.id);
+                                return (
+                                  <td key={cfg.id}>
+                                    <Form.Control
+                                      type="number"
+                                      step="0.1"
+                                      min="0"
+                                      max="5"
+                                      size="sm"
+                                      value={nota?.valor ?? ""}
+                                      onChange={(e) =>
+                                        handleGradeChange(est.id, cfg.id, e.target.value)
+                                      }
+                                      style={{
+                                        borderLeft: nota?.valor
+                                          ? `4px solid ${getGradeColor(nota.valor)}`
+                                          : "none",
+                                        width: "85px"
+                                      }}
+                                    />
+                                  </td>
+                                );
+                              })}
+                              <td>
+                                {est.promedio != null ? (
+                                  <Badge bg={est.promedio >= 3.0 ? "success" : "danger"}>
+                                    {est.promedio.toFixed(2)}
+                                  </Badge>
+                                ) : (
+                                  <Badge bg="secondary">-</Badge>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </Table>
+                  </div>
+
+                  <div className="d-flex justify-content-end mt-3">
+                    <Button
+                      variant="primary"
+                      onClick={handleSaveAll}
+                      disabled={saving || students.length === 0}
+                    >
+                      {saving ? "Guardando..." : "Guardar todas las notas"}
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Tab>
+          );
+        })}
+      </Tabs>
+
+      {/* Modal agregar columna */}
+      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Agregar columna - {periodos.find((p) => p.id === activePeriod)?.nombre}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Nombre</Form.Label>
+            <Form.Control
+              placeholder="Ej: Quiz 1, Taller 2"
+              value={newColumn.nombre}
+              onChange={(e) => setNewColumn({ ...newColumn, nombre: e.target.value })}
+            />
+          </Form.Group>
+          <Form.Group className="mb-3">
+            <Form.Label>Peso (%)</Form.Label>
+            <InputGroup>
+              <Form.Control
+                type="number"
+                min="0"
+                max="100"
+                placeholder="30"
+                value={newColumn.peso}
+                onChange={(e) => setNewColumn({ ...newColumn, peso: e.target.value })}
+              />
+              <InputGroup.Text>%</InputGroup.Text>
+            </InputGroup>
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleAddColumn}>
+            Agregar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Modal editar columna */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Editar columna</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form.Group className="mb-3">
+            <Form.Label>Nombre</Form.Label>
+            <Form.Control
+              type="text"
+              value={editingConfig?.nombre ?? ""}
+              onChange={(e) =>
+                setEditingConfig({ ...editingConfig, nombre: e.target.value })
+              }
+              placeholder="Ej: Quiz 1, Taller 2"
+            />
+          </Form.Group>
+          <Form.Group>
+            <Form.Label>Peso (%)</Form.Label>
+            <InputGroup>
+              <Form.Control
+                type="number"
+                min="0"
+                max="100"
+                value={editingConfig?.peso ?? ""}
+                onChange={(e) =>
+                  setEditingConfig({ ...editingConfig, peso: e.target.value })
+                }
+              />
+              <InputGroup.Text>%</InputGroup.Text>
+            </InputGroup>
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleEditWeight}>
+            Guardar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
+  );
+}
