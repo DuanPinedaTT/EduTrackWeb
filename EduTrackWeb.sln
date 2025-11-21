@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "edutrack-academy-api", "backend_editable\edutrack-academy-api.csproj", "{FD0669FB-F522-69A8-D27D-8EBB7EA8214A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FD0669FB-F522-69A8-D27D-8EBB7EA8214A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD0669FB-F522-69A8-D27D-8EBB7EA8214A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD0669FB-F522-69A8-D27D-8EBB7EA8214A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD0669FB-F522-69A8-D27D-8EBB7EA8214A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {AC953075-6B92-42B5-A3ED-6EFF66AB5E36}
+	EndGlobalSection
+EndGlobal

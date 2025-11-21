@@ -13,7 +13,8 @@ namespace edutrack_academy_api.Controllers
         public string Nombre { get; set; } = string.Empty;
         public int Orden { get; set; }
         public decimal Peso { get; set; }
-        public int Periodo { get; set; } = 1;
+        public int PeriodoAcademicoId { get; set; }
+        public string? PeriodoNombre { get; set; }
     }
 
     public class ActualizarNotaDTO
@@ -57,7 +58,8 @@ namespace edutrack_academy_api.Controllers
         {
             var configs = await _context.NotaConfigs
                 .Where(nc => nc.CursoId == cursoId)
-                .OrderBy(nc => nc.Periodo)
+                .Include(nc => nc.PeriodoAcademico)
+                .OrderBy(nc => nc.PeriodoAcademico!.Orden)
                 .ThenBy(nc => nc.Orden)
                 .Select(nc => new NotaConfigDTO
                 {
@@ -66,7 +68,8 @@ namespace edutrack_academy_api.Controllers
                     Nombre = nc.Nombre,
                     Orden = nc.Orden,
                     Peso = nc.Peso,
-                    Periodo = nc.Periodo
+                    PeriodoAcademicoId = nc.PeriodoAcademicoId,
+                    PeriodoNombre = nc.PeriodoAcademico != null ? nc.PeriodoAcademico.Nombre : null
                 })
                 .ToListAsync();
 
@@ -83,7 +86,7 @@ namespace edutrack_academy_api.Controllers
                 Nombre = dto.Nombre,
                 Orden = dto.Orden,
                 Peso = dto.Peso,
-                Periodo = dto.Periodo
+                PeriodoAcademicoId = dto.PeriodoAcademicoId
             };
 
             _context.NotaConfigs.Add(config);
@@ -96,7 +99,7 @@ namespace edutrack_academy_api.Controllers
                 Nombre = config.Nombre,
                 Orden = config.Orden,
                 Peso = config.Peso,
-                Periodo = config.Periodo
+                PeriodoAcademicoId = config.PeriodoAcademicoId
             });
         }
 
@@ -110,7 +113,7 @@ namespace edutrack_academy_api.Controllers
             config.Nombre = dto.Nombre;
             config.Peso = dto.Peso;
             config.Orden = dto.Orden;
-            config.Periodo = dto.Periodo;
+            config.PeriodoAcademicoId = dto.PeriodoAcademicoId;
 
             await _context.SaveChangesAsync();
 
@@ -121,7 +124,7 @@ namespace edutrack_academy_api.Controllers
                 Nombre = config.Nombre,
                 Orden = config.Orden,
                 Peso = config.Peso,
-                Periodo = config.Periodo
+                PeriodoAcademicoId = config.PeriodoAcademicoId
             });
         }
 
@@ -156,7 +159,7 @@ namespace edutrack_academy_api.Controllers
 
             var configs = await _context.NotaConfigs
                 .Where(nc => nc.CursoId == cursoId)
-                .OrderBy(nc => nc.Periodo)
+                .OrderBy(nc => nc.PeriodoAcademicoId)
                 .ThenBy(nc => nc.Orden)
                 .ToListAsync();
 

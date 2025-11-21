@@ -11,7 +11,7 @@ namespace edutrack_academy_api.Models
         public Asignatura? Asignatura { get; set; }
 
         // Docente que imparte esa asignatura en ese curso (opcional)
-        public int? DocenteId { get; set; }
-        public Usuario? Docente { get; set; }
+        public int? ProfesorId { get; set; }
+        public Profesor? Profesor { get; set; }
     }
 }

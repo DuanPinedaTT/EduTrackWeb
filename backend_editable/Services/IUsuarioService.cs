@@ -7,14 +7,14 @@ namespace edutrack_academy_api.Services
         // Login
         Task<Usuario?> LoginAsync(string user, string password);
 
-        // Docentes
-        Task<IEnumerable<UsuarioResponseDTO>> ListarDocentesAsync();
+        // Listado
+        Task<IEnumerable<UsuarioResponseDTO>> ListarAsync(string? rol = null);
 
-        // Crear usuario (docente o admin)
-        Task<Usuario> RegistrarAsync(RegistroUsuarioDTO dto);
+        // Crear usuario (docente, admin o estudiante)
+        Task<UsuarioResponseDTO> RegistrarAsync(RegistroUsuarioDTO dto);
 
         // Actualizar usuario
-        Task<Usuario?> ActualizarAsync(int id, ActualizarUsuarioDTO dto);
+        Task<UsuarioResponseDTO?> ActualizarAsync(int id, ActualizarUsuarioDTO dto);
 
         // Eliminar usuario
         Task<bool> EliminarAsync(int id);

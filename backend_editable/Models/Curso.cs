@@ -9,8 +9,8 @@
         // ahora `Curso` referencia a `Grado` (ej. 8A)
         public int? GradoId { get; set; }
         public Grado? Grado { get; set; }
-        public int? DocenteId { get; set; }
-        public Usuario? Docente { get; set; }
+        public int? ProfesorId { get; set; }
+        public Profesor? Profesor { get; set; }
 
         // Un curso (sección) puede tener asignadas múltiples asignaturas (con docentes)
         public ICollection<CursoAsignatura> CursoAsignaturas { get; set; } = new List<CursoAsignatura>();
@@ -27,6 +27,6 @@
         // un curso. Conservamos el nullable por compatibilidad.
         public int? GradoId { get; set; }
         public string? Grupo { get; set; }
-        public int? DocenteId { get; set; }
+        public int? ProfesorId { get; set; }
     }
 }

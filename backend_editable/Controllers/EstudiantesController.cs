@@ -10,8 +10,13 @@ namespace edutrack_academy_api.Controllers
     {
         public int? Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
+        public string Apellido { get; set; } = string.Empty;
         public string Documento { get; set; } = string.Empty;
         public int? CursoId { get; set; }
+        public string Telefono { get; set; } = string.Empty;
+        public string Direccion { get; set; } = string.Empty;
+        public string Nivel { get; set; } = string.Empty;
+        public int? UsuarioId { get; set; }
     }
 
     [ApiController]
@@ -33,8 +38,13 @@ namespace edutrack_academy_api.Controllers
                 {
                     Id = e.Id,
                     Nombre = e.Nombre,
+                    Apellido = e.Apellido,
                     Documento = e.Documento,
-                    CursoId = null // now handled via Inscripciones
+                    CursoId = null,
+                    Telefono = e.Telefono,
+                    Direccion = e.Direccion,
+                    Nivel = e.Nivel,
+                    UsuarioId = e.UsuarioId
                 })
                 .ToListAsync();
             return Ok(estudiantes);
@@ -50,8 +60,13 @@ namespace edutrack_academy_api.Controllers
             {
                 Id = estudiante.Id,
                 Nombre = estudiante.Nombre,
+                Apellido = estudiante.Apellido,
                 Documento = estudiante.Documento,
-                CursoId = null
+                CursoId = null,
+                Telefono = estudiante.Telefono,
+                Direccion = estudiante.Direccion,
+                Nivel = estudiante.Nivel,
+                UsuarioId = estudiante.UsuarioId
             });
         }
 
@@ -61,8 +76,12 @@ namespace edutrack_academy_api.Controllers
             var estudiante = new Estudiante
             {
                 Nombre = dto.Nombre,
+                Apellido = dto.Apellido,
                 Documento = dto.Documento,
-                // CursoId no se guarda aquí; las inscripciones gestionan la relación
+                Telefono = dto.Telefono,
+                Direccion = dto.Direccion,
+                Nivel = dto.Nivel,
+                UsuarioId = dto.UsuarioId
             };
             _context.Estudiantes.Add(estudiante);
             await _context.SaveChangesAsync();
@@ -79,7 +98,11 @@ namespace edutrack_academy_api.Controllers
             if (estudiante == null) return NotFound();
 
             estudiante.Nombre = dto.Nombre;
+            estudiante.Apellido = dto.Apellido;
             estudiante.Documento = dto.Documento;
+            estudiante.Telefono = dto.Telefono;
+            estudiante.Direccion = dto.Direccion;
+            estudiante.Nivel = dto.Nivel;
             // No cambiar CursoId desde aquí; use Inscripciones para relacionar estudiantes y cursos.
             await _context.SaveChangesAsync();
             dto.CursoId = null;

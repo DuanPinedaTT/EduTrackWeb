@@ -17,11 +17,11 @@ namespace edutrack_academy_api.Controllers
             _usuarioService = usuarioService;
         }
 
-        // GET: api/Usuarios
+        // GET: api/Usuarios?rol=docente
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UsuarioResponseDTO>>> GetDocentes()
+        public async Task<ActionResult<IEnumerable<UsuarioResponseDTO>>> GetUsuarios([FromQuery] string? rol)
         {
-            var lista = await _usuarioService.ListarDocentesAsync();
+            var lista = await _usuarioService.ListarAsync(rol);
             return Ok(lista);
         }
 
@@ -31,15 +31,7 @@ namespace edutrack_academy_api.Controllers
         {
             dto.Rol = "docente";
             var usuario = await _usuarioService.RegistrarAsync(dto);
-            return Ok(new
-            {
-                usuario.Id,
-                usuario.User,
-                usuario.Nombre,
-                usuario.Apellido,
-                usuario.Email,
-                usuario.Rol
-            });
+            return Ok(usuario);
         }
 
         // POST: api/Usuarios/crear-admin
@@ -48,15 +40,7 @@ namespace edutrack_academy_api.Controllers
         {
             dto.Rol = "admin";
             var usuario = await _usuarioService.RegistrarAsync(dto);
-            return Ok(new
-            {
-                usuario.Id,
-                usuario.User,
-                usuario.Nombre,
-                usuario.Apellido,
-                usuario.Email,
-                usuario.Rol
-            });
+            return Ok(usuario);
         }
 
         // PUT: api/Usuarios/5
@@ -71,15 +55,7 @@ namespace edutrack_academy_api.Controllers
             if (actualizado == null)
                 return NotFound("Usuario no encontrado");
 
-            return Ok(new
-            {
-                actualizado.Id,
-                actualizado.User,
-                actualizado.Nombre,
-                actualizado.Apellido,
-                actualizado.Email,
-                actualizado.Rol
-            });
+            return Ok(actualizado);
         }
 
         // DELETE: api/Usuarios/5

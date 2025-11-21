@@ -22,9 +22,24 @@ namespace edutrack_academy_api.Controllers
             var query = _context.CursoAsignaturas.AsQueryable();
             if (cursoId.HasValue) query = query.Where(ca => ca.CursoId == cursoId.Value);
 
-            var list = await query.Include(ca => ca.Asignatura).Include(ca => ca.Docente)
-                .Select(ca => new { ca.Id, ca.CursoId, ca.AsignaturaId, AsignaturaNombre = ca.Asignatura!.Nombre, ca.DocenteId, DocenteNombre = ca.Docente != null ? ca.Docente.Nombre : null })
+            var entities = await query
+                .Include(ca => ca.Asignatura)
+                .Include(ca => ca.Profesor).ThenInclude(p => p!.Usuario)
                 .ToListAsync();
+
+            var list = entities
+                .Select(ca => new
+                {
+                    ca.Id,
+                    ca.CursoId,
+                    ca.AsignaturaId,
+                    AsignaturaNombre = ca.Asignatura != null ? ca.Asignatura.Nombre : string.Empty,
+                    ca.ProfesorId,
+                    ProfesorNombre = ca.Profesor != null && ca.Profesor.Usuario != null
+                        ? string.Concat(ca.Profesor.Usuario.Nombre, " ", ca.Profesor.Usuario.Apellido)
+                        : null
+                })
+                .ToList();
 
             return Ok(list);
         }
@@ -37,13 +52,19 @@ namespace edutrack_academy_api.Controllers
             var asign = await _context.Asignaturas.FindAsync(dto.AsignaturaId);
             if (curso == null || asign == null) return BadRequest("Curso o asignatura inválida");
 
+            if (dto.ProfesorId.HasValue)
+            {
+                var profesorExiste = await _context.Profesores.AnyAsync(p => p.Id == dto.ProfesorId.Value);
+                if (!profesorExiste) return BadRequest("Profesor no encontrado");
+            }
+
             var exists = await _context.CursoAsignaturas.AnyAsync(ca => ca.CursoId == dto.CursoId && ca.AsignaturaId == dto.AsignaturaId);
             if (exists) return Conflict("Asignatura ya asignada al curso");
 
-            var ca = new CursoAsignatura { CursoId = dto.CursoId, AsignaturaId = dto.AsignaturaId, DocenteId = dto.DocenteId };
+            var ca = new CursoAsignatura { CursoId = dto.CursoId, AsignaturaId = dto.AsignaturaId, ProfesorId = dto.ProfesorId };
             _context.CursoAsignaturas.Add(ca);
             await _context.SaveChangesAsync();
-            return Ok(new { ca.Id, ca.CursoId, ca.AsignaturaId, ca.DocenteId });
+            return Ok(new { ca.Id, ca.CursoId, ca.AsignaturaId, ca.ProfesorId });
         }
 
         [HttpDelete("{id:int}")]

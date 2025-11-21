@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using edutrack_academy_api.Data;
 
@@ -11,9 +12,11 @@ using edutrack_academy_api.Data;
 namespace edutrack_academy_api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251121171934_BackendOverhaul")]
+    partial class BackendOverhaul
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -738,7 +741,7 @@ namespace edutrack_academy_api.Migrations
                     b.HasOne("edutrack_academy_api.Models.Usuario", "Usuario")
                         .WithOne("EstudiantePerfil")
                         .HasForeignKey("edutrack_academy_api.Models.Estudiante", "UsuarioId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("Usuario");
                 });

@@ -23,7 +23,7 @@ namespace edutrack_academy_api.Controllers
         public async Task<ActionResult<IEnumerable<object>>> GetCursos()
         {
             var cursos = await _context.Cursos
-                .Include(c => c.Docente)
+                .Include(c => c.Profesor)
                 .Include(c => c.Grado)
                 .Select(c => new
                 {
@@ -33,8 +33,12 @@ namespace edutrack_academy_api.Controllers
                     GradoId = c.GradoId,
                     GradoNombre = c.Grado != null ? c.Grado.Nombre : null,
                     GradoCodigo = c.Grado != null ? c.Grado.Codigo : null,
-                    DocenteId = c.DocenteId,
-                    DocenteNombre = c.Docente != null ? c.Docente.Nombre : null
+                    ProfesorId = c.ProfesorId,
+                    ProfesorNombre = c.Profesor != null
+                        ? (c.Profesor.Usuario != null
+                            ? string.Concat(c.Profesor.Usuario.Nombre, " ", c.Profesor.Usuario.Apellido)
+                            : c.Profesor.Especialidad)
+                        : null
                 })
                 .ToListAsync();
 
@@ -51,7 +55,7 @@ namespace edutrack_academy_api.Controllers
                 Nombre = dto.Nombre,
                 GradoId = dto.GradoId,
                 Grupo = dto.Grupo ?? string.Empty,
-                DocenteId = dto.DocenteId
+                ProfesorId = dto.ProfesorId
             };
 
             _context.Cursos.Add(curso);
@@ -63,7 +67,7 @@ namespace edutrack_academy_api.Controllers
                 curso.Nombre,
                 curso.Grupo,
                 GradoId = curso.GradoId,
-                curso.DocenteId
+                curso.ProfesorId
             });
         }
 
@@ -79,7 +83,7 @@ namespace edutrack_academy_api.Controllers
             curso.Nombre = dto.Nombre;
             curso.GradoId = dto.GradoId;
             curso.Grupo = dto.Grupo ?? string.Empty;
-            curso.DocenteId = dto.DocenteId;
+            curso.ProfesorId = dto.ProfesorId;
 
             await _context.SaveChangesAsync();
             return Ok(new
@@ -87,7 +91,7 @@ namespace edutrack_academy_api.Controllers
                 curso.Id,
                 curso.Nombre,
                 GradoId = curso.GradoId,
-                curso.DocenteId
+                curso.ProfesorId
             });
         }
 
