@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Alert, Card, Form, Badge } from "react-bootstrap";
-import { useAuth } from "../contexts/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import {
   BarChart,
@@ -18,10 +17,11 @@ import {
 import api from "../services/api.js";
 import StatsCard from "../components/StatsCard.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import useTeacherProfile from "../hooks/useTeacherProfile.js";
 
 export default function TeacherDashboard() {
-  const { user } = useAuth();
   const navigate = useNavigate();
+  const { profile: teacherProfile, loadingProfile, profileError } = useTeacherProfile();
   const [courses, setCourses] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
   const [totalStudents, setTotalStudents] = useState(0);
@@ -53,7 +53,10 @@ export default function TeacherDashboard() {
         const res = await api.get("/cursos");
         const cursos = Array.isArray(res.data) ? res.data : [];
 
-        const misCursos = cursos.filter((c) => c.docenteId === user?.id);
+        const misCursos = cursos.filter((c) => {
+          const responsable = c.profesorId ?? c.docenteId;
+          return responsable === teacherProfile.id;
+        });
         setCourses(misCursos);
         setAllCourses(cursos);
 
@@ -76,8 +79,8 @@ export default function TeacherDashboard() {
       }
     };
 
-    if (user) loadData();
-  }, [user]);
+    if (teacherProfile?.id) loadData();
+  }, [teacherProfile]);
 
   // recalcular estadísticas cuando cambie el curso seleccionado o el periodo
   useEffect(() => {
@@ -179,7 +182,7 @@ export default function TeacherDashboard() {
     navigate(`/teacher/course/${cursoId}`);
   };
 
-  if (loading) return <LoadingSpinner message="Cargando estadísticas..." />;
+  if (loading || loadingProfile) return <LoadingSpinner message="Cargando estadísticas..." />;
 
   return (
     <Container fluid>
@@ -195,6 +198,14 @@ export default function TeacherDashboard() {
           </div>
         </Col>
       </Row>
+
+      {profileError && (
+        <Row className="mb-3">
+          <Col>
+            <Alert variant="warning">{String(profileError)}</Alert>
+          </Col>
+        </Row>
+      )}
 
       {error && (
         <Row className="mb-3">

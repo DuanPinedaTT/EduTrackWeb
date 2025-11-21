@@ -2,6 +2,7 @@ using edutrack_academy_api.Data;
 using edutrack_academy_api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace edutrack_academy_api.Controllers
 {
@@ -17,12 +18,14 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] int? cursoId)
+        public async Task<IActionResult> Get([FromQuery] int? cursoId, [FromQuery] int? profesorId)
         {
             var query = _context.CursoAsignaturas.AsQueryable();
             if (cursoId.HasValue) query = query.Where(ca => ca.CursoId == cursoId.Value);
+            if (profesorId.HasValue) query = query.Where(ca => ca.ProfesorId == profesorId.Value);
 
             var entities = await query
+                .Include(ca => ca.Curso).ThenInclude(c => c.Grado)
                 .Include(ca => ca.Asignatura)
                 .Include(ca => ca.Profesor).ThenInclude(p => p!.Usuario)
                 .ToListAsync();
@@ -32,6 +35,9 @@ namespace edutrack_academy_api.Controllers
                 {
                     ca.Id,
                     ca.CursoId,
+                    CursoNombre = ca.Curso != null ? ca.Curso.Nombre : string.Empty,
+                    GradoId = ca.Curso?.GradoId,
+                    GradoNombre = ca.Curso?.Grado != null ? ca.Curso.Grado.Nombre : null,
                     ca.AsignaturaId,
                     AsignaturaNombre = ca.Asignatura != null ? ca.Asignatura.Nombre : string.Empty,
                     ca.ProfesorId,

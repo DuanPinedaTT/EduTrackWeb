@@ -50,6 +50,43 @@ namespace edutrack_academy_api.Controllers
             return Ok(estudiantes);
         }
 
+        [HttpGet("usuario/{usuarioId:int}")]
+        public async Task<IActionResult> GetByUsuario(int usuarioId)
+        {
+            var estudiante = await _context.Estudiantes
+                .Include(e => e.Inscripciones)
+                    .ThenInclude(i => i.Curso)!
+                        .ThenInclude(c => c.Grado)
+                .FirstOrDefaultAsync(e => e.UsuarioId == usuarioId);
+
+            if (estudiante == null) return NotFound("Estudiante no encontrado");
+
+            var cursoActual = estudiante.Inscripciones
+                .Select(i => i.Curso)
+                .FirstOrDefault(c => c != null);
+
+            return Ok(new
+            {
+                estudiante.Id,
+                estudiante.Nombre,
+                estudiante.Apellido,
+                estudiante.Documento,
+                estudiante.Telefono,
+                estudiante.Direccion,
+                estudiante.Nivel,
+                estudiante.UsuarioId,
+                CursoActual = cursoActual == null ? null : new
+                {
+                    cursoActual.Id,
+                    cursoActual.Nombre,
+                    cursoActual.Grupo,
+                    GradoId = cursoActual.GradoId,
+                    GradoNombre = cursoActual.Grado != null ? cursoActual.Grado.Nombre : null,
+                    GradoCodigo = cursoActual.Grado != null ? cursoActual.Grado.Codigo : null
+                }
+            });
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {

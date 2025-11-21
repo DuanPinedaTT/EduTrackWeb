@@ -15,6 +15,15 @@ import AdminAsignaturas from "./pages/AdminAsignaturas.jsx";
 import AdminGrados from "./pages/AdminGrados.jsx";
 import AdminCursoAsignaturas from "./pages/AdminCursoAsignaturas.jsx";
 import Profile from "./pages/Profile.jsx";
+import TeacherGrades from "./pages/TeacherGrades.jsx";
+import TeacherAttendance from "./pages/TeacherAttendance.jsx";
+import TeacherNotifications from "./pages/TeacherNotifications.jsx";
+import TeacherObservations from "./pages/TeacherObservations.jsx";
+import StudentDashboard from "./pages/StudentDashboard.jsx";
+import StudentGrades from "./pages/StudentGrades.jsx";
+import StudentAttendance from "./pages/StudentAttendance.jsx";
+import StudentNotifications from "./pages/StudentNotifications.jsx";
+import StudentProfile from "./pages/StudentProfile.jsx";
 
 import Navbar from "./components/Navbar.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
@@ -153,6 +162,50 @@ export default function App() {
           />
 
           <Route
+            path="/teacher/grades"
+            element={
+              <PrivateRoute roles={["docente"]}>
+                <DashboardLayout>
+                  <TeacherGrades />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/teacher/attendance"
+            element={
+              <PrivateRoute roles={["docente"]}>
+                <DashboardLayout>
+                  <TeacherAttendance />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/teacher/notifications"
+            element={
+              <PrivateRoute roles={["docente"]}>
+                <DashboardLayout>
+                  <TeacherNotifications />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/teacher/observations"
+            element={
+              <PrivateRoute roles={["docente"]}>
+                <DashboardLayout>
+                  <TeacherObservations />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
             path="/profile"
             element={
               <PrivateRoute>
@@ -169,6 +222,62 @@ export default function App() {
               <PrivateRoute roles={["docente"]}>
                 <DashboardLayout>
                   <CourseView />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          {/* ESTUDIANTE */}
+          <Route
+            path="/student"
+            element={
+              <PrivateRoute roles={["estudiante"]}>
+                <DashboardLayout>
+                  <StudentDashboard />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/student/profile"
+            element={
+              <PrivateRoute roles={["estudiante"]}>
+                <DashboardLayout>
+                  <StudentProfile />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/student/grades"
+            element={
+              <PrivateRoute roles={["estudiante"]}>
+                <DashboardLayout>
+                  <StudentGrades />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/student/attendance"
+            element={
+              <PrivateRoute roles={["estudiante"]}>
+                <DashboardLayout>
+                  <StudentAttendance />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/student/notifications"
+            element={
+              <PrivateRoute roles={["estudiante"]}>
+                <DashboardLayout>
+                  <StudentNotifications />
                 </DashboardLayout>
               </PrivateRoute>
             }
