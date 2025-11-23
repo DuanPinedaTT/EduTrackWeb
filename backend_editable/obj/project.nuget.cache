@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "9ua1BK5/eBQ=",
+  "dgSpecHash": "wqeI4joKDN0=",
   "success": true,
-  "projectFilePath": "C:\\Users\\pc\\source\\repos\\edutrack-academy-api\\edutrack-academy-api\\edutrack-academy-api.csproj",
+  "projectFilePath": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\pc\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\pc\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",
