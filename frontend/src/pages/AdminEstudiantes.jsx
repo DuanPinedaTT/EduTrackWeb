@@ -22,9 +22,6 @@ export default function AdminEstudiantes() {
   const [cursos, setCursos] = useState([]);
   const [grados, setGrados] = useState([]);
   const [inscripcionesByStudent, setInscripcionesByStudent] = useState({});
-  const [showEnrollModal, setShowEnrollModal] = useState(false);
-  const [enrollStudentId, setEnrollStudentId] = useState(null);
-  const [selectedEnrollCourse, setSelectedEnrollCourse] = useState("");
   const [loadingEst, setLoadingEst] = useState(true);
   const [loadingCursos, setLoadingCursos] = useState(true);
   const [error, setError] = useState(null);
@@ -262,23 +259,6 @@ export default function AdminEstudiantes() {
     return grado?.grupos || [];
   };
 
-  const openEnrollModal = (studentId) => {
-    setEnrollStudentId(studentId);
-    setSelectedEnrollCourse("");
-    setShowEnrollModal(true);
-  };
-
-  const handleEnrollSubmit = async () => {
-    if (!selectedEnrollCourse) return alert('Selecciona un curso');
-    try {
-      await api.post('/Inscripciones', { cursoId: Number(selectedEnrollCourse), estudianteId: Number(enrollStudentId) });
-      setShowEnrollModal(false);
-      await loadEstudiantes();
-    } catch (err) {
-      alert(err.response?.data || 'Error inscribiendo estudiante');
-    }
-  };
-
   const handleViewInscripciones = (studentId) => {
     const list = (inscripcionesByStudent[studentId] || []).map(i => {
       const curso = cursos.find(c => c.id === i.cursoId);
@@ -509,7 +489,6 @@ export default function AdminEstudiantes() {
                             })()}</td>
                           <td className="text-end">
                             <ButtonGroup size="sm">
-                              <Button aria-label={`Inscribir estudiante ${e.nombre}`} variant="outline-success" onClick={() => openEnrollModal(e.id)}>Inscribir</Button>
                               <Button aria-label={`Ver inscripciones de ${e.nombre}`} variant="outline-info" onClick={() => handleViewInscripciones(e.id)}>Ver</Button>
                               <Button
                                 variant="outline-primary"
@@ -535,28 +514,6 @@ export default function AdminEstudiantes() {
           </Card>
         </Col>
       </Row>
-
-      {/* Modal para inscripción */}
-      <Modal show={showEnrollModal} onHide={() => setShowEnrollModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Inscribir estudiante</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Group className="mb-3">
-            <Form.Label>Selecciona un curso</Form.Label>
-            <Form.Select aria-label="Seleccionar curso para inscribir" value={selectedEnrollCourse} onChange={(e) => setSelectedEnrollCourse(e.target.value)}>
-              <option value="">-- Selecciona --</option>
-              {cursos.map(c => (
-                <option key={c.id} value={c.id}>{c.nombre} {c.grado ? `(${c.grado})` : ''}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEnrollModal(false)}>Cancelar</Button>
-          <Button variant="primary" onClick={handleEnrollSubmit}>Inscribir</Button>
-        </Modal.Footer>
-      </Modal>
 
       {/* Modal informe por estudiante (documento) */}
       <Modal show={showReportModal} onHide={() => setShowReportModal(false)} size="lg">

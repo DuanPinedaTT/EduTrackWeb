@@ -143,6 +143,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "edutrack_academy_api.Controllers.CursoAsignaturasController",
+    "Method": "GetByDocente",
+    "RelativePath": "api/CursoAsignaturas/docente/{docenteId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "docenteId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "edutrack_academy_api.Controllers.CursosController",
     "Method": "GetCursos",
     "RelativePath": "api/Cursos",

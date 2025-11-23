@@ -212,6 +212,29 @@
         }
       }
     },
+    "/api/CursoAsignaturas/docente/{docenteId}": {
+      "get": {
+        "tags": [
+          "CursoAsignaturas"
+        ],
+        "parameters": [
+          {
+            "name": "docenteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/CursoAsignaturas/{id}": {
       "delete": {
         "tags": [

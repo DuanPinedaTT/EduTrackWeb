@@ -7,19 +7,36 @@ import {
   Table,
   Form,
   Button,
+  ButtonGroup,
   Alert,
   Badge,
   Modal,
-  InputGroup,
-  Tabs,
-  Tab
+  InputGroup
 } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
+
+const PERIODOS = [
+  { id: 1, nombre: "Periodo 1" },
+  { id: 2, nombre: "Periodo 2" },
+  { id: 3, nombre: "Periodo 3" },
+  { id: 4, nombre: "Periodo 4" }
+];
+
+const VALID_PERIOD_IDS = PERIODOS.map((p) => p.id);
+
+const resolvePeriodFromSearch = (search) => {
+  const params = new URLSearchParams(search);
+  const raw = Number(params.get("period") || params.get("periodo"));
+  return VALID_PERIOD_IDS.includes(raw) ? raw : VALID_PERIOD_IDS[0];
+};
 
 export default function CourseView() {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [configs, setConfigs] = useState([]);
   const [students, setStudents] = useState([]);
@@ -30,22 +47,25 @@ export default function CourseView() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingConfig, setEditingConfig] = useState(null);
-  const [activePeriod, setActivePeriod] = useState(1);
+  const [activePeriod, setActivePeriod] = useState(() => resolvePeriodFromSearch(location.search));
 
   const hasCreatedDefault = useRef(false);
 
   const [newColumn, setNewColumn] = useState({
     nombre: "",
     peso: "",
-    periodo: 1
+    periodo: resolvePeriodFromSearch(location.search)
   });
 
-  const periodos = [
-    { id: 1, nombre: "Periodo 1" },
-    { id: 2, nombre: "Periodo 2" },
-    { id: 3, nombre: "Periodo 3" },
-    { id: 4, nombre: "Periodo 4" }
-  ];
+  const getCourseTitle = (courseData) => {
+    if (!courseData) return "";
+    const grado = (courseData.gradoNombre || "").trim();
+    const grupo = (courseData.grupo || "").trim();
+    if (grado && grupo) return `${grado} ${grupo}`;
+    if (grado) return grado;
+    if (grupo) return grupo;
+    return courseData.nombre || "Curso";
+  };
 
   const loadAll = async () => {
     try {
@@ -68,6 +88,12 @@ export default function CourseView() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const nextPeriod = resolvePeriodFromSearch(location.search);
+    setActivePeriod(nextPeriod);
+    setNewColumn((prev) => ({ ...prev, periodo: nextPeriod }));
+  }, [location.search]);
 
   useEffect(() => {
     let isMounted = true;
@@ -131,7 +157,7 @@ export default function CourseView() {
     }
 
     try {
-      const configsInPeriod = configs.filter((c) => c.periodo === activePeriod);
+      const configsInPeriod = configs.filter((c) => Number(c.periodo) === Number(activePeriod));
       const maxOrden = configsInPeriod.length > 0 
         ? Math.max(...configsInPeriod.map((c) => c.orden)) 
         : 0;
@@ -239,8 +265,30 @@ export default function CourseView() {
     return "var(--grade-fail)";
   };
 
-  const configsInPeriod = configs.filter((c) => c.periodo === activePeriod);
-  const totalPesosPeriod = configsInPeriod.reduce((sum, c) => sum + c.peso, 0);
+  const configsForSelectedPeriod = configs.filter(
+    (c) => Number(c.periodo) === Number(activePeriod)
+  );
+  const totalPesosPeriod = configsForSelectedPeriod.reduce(
+    (sum, c) => sum + Number(c.peso || 0),
+    0
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const currentPeriod = Number(params.get("period"));
+    if (currentPeriod === activePeriod) return;
+
+    params.set("period", String(activePeriod));
+    const formattedSearch = params.toString();
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: formattedSearch ? `?${formattedSearch}` : ""
+      },
+      { replace: true }
+    );
+  }, [activePeriod, location.pathname, location.search, navigate]);
 
   if (loading) return <LoadingSpinner message="Cargando curso..." />;
 
@@ -250,10 +298,18 @@ export default function CourseView() {
         <Col>
           {course && (
             <>
-              <h3>{course.nombre}</h3>
-              <p className="text-muted">
-                Grado: {course.gradoNombre || course.grado || "Sin grado"} | Docente: {course.docenteNombre || "Sin asignar"}
-              </p>
+              <h3 className="mb-1">{getCourseTitle(course)}</h3>
+              {(course.asignaturaNombre || course.nombre || course.docenteNombre) && (
+                <div className="text-muted">
+                  {course.asignaturaNombre || course.nombre}
+                  {course.docenteNombre && (
+                    <>
+                      <span className="mx-2">•</span>
+                      {course.docenteNombre}
+                    </>
+                  )}
+                </div>
+              )}
             </>
           )}
         </Col>
@@ -282,161 +338,167 @@ export default function CourseView() {
         </Col>
       </Row>
 
-      <Tabs
-        activeKey={activePeriod}
-        onSelect={(k) => setActivePeriod(Number(k))}
-        className="mb-3"
-      >
-        {periodos.map((periodo) => {
-          const configsPeriodo = configs.filter((c) => c.periodo === periodo.id);
-          const totalPesos = configsPeriodo.reduce((sum, c) => sum + c.peso, 0);
+      <div className="d-flex flex-wrap gap-2 mb-3">
+        {PERIODOS.map((periodo) => {
+          const configsPeriodo = configs.filter(
+            (c) => Number(c.periodo) === periodo.id
+          );
+          const totalPesos = configsPeriodo.reduce(
+            (sum, c) => sum + Number(c.peso || 0),
+            0
+          );
+          const isActive = activePeriod === periodo.id;
 
           return (
-            <Tab
+            <Button
               key={periodo.id}
-              eventKey={periodo.id}
-              title={
-                <span>
-                  {periodo.nombre}{" "}
-                  <Badge bg={totalPesos === 100 ? "success" : "warning"}>
-                    {totalPesos}%
-                  </Badge>
-                </span>
-              }
+              variant={isActive ? "primary" : "outline-secondary"}
+              size="sm"
+              className="d-flex flex-column align-items-start period-chip"
+              onClick={() => {
+                setActivePeriod(periodo.id);
+                setNewColumn((prev) => ({ ...prev, periodo: periodo.id }));
+              }}
             >
-              <Card className="shadow-sm">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-center mb-3">
-                    <small className="text-muted">
-                      Suma de pesos: <strong>{totalPesos}%</strong>
-                      {totalPesos !== 100 && (
-                        <Badge bg="warning" text="dark" className="ms-2">
-                          Se recomienda 100%
-                        </Badge>
-                      )}
-                    </small>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      onClick={() => setShowAddModal(true)}
-                    >
-                      + Agregar columna
-                    </Button>
-                  </div>
-
-                  <div style={{ overflowX: "auto" }}>
-                    <Table striped hover responsive size="sm">
-                      <thead>
-                        <tr>
-                          <th style={{ minWidth: "180px" }}>Estudiante</th>
-                          <th style={{ minWidth: "120px" }}>Documento</th>
-                          {configsPeriodo.map((cfg) => (
-                            <th key={cfg.id} style={{ minWidth: "120px" }}>
-                              <div className="d-flex justify-content-between align-items-center mb-3">
-                                <span>
-                                  {cfg.nombre}
-                                  <br />
-                                  <small className="text-muted">({cfg.peso}%)</small>
-                                </span>
-                                <div>
-                                  <Button
-                                    size="sm"
-                                    variant="link"
-                                    className="p-0 me-1"
-                                    onClick={() => {
-                                      setEditingConfig(cfg);
-                                      setShowEditModal(true);
-                                    }}
-                                  >
-                                    ✏️
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="link"
-                                    className="p-0 text-danger"
-                                    onClick={() => handleDeleteColumn(cfg.id)}
-                                  >
-                                    🗑️
-                                  </Button>
-                                </div>
-                              </div>
-                            </th>
-                          ))}
-                          <th style={{ minWidth: "100px" }}>Promedio</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {students.length === 0 ? (
-                          <tr>
-                            <td colSpan={configsPeriodo.length + 3} className="text-center text-muted">
-                              No hay estudiantes en este curso.
-                            </td>
-                          </tr>
-                        ) : (
-                          students.map((est) => (
-                            <tr key={est.id}>
-                              <td>{est.nombre}</td>
-                              <td>{est.documento}</td>
-                              {configsPeriodo.map((cfg) => {
-                                const nota = est.notas.find((n) => n.notaConfigId === cfg.id);
-                                return (
-                                  <td key={cfg.id}>
-                                    <Form.Control
-                                      type="number"
-                                      step="0.1"
-                                      min="0"
-                                      max="5"
-                                      size="sm"
-                                      value={nota?.valor ?? ""}
-                                      onChange={(e) =>
-                                        handleGradeChange(est.id, cfg.id, e.target.value)
-                                      }
-                                      style={{
-                                        borderLeft: nota?.valor
-                                          ? `4px solid ${getGradeColor(nota.valor)}`
-                                          : "none",
-                                        width: "85px"
-                                      }}
-                                    />
-                                  </td>
-                                );
-                              })}
-                              <td>
-                                {est.promedio != null ? (
-                                  <Badge bg={est.promedio >= 3.0 ? "success" : "danger"}>
-                                    {est.promedio.toFixed(2)}
-                                  </Badge>
-                                ) : (
-                                  <Badge bg="secondary">-</Badge>
-                                )}
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </Table>
-                  </div>
-
-                  <div className="d-flex justify-content-end mt-3">
-                    <Button
-                      variant="primary"
-                      onClick={handleSaveAll}
-                      disabled={saving || students.length === 0}
-                    >
-                      {saving ? "Guardando..." : "Guardar todas las notas"}
-                    </Button>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Tab>
+              <span className="fw-semibold">{periodo.nombre}</span>
+              <small className="text-muted">
+                {totalPesos}% peso · {configsPeriodo.length} columnas
+              </small>
+            </Button>
           );
         })}
-      </Tabs>
+      </div>
+
+      <Card className="shadow-sm">
+        <Card.Body>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <small className="text-muted">
+              Suma de pesos: <strong>{totalPesosPeriod}%</strong>
+              {totalPesosPeriod !== 100 && (
+                <Badge bg="warning" text="dark" className="ms-2">
+                  Se recomienda 100%
+                </Badge>
+              )}
+            </small>
+            <Button size="sm" variant="primary" onClick={() => setShowAddModal(true)}>
+              + Agregar columna
+            </Button>
+          </div>
+
+          {configsForSelectedPeriod.length === 0 ? (
+            <Alert variant="light" className="mb-0">
+              No hay columnas configuradas para este periodo. Usa "Agregar columna" para crear una.
+            </Alert>
+          ) : students.length === 0 ? (
+            <Alert variant="light" className="mb-0">
+              No hay estudiantes en este curso.
+            </Alert>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <Table striped hover responsive size="sm">
+                <thead>
+                  <tr>
+                    <th style={{ minWidth: "180px" }}>Estudiante</th>
+                    <th style={{ minWidth: "120px" }}>Documento</th>
+                    {configsForSelectedPeriod.map((cfg) => (
+                      <th key={cfg.id} style={{ minWidth: "120px" }}>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <span>
+                            {cfg.nombre}
+                            <br />
+                            <small className="text-muted">({cfg.peso}%)</small>
+                          </span>
+                          <ButtonGroup size="sm">
+                            <Button
+                              variant="outline-secondary"
+                              className="icon-btn"
+                              aria-label={`Editar ${cfg.nombre}`}
+                              onClick={() => {
+                                setEditingConfig(cfg);
+                                setShowEditModal(true);
+                              }}
+                            >
+                              <FiEdit2 />
+                            </Button>
+                            <Button
+                              variant="outline-danger"
+                              className="icon-btn"
+                              aria-label={`Eliminar ${cfg.nombre}`}
+                              onClick={() => handleDeleteColumn(cfg.id)}
+                            >
+                              <FiTrash2 />
+                            </Button>
+                          </ButtonGroup>
+                        </div>
+                      </th>
+                    ))}
+                    <th style={{ minWidth: "100px" }}>Promedio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((est) => (
+                    <tr key={est.id}>
+                      <td>{est.nombre}</td>
+                      <td>{est.documento}</td>
+                      {configsForSelectedPeriod.map((cfg) => {
+                        const nota = est.notas.find((n) => n.notaConfigId === cfg.id);
+                        return (
+                          <td key={`${est.id}-${cfg.id}`}>
+                            <Form.Control
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="5"
+                              value={nota?.valor ?? ""}
+                              onChange={(e) =>
+                                handleGradeChange(
+                                  est.id,
+                                  cfg.id,
+                                  e.target.value === "" ? "" : Number(e.target.value)
+                                )
+                              }
+                              style={{
+                                borderLeft: nota?.valor
+                                  ? `4px solid ${getGradeColor(nota.valor)}`
+                                  : "none",
+                                width: "85px"
+                              }}
+                            />
+                          </td>
+                        );
+                      })}
+                      <td>
+                        {est.promedio != null ? (
+                          <Badge bg="primary">{est.promedio.toFixed(2)}</Badge>
+                        ) : (
+                          <Badge bg="secondary">-</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
+
+          <div className="d-flex justify-content-end mt-3">
+            <Button
+              variant="primary"
+              onClick={handleSaveAll}
+              disabled={saving || students.length === 0}
+            >
+              {saving ? "Guardando..." : "Guardar todas las notas"}
+            </Button>
+          </div>
+        </Card.Body>
+      </Card>
 
       {/* Modal agregar columna */}
       <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Agregar columna - {periodos.find((p) => p.id === activePeriod)?.nombre}</Modal.Title>
+          <Modal.Title>
+            Agregar columna - {PERIODOS.find((p) => p.id === activePeriod)?.nombre}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form.Group className="mb-3">

@@ -20,10 +20,46 @@ namespace edutrack_academy_api.Controllers
         public async Task<IActionResult> Get([FromQuery] int? cursoId)
         {
             var query = _context.CursoAsignaturas.AsQueryable();
-            if (cursoId.HasValue) query = query.Where(ca => ca.CursoId == cursoId.Value);
+            if (cursoId.HasValue)
+                query = query.Where(ca => ca.CursoId == cursoId.Value);
 
-            var list = await query.Include(ca => ca.Asignatura).Include(ca => ca.Docente)
-                .Select(ca => new { ca.Id, ca.CursoId, ca.AsignaturaId, AsignaturaNombre = ca.Asignatura!.Nombre, ca.DocenteId, DocenteNombre = ca.Docente != null ? ca.Docente.Nombre : null })
+            var list = await query
+                .Include(ca => ca.Asignatura)
+                .Include(ca => ca.Docente)
+                .Select(ca => new
+                {
+                    ca.Id,
+                    ca.CursoId,
+                    ca.AsignaturaId,
+                    AsignaturaNombre = ca.Asignatura!.Nombre,
+                    ca.DocenteId,
+                    DocenteNombre = ca.Docente != null ? ca.Docente.Nombre : null
+                })
+                .ToListAsync();
+
+            return Ok(list);
+        }
+
+        [HttpGet("docente/{docenteId:int}")]
+        public async Task<IActionResult> GetByDocente(int docenteId)
+        {
+            var list = await _context.CursoAsignaturas
+                .Where(ca => ca.DocenteId == docenteId)
+                .Include(ca => ca.Asignatura)
+                .Include(ca => ca.Curso).ThenInclude(c => c.Grado)
+                .Select(ca => new
+                {
+                    ca.Id,
+                    ca.CursoId,
+                    ca.AsignaturaId,
+                    AsignaturaNombre = ca.Asignatura != null ? ca.Asignatura.Nombre : string.Empty,
+                    AsignaturaCodigo = ca.Asignatura != null ? ca.Asignatura.Codigo : null,
+                    ca.DocenteId,
+                    GradoId = ca.Curso != null ? ca.Curso.GradoId : (int?)null,
+                    GradoNombre = ca.Curso != null && ca.Curso.Grado != null ? ca.Curso.Grado.Nombre : null,
+                    Grupo = ca.Curso != null ? ca.Curso.Grupo : null,
+                    CursoNombre = ca.Curso != null ? ca.Curso.Nombre : null
+                })
                 .ToListAsync();
 
             return Ok(list);
