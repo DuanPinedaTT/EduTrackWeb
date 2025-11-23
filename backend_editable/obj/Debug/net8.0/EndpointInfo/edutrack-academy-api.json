@@ -1152,6 +1152,21 @@
           "email": {
             "type": "string",
             "nullable": true
+          },
+          "asignaturas": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "asignaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocenteGrupoRequestDTO"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1292,6 +1307,108 @@
         },
         "additionalProperties": false
       },
+      "DocenteAsignatura": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "docenteId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "docente": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "asignaturaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "asignatura": {
+            "$ref": "#/components/schemas/Asignatura"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocenteAsignaturaResponseDTO": {
+        "type": "object",
+        "properties": {
+          "asignaturaId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "codigo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocenteGradoGrupo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "docenteId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "docente": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "gradoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "grado": {
+            "$ref": "#/components/schemas/Grado"
+          },
+          "grupo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocenteGrupoRequestDTO": {
+        "type": "object",
+        "properties": {
+          "gradoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "grupo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DocenteGrupoResponseDTO": {
+        "type": "object",
+        "properties": {
+          "gradoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gradoNombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "grupo": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "Estudiante": {
         "type": "object",
         "properties": {
@@ -1304,6 +1421,18 @@
             "nullable": true
           },
           "documento": {
+            "type": "string",
+            "nullable": true
+          },
+          "gradoId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grado": {
+            "$ref": "#/components/schemas/Grado"
+          },
+          "grupo": {
             "type": "string",
             "nullable": true
           },
@@ -1333,9 +1462,17 @@
             "type": "string",
             "nullable": true
           },
-          "cursoId": {
+          "gradoId": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "gradoNombre": {
+            "type": "string",
+            "nullable": true
+          },
+          "grupo": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -1548,6 +1685,21 @@
           "rol": {
             "type": "string",
             "nullable": true
+          },
+          "asignaturas": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "asignaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocenteGrupoRequestDTO"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1593,6 +1745,20 @@
               "$ref": "#/components/schemas/Curso"
             },
             "nullable": true
+          },
+          "docenteAsignaturas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocenteAsignatura"
+            },
+            "nullable": true
+          },
+          "docenteGradoGrupos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocenteGradoGrupo"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -1622,6 +1788,20 @@
           },
           "rol": {
             "type": "string",
+            "nullable": true
+          },
+          "asignaturas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocenteAsignaturaResponseDTO"
+            },
+            "nullable": true
+          },
+          "asignaciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DocenteGrupoResponseDTO"
+            },
             "nullable": true
           }
         },

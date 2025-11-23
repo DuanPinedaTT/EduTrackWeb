@@ -40,7 +40,8 @@ export default function AdminEstudiantes() {
   const [form, setForm] = useState({
     nombre: "",
     documento: "",
-    cursoId: ""
+    gradoId: "",
+    grupo: ""
   });
 
   const loadEstudiantes = async () => {
@@ -71,10 +72,6 @@ export default function AdminEstudiantes() {
       setError(null);
       const res = await api.get("/Cursos");
       setCursos(res.data);
-      
-      // Extraer grados únicos (compatible con GradoNombre)
-      const gradosUnicos = [...new Set(res.data.map((c) => c.gradoNombre || c.grado).filter((g) => g))];
-      setGrados(gradosUnicos.sort());
     } catch (err) {
       setError(err.response?.data || "Error cargando cursos");
     } finally {
@@ -82,8 +79,17 @@ export default function AdminEstudiantes() {
     }
   };
 
+  const loadGrados = async () => {
+    try {
+      const res = await api.get("/Grados");
+      setGrados(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error cargando grados", err);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([loadEstudiantes(), loadCursos()]);
+    Promise.all([loadEstudiantes(), loadCursos(), loadGrados()]);
   }, []);
 
   const handleSearchByDocumento = async () => {
@@ -150,17 +156,28 @@ export default function AdminEstudiantes() {
       const cursosDelGrado = cursos
         .filter((c) => (c.gradoNombre || c.grado) === selectedGradoFilter)
         .map((c) => c.id);
-      result = result.filter((e) => (inscripcionesByStudent[e.id] || []).some(i => cursosDelGrado.includes(i.cursoId)));
+      result = result.filter((e) => {
+        if (e.gradoNombre) {
+          return e.gradoNombre === selectedGradoFilter;
+        }
+        return (inscripcionesByStudent[e.id] || []).some(i => cursosDelGrado.includes(i.cursoId));
+      });
     }
 
     setFilteredEstudiantes(result);
   }, [selectedCursoFilter, selectedGradoFilter, estudiantes, cursos]);
 
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name === "gradoId") {
+      setForm((prev) => ({ ...prev, gradoId: value, grupo: "" }));
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const resetForm = () => {
@@ -168,7 +185,8 @@ export default function AdminEstudiantes() {
     setForm({
       nombre: "",
       documento: "",
-      cursoId: ""
+      gradoId: "",
+      grupo: ""
     });
   };
 
@@ -176,24 +194,25 @@ export default function AdminEstudiantes() {
     e.preventDefault();
     try {
       setError(null);
+      const grupoValue = (form.grupo || "").trim();
+      const gradoIdNumber = form.gradoId ? Number(form.gradoId) : null;
+
+      if (!gradoIdNumber || !grupoValue) {
+        setError("Debes seleccionar grado y grupo");
+        return;
+      }
+
       const body = {
         nombre: form.nombre,
-        documento: form.documento
+        documento: form.documento,
+        gradoId: gradoIdNumber,
+        grupo: grupoValue
       };
 
       if (editingId) {
         await api.put(`/Estudiantes/${editingId}`, body);
       } else {
-        const res = await api.post("/Estudiantes", body);
-        const newId = res.data?.id || res.data?.Id || null;
-        // Si se seleccionó curso al crear, crear Inscripcion
-        if (form.cursoId && newId) {
-          try {
-            await api.post('/Inscripciones', { cursoId: Number(form.cursoId), estudianteId: Number(newId) });
-          } catch (err) {
-            console.error('Error creando inscripción:', err);
-          }
-        }
+        await api.post("/Estudiantes", body);
       }
 
       resetForm();
@@ -208,7 +227,8 @@ export default function AdminEstudiantes() {
     setForm({
       nombre: est.nombre,
       documento: est.documento,
-      cursoId: ""
+      gradoId: est.gradoId ? String(est.gradoId) : "",
+      grupo: est.grupo || ""
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -235,6 +255,11 @@ export default function AdminEstudiantes() {
     if (!cursoId) return "";
     const curso = cursos.find((c) => c.id === cursoId);
     return curso?.gradoNombre || curso?.grado || "";
+  };
+
+  const gruposDisponibles = () => {
+    const grado = grados.find((g) => String(g.id) === String(form.gradoId));
+    return grado?.grupos || [];
   };
 
   const openEnrollModal = (studentId) => {
@@ -273,7 +298,7 @@ export default function AdminEstudiantes() {
         <Col>
           <h3>Gestión de estudiantes</h3>
           <p className="text-muted">
-            Crea, edita y asigna estudiantes a cursos.
+            Crea, edita y asigna estudiantes a grados y grupos.
           </p>
         </Col>
       </Row>
@@ -314,18 +339,32 @@ export default function AdminEstudiantes() {
                     required
                   />
                 </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Curso</Form.Label>
+                <Form.Group className="mb-2">
+                  <Form.Label>Grado</Form.Label>
                   <Form.Select
-                    name="cursoId"
-                    value={form.cursoId}
+                    name="gradoId"
+                    value={form.gradoId}
                     onChange={handleChange}
+                    required
                   >
-                    <option value="">Sin asignar</option>
-                    {cursos.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.nombre} {c.gradoNombre ? `(${c.gradoNombre})` : c.grado ? `(${c.grado})` : ""}
-                      </option>
+                    <option value="">Selecciona grado</option>
+                    {grados.map((g) => (
+                      <option key={g.id} value={g.id}>{g.nombre}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Grupo</Form.Label>
+                  <Form.Select
+                    name="grupo"
+                    value={form.grupo}
+                    onChange={handleChange}
+                    disabled={!form.gradoId}
+                    required
+                  >
+                    <option value="">Selecciona grupo</option>
+                    {gruposDisponibles().map((gr) => (
+                      <option key={gr} value={gr}>{gr}</option>
                     ))}
                   </Form.Select>
                 </Form.Group>
@@ -367,8 +406,8 @@ export default function AdminEstudiantes() {
                     >
                       <option value="">Todos los grados</option>
                       {grados.map((g) => (
-                        <option key={g} value={g}>
-                          {g}
+                        <option key={g.id} value={g.nombre}>
+                          {g.nombre}
                         </option>
                       ))}
                     </Form.Select>
@@ -433,7 +472,7 @@ export default function AdminEstudiantes() {
                       <th>Nombre</th>
                       <th>Documento</th>
                       <th>Grado</th>
-                      <th>Curso</th>
+                      <th>Grupo</th>
                       <th className="text-end">Acciones</th>
                     </tr>
                   </thead>
@@ -454,14 +493,19 @@ export default function AdminEstudiantes() {
                           <td>{e.documento}</td>
                           <td>
                             {(() => {
-                              const ins = (inscripcionesByStudent[e.id] || [])[0];
-                              const grado = ins ? getCursoGrado(ins.cursoId) : null;
+                              const grado = e.gradoNombre || (() => {
+                                const ins = (inscripcionesByStudent[e.id] || [])[0];
+                                return ins ? getCursoGrado(ins.cursoId) : null;
+                              })();
                               return grado ? <Badge bg="secondary">{grado}</Badge> : <span className="text-muted">-</span>;
                             })()}
                           </td>
                           <td>{(() => {
+                              if (e.grupo) return e.grupo;
                               const ins = (inscripcionesByStudent[e.id] || [])[0];
-                              return ins ? getCursoNombre(ins.cursoId) : "Sin asignar";
+                              if (!ins) return "Sin grupo";
+                              const curso = cursos.find(c => c.id === ins.cursoId);
+                              return curso?.grupo || getCursoNombre(ins.cursoId) || "Sin grupo";
                             })()}</td>
                           <td className="text-end">
                             <ButtonGroup size="sm">

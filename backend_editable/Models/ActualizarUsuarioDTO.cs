@@ -1,4 +1,6 @@
-﻿namespace edutrack_academy_api.Models
+﻿using System.Collections.Generic;
+
+namespace edutrack_academy_api.Models
 {
     public class ActualizarUsuarioDTO
     {
@@ -7,7 +9,7 @@
         public string Nombre { get; set; } = null!;
         public string Apellido { get; set; } = null!;
         public string Email { get; set; } = null!;
-        // Si más adelante quieres permitir cambiar también el rol:
-        // public string? Rol { get; set; }
+        public List<int> Asignaturas { get; set; } = new();
+        public List<DocenteGrupoRequestDTO> Asignaciones { get; set; } = new();
     }
 }

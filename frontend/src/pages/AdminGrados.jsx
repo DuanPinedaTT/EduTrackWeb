@@ -49,7 +49,7 @@ export default function AdminGrados() {
 
   const handleEdit = (g) => {
     setEditing(g.id);
-    setForm({ codigo: g.codigo || "", nombre: g.nombre || "", grupos: '' });
+    setForm({ codigo: g.codigo || "", nombre: g.nombre || "", grupos: (g.grupos || []).join(', ') });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

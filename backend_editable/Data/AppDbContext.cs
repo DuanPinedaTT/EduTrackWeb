@@ -16,6 +16,8 @@ namespace edutrack_academy_api.Data
         public DbSet<CursoAsignatura> CursoAsignaturas { get; set; }
         public DbSet<NotaConfig> NotaConfigs { get; set; }
         public DbSet<Nota> Notas { get; set; }
+        public DbSet<DocenteAsignatura> DocenteAsignaturas { get; set; }
+        public DbSet<DocenteGradoGrupo> DocenteGradoGrupos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -63,6 +65,16 @@ namespace edutrack_academy_api.Data
                 .Property(c => c.Grupo)
                 .HasMaxLength(50);
 
+            modelBuilder.Entity<Estudiante>()
+                .HasOne(e => e.Grado)
+                .WithMany()
+                .HasForeignKey(e => e.GradoId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Estudiante>()
+                .Property(e => e.Grupo)
+                .HasMaxLength(50);
+
             // Grado Codigo y Grupos
             modelBuilder.Entity<Grado>()
                 .Property(g => g.Codigo)
@@ -71,6 +83,42 @@ namespace edutrack_academy_api.Data
             modelBuilder.Entity<Grado>()
                 .Property(g => g.Grupos)
                 .HasMaxLength(500);
+
+            modelBuilder.Entity<DocenteAsignatura>()
+                .HasOne(da => da.Docente)
+                .WithMany(u => u.DocenteAsignaturas)
+                .HasForeignKey(da => da.DocenteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DocenteAsignatura>()
+                .HasOne(da => da.Asignatura)
+                .WithMany()
+                .HasForeignKey(da => da.AsignaturaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DocenteAsignatura>()
+                .HasIndex(da => new { da.DocenteId, da.AsignaturaId })
+                .IsUnique();
+
+            modelBuilder.Entity<DocenteGradoGrupo>()
+                .Property(dg => dg.Grupo)
+                .HasMaxLength(50);
+
+            modelBuilder.Entity<DocenteGradoGrupo>()
+                .HasOne(dg => dg.Docente)
+                .WithMany(u => u.DocenteGradoGrupos)
+                .HasForeignKey(dg => dg.DocenteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DocenteGradoGrupo>()
+                .HasOne(dg => dg.Grado)
+                .WithMany()
+                .HasForeignKey(dg => dg.GradoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<DocenteGradoGrupo>()
+                .HasIndex(dg => new { dg.DocenteId, dg.GradoId, dg.Grupo })
+                .IsUnique();
 
             // Asignatura Codigo
             modelBuilder.Entity<Asignatura>()

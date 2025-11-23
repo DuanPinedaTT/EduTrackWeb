@@ -1,4 +1,7 @@
-﻿namespace edutrack_academy_api.Models
+﻿using System;
+using System.Collections.Generic;
+
+namespace edutrack_academy_api.Models
 {
     public class Usuario
     {
@@ -12,6 +15,8 @@
         public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
 
         public ICollection<Curso> CursosAsignados { get; set; } = new List<Curso>();
+        public ICollection<DocenteAsignatura> DocenteAsignaturas { get; set; } = new List<DocenteAsignatura>();
+        public ICollection<DocenteGradoGrupo> DocenteGradoGrupos { get; set; } = new List<DocenteGradoGrupo>();
     }
 
     public class RegistroUsuarioDTO
@@ -22,6 +27,8 @@
         public string Apellido { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string Rol { get; set; } = "docente"; // por defecto docente
+        public List<int> Asignaturas { get; set; } = new();
+        public List<DocenteGrupoRequestDTO> Asignaciones { get; set; } = new();
     }
 
     public class LoginDTO
@@ -38,5 +45,7 @@
         public string Apellido { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string Rol { get; set; } = null!;
+        public IEnumerable<DocenteAsignaturaResponseDTO> Asignaturas { get; set; } = new List<DocenteAsignaturaResponseDTO>();
+        public IEnumerable<DocenteGrupoResponseDTO> Asignaciones { get; set; } = new List<DocenteGrupoResponseDTO>();
     }
 }

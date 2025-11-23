@@ -22,13 +22,17 @@ export default function AdminDocentes() {
   const [error, setError] = useState(null);
   const [editingId, setEditingId] = useState(null);
 
-  const [form, setForm] = useState({
+  const initialFormState = {
     user: "",
     password: "",
     nombre: "",
     apellido: "",
-    email: ""
-  });
+    email: "",
+    asignaturas: [],
+    asignaciones: []
+  };
+
+  const [form, setForm] = useState(() => ({ ...initialFormState }));
 
   // include asignaturas and asignaciones (grado+grupo)
   useEffect(() => {
@@ -68,21 +72,38 @@ export default function AdminDocentes() {
     });
   };
 
-  const handleMultiSelect = (e) => {
-    const { name, selectedOptions } = e.target;
-    const values = Array.from(selectedOptions).map(o => o.value);
-    setForm({ ...form, [name]: values });
+  const toggleAsignatura = (asignaturaId) => {
+    setForm((prev) => {
+      const key = String(asignaturaId);
+      const current = new Set(prev.asignaturas || []);
+      if (current.has(key)) {
+        current.delete(key);
+      } else {
+        current.add(key);
+      }
+      return { ...prev, asignaturas: Array.from(current) };
+    });
   };
+
+  const toggleAsignacion = (gradoId, grupo) => {
+    const key = `${gradoId}__${grupo}`;
+    setForm((prev) => {
+      const current = new Set(prev.asignaciones || []);
+      if (current.has(key)) {
+        current.delete(key);
+      } else {
+        current.add(key);
+      }
+      return { ...prev, asignaciones: Array.from(current) };
+    });
+  };
+
+  const selectedAsignaturas = form.asignaturas || [];
+  const selectedAsignaciones = form.asignaciones || [];
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({
-      user: "",
-      password: "",
-      nombre: "",
-      apellido: "",
-      email: ""
-    });
+    setForm({ ...initialFormState });
   };
 
   const handleSubmit = async (e) => {
@@ -96,9 +117,9 @@ export default function AdminDocentes() {
         nombre: form.nombre,
         apellido: form.apellido,
         email: form.email,
-        asignaturas: form.asignaturas || [],
-        asignaciones: (form.asignaciones || []).map(s => {
-          const [gradoId, grupo] = s.split('__');
+        asignaturas: selectedAsignaturas.map((id) => Number(id)),
+        asignaciones: selectedAsignaciones.map((value) => {
+          const [gradoId, grupo] = value.split("__");
           return { gradoId: Number(gradoId), grupo };
         })
       };
@@ -122,7 +143,9 @@ export default function AdminDocentes() {
       password: "",
       nombre: teacher.nombre,
       apellido: teacher.apellido,
-      email: teacher.email
+      email: teacher.email,
+      asignaturas: (teacher.asignaturas || []).map((a) => String(a.asignaturaId ?? a.id ?? a)),
+      asignaciones: (teacher.asignaciones || []).map((a) => `${a.gradoId}__${a.grupo}`)
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -220,24 +243,90 @@ export default function AdminDocentes() {
                     required
                   />
                 </Form.Group>
-                <Form.Group className="mb-2">
-                  <Form.Label>Asignaturas (seleccione varias)</Form.Label>
-                  <Form.Control as="select" multiple name="asignaturas" value={form.asignaturas || []} onChange={handleMultiSelect}>
-                    {asignaturas.map(a => (
-                      <option key={a.id} value={a.id}>{a.codigo ? `${a.codigo} - ${a.nombre}` : a.nombre}</option>
-                    ))}
-                  </Form.Control>
+                <Form.Group className="mb-3">
+                  <Form.Label>Asignaturas que imparte</Form.Label>
+                  <div className="d-flex flex-wrap gap-2">
+                    {asignaturas.length === 0 ? (
+                      <span className="text-muted small">No hay asignaturas registradas.</span>
+                    ) : (
+                      asignaturas.map((a) => {
+                        const selected = selectedAsignaturas.includes(String(a.id));
+                        return (
+                          <Button
+                            type="button"
+                            key={a.id}
+                            size="sm"
+                            variant={selected ? "success" : "outline-secondary"}
+                            onClick={() => toggleAsignatura(a.id)}
+                          >
+                            {a.codigo ? `${a.codigo} - ${a.nombre}` : a.nombre}
+                          </Button>
+                        );
+                      })
+                    )}
+                  </div>
+                  <Form.Text className="text-muted">Haz clic para activar o desactivar cada asignatura.</Form.Text>
+                  {selectedAsignaturas.length > 0 && (
+                    <div className="d-flex flex-wrap gap-2 mt-2">
+                      {selectedAsignaturas.map((id) => {
+                        const data = asignaturas.find((a) => String(a.id) === id);
+                        const label = data
+                          ? data.codigo
+                            ? `${data.codigo} - ${data.nombre}`
+                            : data.nombre
+                          : `Asignatura #${id}`;
+                        return (
+                          <Badge bg="info" key={id}>{label}</Badge>
+                        );
+                      })}
+                    </div>
+                  )}
                 </Form.Group>
 
-                <Form.Group className="mb-2">
-                  <Form.Label>Grados / Grupos (seleccione varios)</Form.Label>
-                  <Form.Control as="select" multiple name="asignaciones" value={form.asignaciones || []} onChange={handleMultiSelect}>
-                    {grados.flatMap(g => (g.grupos || []).map(gr => ({ gradoId: g.id, grupo: gr }))).map(item => (
-                      <option key={`${item.gradoId}__${item.grupo}`} value={`${item.gradoId}__${item.grupo}`}>
-                        {`${grados.find(g => g.id === item.gradoId)?.nombre || ''} - ${item.grupo}`}
-                      </option>
-                    ))}
-                  </Form.Control>
+                <Form.Group className="mb-3">
+                  <Form.Label>Grados y grupos</Form.Label>
+                  {grados.length === 0 ? (
+                    <p className="text-muted small mb-2">Crea grados para poder seleccionar grupos.</p>
+                  ) : (
+                    grados.map((grado) => (
+                      <div key={grado.id} className="mb-2">
+                        <strong>{grado.nombre}</strong>
+                        <div className="d-flex flex-wrap gap-2 mt-2">
+                          {(grado.grupos || []).length === 0 ? (
+                            <span className="text-muted small">Sin grupos configurados.</span>
+                          ) : (
+                            grado.grupos.map((grupo) => {
+                              const key = `${grado.id}__${grupo}`;
+                              const selected = selectedAsignaciones.includes(key);
+                              return (
+                                <Button
+                                  type="button"
+                                  key={key}
+                                  size="sm"
+                                  variant={selected ? "success" : "outline-secondary"}
+                                  onClick={() => toggleAsignacion(grado.id, grupo)}
+                                >
+                                  {grupo}
+                                </Button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  <Form.Text className="text-muted">Selecciona los salones donde el docente impartirá clases.</Form.Text>
+                  {selectedAsignaciones.length > 0 && (
+                    <div className="d-flex flex-wrap gap-2 mt-2">
+                      {selectedAsignaciones.map((value) => {
+                        const [gradoId, grupo] = value.split("__");
+                        const gradoNombre = grados.find((g) => String(g.id) === gradoId)?.nombre || `Grado #${gradoId}`;
+                        return (
+                          <Badge bg="secondary" key={value}>{`${gradoNombre} - ${grupo}`}</Badge>
+                        );
+                      })}
+                    </div>
+                  )}
                 </Form.Group>
                 <div className="d-flex justify-content-between">
                   <Button type="submit" variant="primary">
@@ -275,13 +364,14 @@ export default function AdminDocentes() {
                       <th>Usuario</th>
                       <th>Nombre completo</th>
                       <th>Email</th>
+                      <th>Asignaturas</th>
                       <th className="text-end">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {teachers.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="text-center text-muted">
+                        <td colSpan={6} className="text-center text-muted">
                           No hay docentes registrados.
                         </td>
                       </tr>
@@ -294,6 +384,19 @@ export default function AdminDocentes() {
                             {t.nombre} {t.apellido}
                           </td>
                           <td>{t.email}</td>
+                          <td>
+                            {t.asignaturas && t.asignaturas.length > 0 ? (
+                              <div className="d-flex flex-wrap gap-1">
+                                {t.asignaturas.map((a) => (
+                                  <Badge key={`${t.id}-asig-${a.asignaturaId}`} bg="light" text="dark">
+                                    {a.codigo || a.nombre}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-muted">Sin asignar</span>
+                            )}
+                          </td>
                           <td className="text-end">
                             <ButtonGroup size="sm">
                               <Button

@@ -17,6 +17,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Servicios
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IGrupoSyncService, GrupoSyncService>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 builder.Services.AddControllers();
@@ -56,8 +57,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var syncService = scope.ServiceProvider.GetRequiredService<IGrupoSyncService>();
+    syncService.EnsureCursosForAllGradosAsync().GetAwaiter().GetResult();
+}
 
 app.Run();
