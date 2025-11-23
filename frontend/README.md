@@ -28,6 +28,22 @@ npm run lint      # ejecuta eslint sobre src/
 - **Panel estudiante**: dashboard con KPIs, calificaciones, asistencias, notificaciones y seguimiento de observaciones.
 - **Reportes**: gráficos (Recharts), exportación CSV y descarga de planillas XLSX vía `/api/Exports/course/{id}/xlsx`.
 
+## Credenciales de prueba
+
+| Rol | Usuario | Contraseña | Uso recomendado |
+| --- | --- | --- | --- |
+| Admin (rectoría) | `admin.campus` | `CampusAdmin#2025!` | Menú completo, reportes y descargas.
+| Admin (coordinación) | `coordinacion` | `Coordinador$2025!` | Gestión académica y periodos.
+| Admin (dirección) | `rectoria` | `Direccion@2025!` | Validar estadísticas globales.
+| Docente 1 | `prof.mvalencia` | `MentoraSTEM#25!` | Notas STEAM y asistencias 5°.
+| Docente 2 | `prof.jramirez` | `CienciasLab$25!` | Laboratorios y observaciones.
+| Docente 3 | `prof.zamora` | `InglesPlus@25!` | Inglés y notificaciones.
+| Estudiante 1 | `est.luisa` | `LuisaFocus#25!` | Panel 5° básico.
+| Estudiante 2 | `est.carlos` | `CarlosAvance@25!` | Panel 8° básico.
+| Estudiante 3 | `est.ana` | `AnaTalento$25!` | Panel 10° académico.
+
+> Las contraseñas ya están sembradas en la base local mediante la migración `20251123025603_SeedPasswordsRefresh`. Si restableces la BD con `dotnet ef database update`, tendrás nuevamente estos mismos accesos.
+
 ## Flujo de despliegue
 
 1. Aplica los cambios deseados dentro de `backend_editable/` y `frontend/`.
@@ -40,3 +56,11 @@ npm run lint      # ejecuta eslint sobre src/
 - Ejecutar pruebas funcionales completas cuando el backend y frontend estén integrados.
 - Documentar credenciales de prueba y endpoints adicionales si se agregan nuevos módulos.
 - Automatizar la copia de `backend_editable/` hacia la solución oficial si el flujo se mantiene.
+
+## Flujos validados
+
+1. **Login por rol**: iniciar sesión con cualquiera de las credenciales anteriores redirige al panel correspondiente (`/admin`, `/teacher`, `/student`).
+2. **Reportes administrativos**: desde `/admin/reportes` se generan métricas por curso, se exporta CSV y se descarga la planilla XLSX (endpoint `/api/Exports/course/{id}/xlsx`).
+3. **Docente**: captura y edición de notas/asistencias (menú "Calificaciones" y "Asistencias"), además de notificaciones y observaciones.
+4. **Estudiante**: visualización de KPIs, calificaciones, asistencias y observaciones personales.
+5. **Sesión**: el botón "Cerrar sesión" de `DashboardLayout` borra token y usuario en `localStorage` y regresa al landing.
