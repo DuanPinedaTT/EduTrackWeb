@@ -65,6 +65,10 @@ export const Estudiantes = {
 
 export const Periodos = {
   list: () => api.get('/Periodos'),
+  active: () => api.get('/Periodos/activo'),
+  create: (data) => api.post('/Periodos', data),
+  update: (id, data) => api.put(`/Periodos/${id}`, data),
+  remove: (id) => api.delete(`/Periodos/${id}`),
   activate: (id) => api.post(`/Periodos/${id}/activar`)
 };
 
@@ -105,4 +109,12 @@ export const Observaciones = {
 export const Profesores = {
   profileByUsuario: (usuarioId) => api.get(`/Profesores/perfil-usuario/${usuarioId}`),
   courses: (profesorId) => api.get(`/Profesores/${profesorId}/cursos`)
+};
+
+export const Estadisticas = {
+  resumen: () => api.get('/Estadisticas')
+};
+
+export const Exports = {
+  courseXlsx: (cursoId) => api.get(`/Exports/course/${cursoId}/xlsx`, { responseType: 'blob' })
 };

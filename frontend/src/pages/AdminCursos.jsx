@@ -18,11 +18,9 @@ import LoadingSpinner from "../components/LoadingSpinner.jsx";
 export default function AdminCursos() {
   const [teachers, setTeachers] = useState([]);
   const [courses, setCourses] = useState([]);
-  const [asignaturas, setAsignaturas] = useState([]);
   const [grados, setGrados] = useState([]);
   const [studentCounts, setStudentCounts] = useState({});
   const [error, setError] = useState(null);
-  const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [loadingCounts, setLoadingCounts] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState(null);
@@ -38,14 +36,11 @@ export default function AdminCursos() {
 
   const loadTeachers = async () => {
     try {
-      setLoadingTeachers(true);
       setError(null);
       const res = await api.get("/usuarios");
       setTeachers(res.data);
     } catch (err) {
       setError(err.response?.data || "Error cargando docentes");
-    } finally {
-      setLoadingTeachers(false);
     }
   };
 
@@ -59,15 +54,6 @@ export default function AdminCursos() {
       setError(err.response?.data || "Error cargando cursos");
     } finally {
       setLoadingCourses(false);
-    }
-  };
-
-  const loadAsignaturas = async () => {
-    try {
-      const res = await api.get("/Asignaturas");
-      setAsignaturas(res.data || []);
-    } catch (err) {
-      console.error("Error cargando asignaturas", err);
     }
   };
 
@@ -101,7 +87,7 @@ export default function AdminCursos() {
   };
 
   useEffect(() => {
-    Promise.all([loadTeachers(), loadCourses(), loadAsignaturas(), loadGrados()]);
+    Promise.all([loadTeachers(), loadCourses(), loadGrados()]);
   }, []);
 
   useEffect(() => {

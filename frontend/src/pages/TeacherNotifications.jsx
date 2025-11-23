@@ -69,13 +69,13 @@ export default function TeacherNotifications() {
     const data = Array.isArray(res.data) ? res.data : [];
     setAssignments(data);
     return data;
-  }, [teacherProfile]);
+  }, [teacherProfile?.id]);
 
   const loadNotifications = useCallback(async () => {
     if (!teacherProfile?.id) return;
     const res = await Notificaciones.list({ profesorId: teacherProfile.id });
     setNotifications(Array.isArray(res.data) ? res.data : []);
-  }, [teacherProfile]);
+  }, [teacherProfile?.id]);
 
   const ensureStudentsForCourse = useCallback(async (cursoId) => {
     if (!cursoId || studentsByCourse[cursoId]) return;
@@ -91,13 +91,21 @@ export default function TeacherNotifications() {
     }
   }, [studentsByCourse]);
 
-  useEffect(() => {
+  const refreshData = useCallback(async () => {
     if (!teacherProfile?.id) return;
     setLoadingData(true);
-    Promise.all([loadAssignments(), loadNotifications()])
-      .catch((err) => setError(err.response?.data || "No se pudo cargar la información"))
-      .finally(() => setLoadingData(false));
-  }, [teacherProfile, loadAssignments, loadNotifications]);
+    try {
+      await Promise.all([loadAssignments(), loadNotifications()]);
+    } catch (err) {
+      setError(err.response?.data || "No se pudo cargar la información");
+    } finally {
+      setLoadingData(false);
+    }
+  }, [teacherProfile?.id, loadAssignments, loadNotifications]);
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   const handleOpenModal = (notification) => {
     if (notification) {

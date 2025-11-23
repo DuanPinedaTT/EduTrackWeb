@@ -58,13 +58,13 @@ export default function TeacherObservations() {
     const data = Array.isArray(res.data) ? res.data : [];
     setAssignments(data);
     return data;
-  }, [teacherProfile]);
+  }, [teacherProfile?.id]);
 
   const loadObservations = useCallback(async () => {
     if (!teacherProfile?.id) return;
     const res = await Observaciones.list({ profesorId: teacherProfile.id });
     setObservations(Array.isArray(res.data) ? res.data : []);
-  }, [teacherProfile]);
+  }, [teacherProfile?.id]);
 
   const ensureStudentsForCourse = useCallback(async (cursoId) => {
     if (!cursoId || studentsByCourse[cursoId]) return;
@@ -80,13 +80,21 @@ export default function TeacherObservations() {
     }
   }, [studentsByCourse]);
 
-  useEffect(() => {
+  const refreshData = useCallback(async () => {
     if (!teacherProfile?.id) return;
     setLoadingData(true);
-    Promise.all([loadAssignments(), loadObservations()])
-      .catch((err) => setError(err.response?.data || "No se pudo cargar la información"))
-      .finally(() => setLoadingData(false));
-  }, [teacherProfile, loadAssignments, loadObservations]);
+    try {
+      await Promise.all([loadAssignments(), loadObservations()]);
+    } catch (err) {
+      setError(err.response?.data || "No se pudo cargar la información");
+    } finally {
+      setLoadingData(false);
+    }
+  }, [teacherProfile?.id, loadAssignments, loadObservations]);
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   const handleFilterChange = (name, value) => {
     setFilters((prev) => ({

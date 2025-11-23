@@ -1,30 +1,28 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-
-const AuthContext = createContext(null);
+import React, { useState } from "react";
+import AuthContext from "./authContext.js";
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
-
-  useEffect(() => {
-    if (token) {
-      const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-      setUser(storedUser);
-    } else {
-      setUser(null);
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [user, setUser] = useState(() => {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) return null;
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null");
+    } catch {
+      return null;
     }
-  }, [token]);
+  });
 
-const login = (data) => {
-  const normalizedUser = {
-    ...data.user,
-    rol: data.user.rol?.toLowerCase()
+  const login = (data) => {
+    const normalizedUser = {
+      ...data.user,
+      rol: data.user.rol?.toLowerCase()
+    };
+    setToken(data.token);
+    setUser(normalizedUser);
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
   };
-  setToken(data.token);
-  setUser(normalizedUser);
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("user", JSON.stringify(normalizedUser));
-};
 
   const logout = () => {
     setToken(null);
@@ -43,8 +41,4 @@ const login = (data) => {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  return useContext(AuthContext);
 }

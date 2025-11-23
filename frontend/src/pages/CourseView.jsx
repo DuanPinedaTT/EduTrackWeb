@@ -239,8 +239,6 @@ export default function CourseView() {
     return "var(--grade-fail)";
   };
 
-  const configsInPeriod = configs.filter((c) => c.periodo === activePeriod);
-  const totalPesosPeriod = configsInPeriod.reduce((sum, c) => sum + c.peso, 0);
 
   if (loading) return <LoadingSpinner message="Cargando curso..." />;
 

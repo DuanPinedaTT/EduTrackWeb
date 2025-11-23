@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
+import { useAuth } from "./hooks/useAuth.js";
 
 import Home from "./pages/Home.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
@@ -14,6 +15,9 @@ import AdminCursos from "./pages/AdminCursos.jsx";
 import AdminAsignaturas from "./pages/AdminAsignaturas.jsx";
 import AdminGrados from "./pages/AdminGrados.jsx";
 import AdminCursoAsignaturas from "./pages/AdminCursoAsignaturas.jsx";
+import AdminPeriodos from "./pages/AdminPeriodos.jsx";
+import AdminReportes from "./pages/AdminReportes.jsx";
+import AdminNotificaciones from "./pages/AdminNotificaciones.jsx";
 import Profile from "./pages/Profile.jsx";
 import TeacherGrades from "./pages/TeacherGrades.jsx";
 import TeacherAttendance from "./pages/TeacherAttendance.jsx";
@@ -24,6 +28,7 @@ import StudentGrades from "./pages/StudentGrades.jsx";
 import StudentAttendance from "./pages/StudentAttendance.jsx";
 import StudentNotifications from "./pages/StudentNotifications.jsx";
 import StudentProfile from "./pages/StudentProfile.jsx";
+import StudentObservations from "./pages/StudentObservations.jsx";
 
 import Navbar from "./components/Navbar.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
@@ -133,6 +138,39 @@ export default function App() {
               <PrivateRoute roles={["admin"]}>
                 <DashboardLayout>
                   <AdminCursoAsignaturas />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/admin/periodos"
+            element={
+              <PrivateRoute roles={["admin"]}>
+                <DashboardLayout>
+                  <AdminPeriodos />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/admin/reportes"
+            element={
+              <PrivateRoute roles={["admin"]}>
+                <DashboardLayout>
+                  <AdminReportes />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/admin/notificaciones"
+            element={
+              <PrivateRoute roles={["admin"]}>
+                <DashboardLayout>
+                  <AdminNotificaciones />
                 </DashboardLayout>
               </PrivateRoute>
             }
@@ -278,6 +316,17 @@ export default function App() {
               <PrivateRoute roles={["estudiante"]}>
                 <DashboardLayout>
                   <StudentNotifications />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/student/observations"
+            element={
+              <PrivateRoute roles={["estudiante"]}>
+                <DashboardLayout>
+                  <StudentObservations />
                 </DashboardLayout>
               </PrivateRoute>
             }

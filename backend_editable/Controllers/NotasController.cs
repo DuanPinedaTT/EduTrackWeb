@@ -30,6 +30,8 @@ namespace edutrack_academy_api.Controllers
         public string Nombre { get; set; } = string.Empty;
         public decimal Peso { get; set; }
         public decimal? Valor { get; set; }
+        public int? PeriodoAcademicoId { get; set; }
+        public string? PeriodoNombre { get; set; }
     }
 
     public class EstudianteConNotasDTO
@@ -159,6 +161,7 @@ namespace edutrack_academy_api.Controllers
 
             var configs = await _context.NotaConfigs
                 .Where(nc => nc.CursoId == cursoId)
+                .Include(nc => nc.PeriodoAcademico)
                 .OrderBy(nc => nc.PeriodoAcademicoId)
                 .ThenBy(nc => nc.Orden)
                 .ToListAsync();
@@ -175,7 +178,9 @@ namespace edutrack_academy_api.Controllers
                     NotaConfigId = cfg.Id,
                     Nombre = cfg.Nombre,
                     Peso = cfg.Peso,
-                    Valor = notas.FirstOrDefault(n => n.EstudianteId == est.Id && n.NotaConfigId == cfg.Id)?.Valor
+                    Valor = notas.FirstOrDefault(n => n.EstudianteId == est.Id && n.NotaConfigId == cfg.Id)?.Valor,
+                    PeriodoAcademicoId = cfg.PeriodoAcademicoId,
+                    PeriodoNombre = cfg.PeriodoAcademico != null ? cfg.PeriodoAcademico.Nombre : null
                 }).ToList();
 
                 // Calcular promedio ponderado

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 import api from "../services/api.js";
 
 export default function Profile() {

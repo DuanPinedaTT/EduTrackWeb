@@ -1,16 +1,42 @@
-# React + Vite
+# EduTrack Web Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SPA construida con React 19 + Vite que replica la plataforma EduTrak, conectándose al backend ASP.NET Core (`backend_editable`). Incluye paneles diferenciados por rol (admin, docente y estudiante), consumo de APIs reales y vistas responsivas basadas en Bootstrap 5.
 
-Currently, two official plugins are available:
+## Requisitos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 20+
+- Backend .NET 8 levantado aparte (el proyecto se sincroniza copiando los archivos de `backend_editable/` hacia tu solución principal en Visual Studio 2022, tal como se acordó)
+- Variables locales: no se requiere `.env`; las peticiones usan el proxy relativo `/api` definido en Vite.
 
-## React Compiler
+## Scripts disponibles
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install       # instala dependencias
+npm run dev       # levanta el frontend en http://localhost:5173
+npm run build     # genera artefacto de producción
+npm run preview   # sirve la build generada
+npm run lint      # ejecuta eslint sobre src/
+```
 
-## Expanding the ESLint configuration
+> El backend **no se ejecuta desde aquí**. Levántalo con Visual Studio 2022 (o `dotnet run`) apuntando a la copia oficial del proyecto. Solo usamos `backend_editable/` como staging para los cambios antes de que los pegues en la solución ejecutable.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Características principales
+
+- **Autenticación JWT** contra `/api/Auth/login` con rutas privadas segmentadas por rol.
+- **Panel administrador** completo: gestión de docentes, estudiantes, cursos, asignaciones, periodos, reportes avanzados (promedios, asistencia) y centro de notificaciones.
+- **Panel docente**: calificaciones (configuración + captura), asistencias, notificaciones y observaciones enlazadas a los endpoints reales.
+- **Panel estudiante**: dashboard con KPIs, calificaciones, asistencias, notificaciones y seguimiento de observaciones.
+- **Reportes**: gráficos (Recharts), exportación CSV y descarga de planillas XLSX vía `/api/Exports/course/{id}/xlsx`.
+
+## Flujo de despliegue
+
+1. Aplica los cambios deseados dentro de `backend_editable/` y `frontend/`.
+2. Copia el contenido de `backend_editable/` hacia la carpeta del backend que tienes abierta en Visual Studio 2022.
+3. Ejecuta el backend con VS (o `dotnet run`) y luego `npm run dev` en `frontend/`.
+4. Cuando todo esté validado, corre `npm run build` para generar la versión productiva y los tests/lints que necesites.
+
+## Próximos pasos sugeridos
+
+- Ejecutar pruebas funcionales completas cuando el backend y frontend estén integrados.
+- Documentar credenciales de prueba y endpoints adicionales si se agregan nuevos módulos.
+- Automatizar la copia de `backend_editable/` hacia la solución oficial si el flujo se mantiene.

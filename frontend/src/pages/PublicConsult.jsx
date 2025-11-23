@@ -74,7 +74,7 @@ export default function PublicConsult() {
     }
 
     setFilteredStudents(result);
-  }, [searchTerm, selectedCourse, students]);
+  }, [searchTerm, selectedCourse, students, inscripcionesByStudent]);
 
   const getCursoNombre = (cursoId) => {
     if (!cursoId) return "Sin asignar";

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, ListGroup, Dropdown, Collapse } from "react-bootstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 import api from "../services/api.js";
 import useTeacherProfile from "../hooks/useTeacherProfile.js";
 
@@ -53,7 +53,10 @@ export default function DashboardLayout({ children }) {
     { path: "/admin/asignaturas", label: "Asignaturas" },
     { path: "/admin/grados", label: "Grados" },
     { path: "/admin/curso-asignaturas", label: "Asignaciones" },
-    { path: "/admin/estudiantes", label: "Estudiantes" }
+    { path: "/admin/estudiantes", label: "Estudiantes" },
+    { path: "/admin/periodos", label: "Periodos" },
+    { path: "/admin/reportes", label: "Reportes" },
+    { path: "/admin/notificaciones", label: "Notificaciones" }
   ];
 
   const menuTeacher = [
@@ -69,7 +72,8 @@ export default function DashboardLayout({ children }) {
     { path: "/student/profile", label: "Mi perfil" },
     { path: "/student/grades", label: "Mis calificaciones" },
     { path: "/student/attendance", label: "Mis asistencias" },
-    { path: "/student/notifications", label: "Mis notificaciones" }
+    { path: "/student/notifications", label: "Mis notificaciones" },
+    { path: "/student/observations", label: "Observaciones" }
   ];
 
   let sidebarMenu = (

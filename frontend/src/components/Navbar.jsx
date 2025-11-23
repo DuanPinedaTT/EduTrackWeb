@@ -5,7 +5,7 @@ import {
   Button
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 
 export default function Navbar({ onLoginClick }) {
   const { user } = useAuth();

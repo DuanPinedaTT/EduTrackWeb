@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import { useAuth } from "./useAuth.js";
 import { Estudiantes } from "../services/api.js";
 
 export default function useStudentProfile() {

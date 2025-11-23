@@ -55,10 +55,26 @@ namespace edutrack_academy_api.Migrations
                         new
                         {
                             Id = 1,
-                            Direccion = "Calle Principal 123",
-                            FechaRegistro = new DateTime(2025, 11, 21, 17, 19, 33, 646, DateTimeKind.Utc).AddTicks(5868),
-                            Telefono = "3001234567",
+                            Direccion = "Calle 10 #45-21",
+                            FechaRegistro = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2483),
+                            Telefono = "3001112233",
                             UsuarioId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Direccion = "Carrera 50 #12-44",
+                            FechaRegistro = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2487),
+                            Telefono = "3002223344",
+                            UsuarioId = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Direccion = "Diagonal 80 #66-01",
+                            FechaRegistro = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2488),
+                            Telefono = "3003334455",
+                            UsuarioId = 3
                         });
                 });
 
@@ -82,6 +98,38 @@ namespace edutrack_academy_api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Asignaturas");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Codigo = "MAT",
+                            Nombre = "Matemáticas"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Codigo = "LEN",
+                            Nombre = "Lengua Castellana"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Codigo = "CIE",
+                            Nombre = "Ciencias Naturales"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Codigo = "ING",
+                            Nombre = "Inglés"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Codigo = "HIS",
+                            Nombre = "Historia"
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.Asistencia", b =>
@@ -115,6 +163,134 @@ namespace edutrack_academy_api.Migrations
                     b.HasIndex("EstudianteId");
 
                     b.ToTable("Asistencias");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CursoAsignaturaId = 1,
+                            Estado = 1,
+                            EstudianteId = 1,
+                            Fecha = new DateTime(2025, 2, 3, 12, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = "Participó activamente"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CursoAsignaturaId = 1,
+                            Estado = 1,
+                            EstudianteId = 1,
+                            Fecha = new DateTime(2025, 2, 4, 12, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = ""
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CursoAsignaturaId = 1,
+                            Estado = 3,
+                            EstudianteId = 1,
+                            Fecha = new DateTime(2025, 2, 5, 12, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = "Llegó 10 min tarde"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CursoAsignaturaId = 1,
+                            Estado = 1,
+                            EstudianteId = 4,
+                            Fecha = new DateTime(2025, 2, 3, 12, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = ""
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CursoAsignaturaId = 1,
+                            Estado = 2,
+                            EstudianteId = 4,
+                            Fecha = new DateTime(2025, 2, 4, 12, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = "Justificada por cita médica"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CursoAsignaturaId = 1,
+                            Estado = 1,
+                            EstudianteId = 4,
+                            Fecha = new DateTime(2025, 2, 5, 12, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = ""
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CursoAsignaturaId = 3,
+                            Estado = 1,
+                            EstudianteId = 2,
+                            Fecha = new DateTime(2025, 2, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = ""
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CursoAsignaturaId = 3,
+                            Estado = 1,
+                            EstudianteId = 2,
+                            Fecha = new DateTime(2025, 2, 4, 15, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = "Dirigió laboratorio"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CursoAsignaturaId = 3,
+                            Estado = 1,
+                            EstudianteId = 5,
+                            Fecha = new DateTime(2025, 2, 3, 15, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = ""
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CursoAsignaturaId = 3,
+                            Estado = 2,
+                            EstudianteId = 5,
+                            Fecha = new DateTime(2025, 2, 4, 15, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = "No entregó excusa"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            CursoAsignaturaId = 5,
+                            Estado = 1,
+                            EstudianteId = 3,
+                            Fecha = new DateTime(2025, 2, 3, 17, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = "Exposición sobresaliente"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            CursoAsignaturaId = 5,
+                            Estado = 1,
+                            EstudianteId = 3,
+                            Fecha = new DateTime(2025, 2, 4, 17, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = ""
+                        },
+                        new
+                        {
+                            Id = 13,
+                            CursoAsignaturaId = 5,
+                            Estado = 3,
+                            EstudianteId = 6,
+                            Fecha = new DateTime(2025, 2, 3, 17, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = "Ingreso tarde por transporte"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            CursoAsignaturaId = 5,
+                            Estado = 1,
+                            EstudianteId = 6,
+                            Fecha = new DateTime(2025, 2, 4, 17, 0, 0, 0, DateTimeKind.Utc),
+                            Observacion = ""
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.Curso", b =>
@@ -157,6 +333,32 @@ namespace edutrack_academy_api.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Cursos");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            GradoId = 1,
+                            Grupo = "A",
+                            Nombre = "5° Básico A",
+                            ProfesorId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            GradoId = 2,
+                            Grupo = "A",
+                            Nombre = "8° Básico A",
+                            ProfesorId = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            GradoId = 3,
+                            Grupo = "A",
+                            Nombre = "10° Académico A",
+                            ProfesorId = 3
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.CursoAsignatura", b =>
@@ -186,6 +388,50 @@ namespace edutrack_academy_api.Migrations
                         .IsUnique();
 
                     b.ToTable("CursoAsignaturas");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AsignaturaId = 1,
+                            CursoId = 1,
+                            ProfesorId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AsignaturaId = 4,
+                            CursoId = 1,
+                            ProfesorId = 3
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AsignaturaId = 3,
+                            CursoId = 2,
+                            ProfesorId = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AsignaturaId = 2,
+                            CursoId = 2,
+                            ProfesorId = 1
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AsignaturaId = 4,
+                            CursoId = 3,
+                            ProfesorId = 3
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AsignaturaId = 5,
+                            CursoId = 3,
+                            ProfesorId = 2
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.Estudiante", b =>
@@ -242,15 +488,77 @@ namespace edutrack_academy_api.Migrations
                         new
                         {
                             Id = 1,
-                            Acudiente = "Carlos Pérez",
-                            Apellido = "Pérez",
-                            Direccion = "Calle Estudiantes 321",
-                            Documento = "123456789",
-                            FechaNacimiento = new DateTime(2010, 11, 21, 17, 19, 33, 646, DateTimeKind.Utc).AddTicks(5928),
+                            Acudiente = "Patricia Gómez",
+                            Apellido = "Marín",
+                            Direccion = "Barrio Primavera",
+                            Documento = "1053891201",
+                            FechaNacimiento = new DateTime(2014, 5, 17, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nivel = "5°",
+                            Nombre = "Luisa",
+                            Telefono = "3015558899",
+                            UsuarioId = 7
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Acudiente = "Sandra Ruiz",
+                            Apellido = "Ruiz",
+                            Direccion = "Conjunto Nogales",
+                            Documento = "1054782203",
+                            FechaNacimiento = new DateTime(2012, 11, 9, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nivel = "8°",
+                            Nombre = "Carlos",
+                            Telefono = "3017776644",
+                            UsuarioId = 8
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Acudiente = "Marcos Suárez",
+                            Apellido = "Suárez",
+                            Direccion = "Urbanización Cedros",
+                            Documento = "1045221188",
+                            FechaNacimiento = new DateTime(2010, 3, 28, 0, 0, 0, 0, DateTimeKind.Utc),
                             Nivel = "10°",
-                            Nombre = "Juan",
-                            Telefono = "3005551234",
-                            UsuarioId = 3
+                            Nombre = "Ana",
+                            Telefono = "3027773311",
+                            UsuarioId = 9
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Acudiente = "Carolina López",
+                            Apellido = "López",
+                            Direccion = "Villa del Prado",
+                            Documento = "1053999981",
+                            FechaNacimiento = new DateTime(2014, 8, 5, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nivel = "5°",
+                            Nombre = "Mateo",
+                            Telefono = "3009007766"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Acudiente = "Andrea Ortiz",
+                            Apellido = "Ortiz",
+                            Direccion = "Bosques del Norte",
+                            Documento = "1045888812",
+                            FechaNacimiento = new DateTime(2012, 1, 15, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nivel = "8°",
+                            Nombre = "Valentina",
+                            Telefono = "3012203344"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Acudiente = "Ricardo Torres",
+                            Apellido = "Torres",
+                            Direccion = "Altos de la Sabana",
+                            Documento = "1050011223",
+                            FechaNacimiento = new DateTime(2010, 9, 2, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Nivel = "10°",
+                            Nombre = "Samuel",
+                            Telefono = "3021144556"
                         });
                 });
 
@@ -279,6 +587,29 @@ namespace edutrack_academy_api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Grados");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Codigo = "5BAS",
+                            Grupos = "A,B",
+                            Nombre = "Quinto Básico"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Codigo = "8BAS",
+                            Grupos = "A,B",
+                            Nombre = "Octavo Básico"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Codigo = "10ACA",
+                            Grupos = "A",
+                            Nombre = "Décimo Académico"
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.Inscripcion", b =>
@@ -303,6 +634,44 @@ namespace edutrack_academy_api.Migrations
                         .IsUnique();
 
                     b.ToTable("Inscripciones");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CursoId = 1,
+                            EstudianteId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CursoId = 1,
+                            EstudianteId = 4
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CursoId = 2,
+                            EstudianteId = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CursoId = 2,
+                            EstudianteId = 5
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CursoId = 3,
+                            EstudianteId = 3
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CursoId = 3,
+                            EstudianteId = 6
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.Nota", b =>
@@ -335,6 +704,92 @@ namespace edutrack_academy_api.Migrations
                     b.HasIndex("NotaConfigId");
 
                     b.ToTable("Notas");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            EstudianteId = 1,
+                            NotaConfigId = 1,
+                            Valor = 4.5m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            EstudianteId = 1,
+                            NotaConfigId = 2,
+                            Valor = 4.2m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            EstudianteId = 4,
+                            NotaConfigId = 1,
+                            Valor = 3.8m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            EstudianteId = 4,
+                            NotaConfigId = 2,
+                            Valor = 3.5m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            EstudianteId = 2,
+                            NotaConfigId = 3,
+                            Valor = 4.0m
+                        },
+                        new
+                        {
+                            Id = 6,
+                            EstudianteId = 2,
+                            NotaConfigId = 4,
+                            Valor = 4.6m
+                        },
+                        new
+                        {
+                            Id = 7,
+                            EstudianteId = 5,
+                            NotaConfigId = 3,
+                            Valor = 3.2m
+                        },
+                        new
+                        {
+                            Id = 8,
+                            EstudianteId = 5,
+                            NotaConfigId = 4,
+                            Valor = 3.4m
+                        },
+                        new
+                        {
+                            Id = 9,
+                            EstudianteId = 3,
+                            NotaConfigId = 5,
+                            Valor = 4.8m
+                        },
+                        new
+                        {
+                            Id = 10,
+                            EstudianteId = 3,
+                            NotaConfigId = 6,
+                            Valor = 4.4m
+                        },
+                        new
+                        {
+                            Id = 11,
+                            EstudianteId = 6,
+                            NotaConfigId = 5,
+                            Valor = 3.9m
+                        },
+                        new
+                        {
+                            Id = 12,
+                            EstudianteId = 6,
+                            NotaConfigId = 6,
+                            Valor = 3.6m
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.NotaConfig", b =>
@@ -369,6 +824,62 @@ namespace edutrack_academy_api.Migrations
                     b.HasIndex("PeriodoAcademicoId");
 
                     b.ToTable("NotaConfigs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CursoId = 1,
+                            Nombre = "Proyecto STEAM",
+                            Orden = 1,
+                            PeriodoAcademicoId = 1,
+                            Peso = 50m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CursoId = 1,
+                            Nombre = "Evaluación integral",
+                            Orden = 2,
+                            PeriodoAcademicoId = 1,
+                            Peso = 50m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CursoId = 2,
+                            Nombre = "Laboratorio de ciencias",
+                            Orden = 1,
+                            PeriodoAcademicoId = 1,
+                            Peso = 40m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CursoId = 2,
+                            Nombre = "Examen bimestral",
+                            Orden = 2,
+                            PeriodoAcademicoId = 1,
+                            Peso = 60m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CursoId = 3,
+                            Nombre = "Ensayo crítico",
+                            Orden = 1,
+                            PeriodoAcademicoId = 1,
+                            Peso = 40m
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CursoId = 3,
+                            Nombre = "Examen final",
+                            Orden = 2,
+                            PeriodoAcademicoId = 1,
+                            Peso = 60m
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.Notificacion", b =>
@@ -415,6 +926,31 @@ namespace edutrack_academy_api.Migrations
                     b.HasIndex("ProfesorId");
 
                     b.ToTable("Notificaciones");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CursoAsignaturaId = 1,
+                            FechaEnvio = new DateTime(2025, 2, 2, 13, 0, 0, 0, DateTimeKind.Utc),
+                            Leida = false,
+                            Mensaje = "Recuerden cargar la presentación antes del viernes.",
+                            ProfesorId = 1,
+                            Tipo = "evaluacion",
+                            Titulo = "Entrega de proyecto STEAM"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CursoAsignaturaId = 5,
+                            EstudianteId = 3,
+                            FechaEnvio = new DateTime(2025, 2, 5, 18, 0, 0, 0, DateTimeKind.Utc),
+                            Leida = true,
+                            Mensaje = "Excelente liderazgo en la exposición final.",
+                            ProfesorId = 3,
+                            Tipo = "reconocimiento",
+                            Titulo = "Reconocimiento"
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.Observacion", b =>
@@ -454,6 +990,28 @@ namespace edutrack_academy_api.Migrations
                     b.HasIndex("ProfesorId");
 
                     b.ToTable("Observaciones");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Comentario = "Requiere refuerzo en registro de laboratorio",
+                            CursoAsignaturaId = 3,
+                            EstudianteId = 5,
+                            Fecha = new DateTime(2025, 2, 6, 14, 30, 0, 0, DateTimeKind.Utc),
+                            ProfesorId = 2,
+                            Tipo = "seguimiento"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Comentario = "Lideró al equipo durante el reto de robótica",
+                            CursoAsignaturaId = 1,
+                            EstudianteId = 1,
+                            Fecha = new DateTime(2025, 2, 7, 10, 0, 0, 0, DateTimeKind.Utc),
+                            ProfesorId = 1,
+                            Tipo = "reconocimiento"
+                        });
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.PeriodoAcademico", b =>
@@ -565,12 +1123,32 @@ namespace edutrack_academy_api.Migrations
                         new
                         {
                             Id = 1,
-                            Biografia = "Docente titular de ciencias exactas",
-                            Direccion = "Avenida Educación 456",
+                            Biografia = "Mentora STEM con enfoque en innovación",
+                            Direccion = "Av. Educativa 45",
                             Especialidad = "Matemáticas",
-                            FechaIngreso = new DateTime(2025, 11, 21, 17, 19, 33, 646, DateTimeKind.Utc).AddTicks(5899),
+                            FechaIngreso = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2696),
                             Telefono = "3009876543",
-                            UsuarioId = 2
+                            UsuarioId = 4
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Biografia = "Coordinador de laboratorios escolares",
+                            Direccion = "Calle 23 #18-55",
+                            Especialidad = "Ciencias Naturales",
+                            FechaIngreso = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2701),
+                            Telefono = "3008765432",
+                            UsuarioId = 5
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Biografia = "Docente bilingüe con certificación CELTA",
+                            Direccion = "Transversal 90 #33-10",
+                            Especialidad = "Inglés",
+                            FechaIngreso = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2703),
+                            Telefono = "3007654321",
+                            UsuarioId = 6
                         });
                 });
 
@@ -620,35 +1198,101 @@ namespace edutrack_academy_api.Migrations
                         new
                         {
                             Id = 1,
-                            Apellido = "Principal",
-                            CreadoEn = new DateTime(2025, 11, 21, 17, 19, 33, 646, DateTimeKind.Utc).AddTicks(5661),
-                            Email = "admin@edutrack.com",
-                            Nombre = "Admin",
-                            PasswordHash = "$2a$11$8Ax7AnCM1j7rwhhtjfiSeu41IrT9jp9.yhiAaZ1I.F7.DOPxJrj1C",
+                            Apellido = "Medina",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2350),
+                            Email = "laura.medina@edutrack.com",
+                            Nombre = "Laura",
+                            PasswordHash = "$2a$11$hUQWqGG5.yWyM/qqiHKF4uxRXLbYvGcXkXhH5u6yrSqhEvWrkN3CO",
                             Rol = "admin",
-                            User = "admin"
+                            User = "admin.campus"
                         },
                         new
                         {
                             Id = 2,
-                            Apellido = "González",
-                            CreadoEn = new DateTime(2025, 11, 21, 17, 19, 33, 646, DateTimeKind.Utc).AddTicks(5672),
-                            Email = "docente@edutrack.com",
-                            Nombre = "María",
-                            PasswordHash = "$2a$11$k26qcKoy0eZZ.!9dBbTK1ehV4VHKs3P6KyHRxY6SY3n9Pqj8VimLa",
-                            Rol = "docente",
-                            User = "docente"
+                            Apellido = "Herrera",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2357),
+                            Email = "diego.herrera@edutrack.com",
+                            Nombre = "Diego",
+                            PasswordHash = "$2a$11$qvllrbCaMbGgYllRCgvL/ewadMQK0Y0xFyPJHbKiROon3GgTB0tN2",
+                            Rol = "admin",
+                            User = "coordinacion"
                         },
                         new
                         {
                             Id = 3,
-                            Apellido = "Pérez",
-                            CreadoEn = new DateTime(2025, 11, 21, 17, 19, 33, 646, DateTimeKind.Utc).AddTicks(5674),
-                            Email = "estudiante@edutrack.com",
-                            Nombre = "Juan",
-                            PasswordHash = "$2a$11$0LjXmJvLCYOtJk9gDC11SuGeUXLEVp3G.yUpiRaY1oWXcnZ6FQxK6",
+                            Apellido = "Roldán",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2359),
+                            Email = "sofia.roldan@edutrack.com",
+                            Nombre = "Sofía",
+                            PasswordHash = "$2a$11$bSnUxtpacM98uXY0SX1rTOOJUXJG3OCM5UVzBaSiBLvWWW0kWfwJu",
+                            Rol = "admin",
+                            User = "rectoria"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Apellido = "Valencia",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2361),
+                            Email = "martina.valencia@edutrack.com",
+                            Nombre = "Martina",
+                            PasswordHash = "$2a$11$oixTIg92I4Pfm5TUafTLe.D3atM/eQNY3PORqf4Z3cFFBNklcHmpq",
+                            Rol = "docente",
+                            User = "prof.mvalencia"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Apellido = "Ramírez",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2362),
+                            Email = "julio.ramirez@edutrack.com",
+                            Nombre = "Julio",
+                            PasswordHash = "$2a$11$OubtyYofmljpSC0TooyC0uUR2FGPP8XrYCCRvrSiu0JZW9/BCCQU6",
+                            Rol = "docente",
+                            User = "prof.jramirez"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Apellido = "Zamora",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2365),
+                            Email = "lucia.zamora@edutrack.com",
+                            Nombre = "Lucía",
+                            PasswordHash = "$2a$11$aOVh.JyjDYjih70j9g/jwu3b4WRSFn0pfSCvCqQdLnpU5GtWtW4zC",
+                            Rol = "docente",
+                            User = "prof.zamora"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Apellido = "Marín",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2366),
+                            Email = "luisa.marin@edutrack.com",
+                            Nombre = "Luisa",
+                            PasswordHash = "$2a$11$Mi70yXzDH8aqBCCn45bkk..dKm3xZmbLMBdErkWzpgzxiFG3Dhv76",
                             Rol = "estudiante",
-                            User = "estudiante"
+                            User = "est.luisa"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Apellido = "Ruiz",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2367),
+                            Email = "carlos.ruiz@edutrack.com",
+                            Nombre = "Carlos",
+                            PasswordHash = "$2a$11$2cpxkHQJT/6voaIPqNFHsexie2arprDlffJxVsesaEDqwvgTj.tFK",
+                            Rol = "estudiante",
+                            User = "est.carlos"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Apellido = "Suárez",
+                            CreadoEn = new DateTime(2025, 11, 23, 2, 56, 3, 372, DateTimeKind.Utc).AddTicks(2368),
+                            Email = "ana.suarez@edutrack.com",
+                            Nombre = "Ana",
+                            PasswordHash = "$2a$11$vO3ZrqzQCN3pzQwGGNOq8u7fKUcrWUng80aZWb4ZpKNKqH9DW/M2e",
+                            Rol = "estudiante",
+                            User = "est.ana"
                         });
                 });
 

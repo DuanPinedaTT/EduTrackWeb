@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../services/api.js";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import { useAuth } from "./useAuth.js";
 
 export default function useTeacherProfile() {
   const { user } = useAuth();

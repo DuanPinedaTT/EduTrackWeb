@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Container,
   Row,
@@ -43,7 +43,7 @@ export default function AdminEstudiantes() {
     cursoId: ""
   });
 
-  const loadEstudiantes = async () => {
+  const loadEstudiantes = useCallback(async () => {
     try {
       setLoadingEst(true);
       setError(null);
@@ -63,9 +63,9 @@ export default function AdminEstudiantes() {
     } finally {
       setLoadingEst(false);
     }
-  };
+  }, []);
 
-  const loadCursos = async () => {
+  const loadCursos = useCallback(async () => {
     try {
       setLoadingCursos(true);
       setError(null);
@@ -80,11 +80,11 @@ export default function AdminEstudiantes() {
     } finally {
       setLoadingCursos(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     Promise.all([loadEstudiantes(), loadCursos()]);
-  }, []);
+  }, [loadEstudiantes, loadCursos]);
 
   const handleSearchByDocumento = async () => {
     if (!searchDocumento) return alert('Ingresa un documento');
@@ -154,7 +154,7 @@ export default function AdminEstudiantes() {
     }
 
     setFilteredEstudiantes(result);
-  }, [selectedCursoFilter, selectedGradoFilter, estudiantes, cursos]);
+  }, [selectedCursoFilter, selectedGradoFilter, estudiantes, cursos, inscripcionesByStudent]);
 
   const handleChange = (e) => {
     setForm({

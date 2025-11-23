@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Form, Button, Alert } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import { useAuth } from "../hooks/useAuth.js";
 
 export default function Login({ onSuccess }) {
   const [user, setUser] = useState("");
@@ -35,8 +35,15 @@ export default function Login({ onSuccess }) {
 
       if (onSuccess) onSuccess();
 
-      if (normalizedUser.rol === "admin") navigate("/admin");
-      else navigate("/teacher");
+      if (normalizedUser.rol === "admin") {
+        navigate("/admin");
+      } else if (normalizedUser.rol === "docente") {
+        navigate("/teacher");
+      } else if (normalizedUser.rol === "estudiante") {
+        navigate("/student");
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       setError(err.response?.data || "Error al iniciar sesión");
     } finally {
