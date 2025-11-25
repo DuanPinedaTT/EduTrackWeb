@@ -7,6 +7,8 @@ namespace edutrack_academy_api.Models
         public Curso Curso { get; set; } = null!;
         public int EstudianteId { get; set; }
         public Estudiante Estudiante { get; set; } = null!;
+        public int? AsignaturaId { get; set; }
+        public Asignatura? Asignatura { get; set; }
         public DateTime Fecha { get; set; }
         public int Periodo { get; set; } = 1;
         public string Estado { get; set; } = "Presente";

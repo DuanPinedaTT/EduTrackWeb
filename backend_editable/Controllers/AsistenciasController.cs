@@ -33,6 +33,8 @@ namespace edutrack_academy_api.Controllers
         {
             [Required]
             public int CursoId { get; set; }
+            [Required]
+            public int? AsignaturaId { get; set; }
             public DateTime Fecha { get; set; } = DateTime.UtcNow.Date;
             public int Periodo { get; set; } = 1;
             [MinLength(1)]
@@ -56,6 +58,11 @@ namespace edutrack_academy_api.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (!dto.AsignaturaId.HasValue || dto.AsignaturaId.Value <= 0)
+            {
+                return BadRequest("La asignatura es obligatoria para el registro de asistencia");
+            }
+
             var fecha = dto.Fecha.Date;
             var estudianteIds = dto.Detalles.Select(d => d.EstudianteId).Distinct().ToList();
 
@@ -70,7 +77,11 @@ namespace edutrack_academy_api.Controllers
             }
 
             var existing = await _context.Asistencias
-                .Where(a => a.CursoId == dto.CursoId && a.Fecha == fecha && estudianteIds.Contains(a.EstudianteId))
+                .Where(a => a.CursoId == dto.CursoId
+                            && a.Fecha == fecha
+                            && a.Periodo == dto.Periodo
+                            && a.AsignaturaId == dto.AsignaturaId
+                            && estudianteIds.Contains(a.EstudianteId))
                 .ToListAsync();
 
             var userId = GetUserId();
@@ -83,6 +94,7 @@ namespace edutrack_academy_api.Controllers
                     registro = new Asistencia
                     {
                         CursoId = dto.CursoId,
+                        AsignaturaId = dto.AsignaturaId,
                         EstudianteId = detalle.EstudianteId,
                         Fecha = fecha,
                         Periodo = dto.Periodo,
@@ -97,6 +109,7 @@ namespace edutrack_academy_api.Controllers
                     registro.Estado = detalle.Estado;
                     registro.Observacion = detalle.Observacion;
                     registro.Periodo = dto.Periodo;
+                    registro.AsignaturaId = dto.AsignaturaId;
                     registro.RegistradoPorId = userId;
                 }
             }
@@ -106,11 +119,17 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("curso/{cursoId:int}")]
-        public async Task<IActionResult> GetAsistenciasCurso(int cursoId, [FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
+        public async Task<IActionResult> GetAsistenciasCurso(
+            int cursoId,
+            [FromQuery] DateTime? desde,
+            [FromQuery] DateTime? hasta,
+            [FromQuery] int? periodo,
+            [FromQuery] int? asignaturaId)
         {
             IQueryable<Asistencia> query = _context.Asistencias
                 .Where(a => a.CursoId == cursoId)
                 .Include(a => a.Estudiante)
+                .Include(a => a.Asignatura)
                 .AsQueryable();
 
             if (desde.HasValue)
@@ -121,6 +140,16 @@ namespace edutrack_academy_api.Controllers
             if (hasta.HasValue)
             {
                 query = query.Where(a => a.Fecha <= hasta.Value.Date);
+            }
+
+            if (periodo.HasValue)
+            {
+                query = query.Where(a => a.Periodo == periodo.Value);
+            }
+
+            if (asignaturaId.HasValue)
+            {
+                query = query.Where(a => a.AsignaturaId == asignaturaId.Value);
             }
 
             var registros = await query
@@ -134,6 +163,13 @@ namespace edutrack_academy_api.Controllers
                     a.Periodo,
                     a.Estado,
                     a.Observacion,
+                    a.AsignaturaId,
+                    Asignatura = a.Asignatura != null ? new
+                    {
+                        a.Asignatura.Id,
+                        a.Asignatura.Nombre,
+                        a.Asignatura.Codigo
+                    } : null,
                     Estudiante = new
                     {
                         a.EstudianteId,

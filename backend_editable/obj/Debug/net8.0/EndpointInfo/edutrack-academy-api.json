@@ -191,6 +191,22 @@
               "type": "string",
               "format": "date-time"
             }
+          },
+          {
+            "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "asignaturaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -1735,6 +1751,14 @@
           "estudiante": {
             "$ref": "#/components/schemas/Estudiante"
           },
+          "asignaturaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "asignatura": {
+            "$ref": "#/components/schemas/Asignatura"
+          },
           "fecha": {
             "type": "string",
             "format": "date-time"
@@ -2413,11 +2437,16 @@
       },
       "RegistrarAsistenciaDTO": {
         "required": [
+          "asignaturaId",
           "cursoId"
         ],
         "type": "object",
         "properties": {
           "cursoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "asignaturaId": {
             "type": "integer",
             "format": "int32"
           },

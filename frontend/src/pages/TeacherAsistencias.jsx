@@ -41,13 +41,31 @@ const formatDate = (value) => {
   return date.toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
 };
 
+const resolveAssignmentKey = (assignment) => {
+  if (!assignment) return null;
+  const rawId =
+    assignment.id ??
+    assignment.Id ??
+    assignment.cursoAsignaturaId ??
+    assignment.CursoAsignaturaId ??
+    assignment.cursoAsignaturaID ??
+    assignment.CursoAsignaturaID;
+  if (rawId !== undefined && rawId !== null) {
+    return String(rawId);
+  }
+  const curso = assignment.cursoId ?? assignment.CursoId ?? "curso";
+  const asignatura = assignment.asignaturaId ?? assignment.AsignaturaId ?? "asignatura";
+  const grupo = assignment.grupo ?? assignment.Grupo ?? "grupo";
+  return `curso-${curso}-asig-${asignatura}-grupo-${grupo}`;
+};
+
 export default function TeacherAsistencias() {
   const { user } = useAuth();
   const [assignments, setAssignments] = useState([]);
   const [assignmentsLoading, setAssignmentsLoading] = useState(true);
   const [assignmentsError, setAssignmentsError] = useState(null);
 
-  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
   const [students, setStudents] = useState([]);
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [marks, setMarks] = useState({});
@@ -61,6 +79,35 @@ export default function TeacherAsistencias() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
+  const selectedAssignment = useMemo(
+    () => assignments.find((assignment) => resolveAssignmentKey(assignment) === selectedAssignmentId) || null,
+    [assignments, selectedAssignmentId]
+  );
+
+  const selectedCourseId = selectedAssignment
+    ? Number(
+        selectedAssignment.cursoId ??
+          selectedAssignment.CursoId ??
+          selectedAssignment.cursoID ??
+          selectedAssignment.CursoID ??
+          selectedAssignment.curso_id ??
+          selectedAssignment.Curso_Id ??
+          0
+      ) || null
+    : null;
+
+  const selectedAsignaturaId = selectedAssignment
+    ? Number(
+        selectedAssignment.asignaturaId ??
+          selectedAssignment.AsignaturaId ??
+          selectedAssignment.asignaturaID ??
+          selectedAssignment.AsignaturaID ??
+          selectedAssignment.asignatura_id ??
+          selectedAssignment.Asignatura_Id ??
+          0
+      ) || null
+    : null;
+
   useEffect(() => {
     if (!user?.id) return;
 
@@ -72,10 +119,11 @@ export default function TeacherAsistencias() {
         const data = Array.isArray(res.data) ? res.data : [];
         setAssignments(data);
         if (data.length > 0) {
-          setSelectedCourseId(data[0].cursoId);
+          const firstKey = resolveAssignmentKey(data[0]);
+          setSelectedAssignmentId(firstKey);
         }
       } catch (err) {
-        setAssignmentsError(err?.response?.data || "No se pudieron cargar tus cursos");
+        setAssignmentsError(err?.response?.data || "No se pudieron cargar tus asignaturas");
       } finally {
         setAssignmentsLoading(false);
       }
@@ -83,6 +131,20 @@ export default function TeacherAsistencias() {
 
     loadAssignments();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (assignments.length === 0) {
+      if (selectedAssignmentId !== null) {
+        setSelectedAssignmentId(null);
+      }
+      return;
+    }
+    const hasSelected = assignments.some((assignment) => resolveAssignmentKey(assignment) === selectedAssignmentId);
+    if (!selectedAssignmentId || !hasSelected) {
+      const first = assignments[0];
+      setSelectedAssignmentId(resolveAssignmentKey(first));
+    }
+  }, [assignments, selectedAssignmentId]);
 
   useEffect(() => {
     if (!selectedCourseId) {
@@ -128,14 +190,19 @@ export default function TeacherAsistencias() {
   }, [selectedCourseId]);
 
   const loadHistory = useCallback(
-    async (courseId) => {
+    async (courseId, asignaturaId, periodoFilter) => {
       if (!courseId) {
         setHistory([]);
         return;
       }
       setHistoryLoading(true);
       try {
-        const res = await api.get(`/Asistencias/curso/${courseId}`);
+        const res = await api.get(`/Asistencias/curso/${courseId}`, {
+          params: {
+            asignaturaId,
+            periodo: periodoFilter
+          }
+        });
         const data = Array.isArray(res.data) ? res.data : [];
         setHistory(data);
       } catch (err) {
@@ -148,15 +215,21 @@ export default function TeacherAsistencias() {
   );
 
   useEffect(() => {
-    loadHistory(selectedCourseId);
-  }, [selectedCourseId, loadHistory]);
-
-  const selectedCourse = useMemo(
-    () => assignments.find((assignment) => assignment.cursoId === selectedCourseId) || null,
-    [assignments, selectedCourseId]
-  );
-
+    if (!selectedCourseId || !selectedAsignaturaId) {
+      setHistory([]);
+      return;
+    }
+    loadHistory(selectedCourseId, selectedAsignaturaId, periodo);
+  }, [selectedCourseId, selectedAsignaturaId, periodo, loadHistory]);
   const studentCount = students.length;
+  const periodoLabel = PERIOD_OPTIONS.find((option) => option.id === periodo)?.label ?? `Periodo ${periodo}`;
+  const assignmentDisplay = useMemo(() => {
+    if (!selectedAssignment) return null;
+    const subject = selectedAssignment.asignaturaNombre || "Asignatura";
+    const grade = selectedAssignment.gradoNombre || "Sin grado";
+    const group = selectedAssignment.grupo ? ` (${selectedAssignment.grupo})` : "";
+    return `${subject} • ${grade}${group}`;
+  }, [selectedAssignment]);
 
   const updateMark = (studentId, field, value) => {
     setMarks((prev) => ({
@@ -188,7 +261,7 @@ export default function TeacherAsistencias() {
     });
   };
 
-  const canSubmit = Boolean(selectedCourseId && studentCount > 0 && !submitting);
+  const canSubmit = Boolean(selectedCourseId && selectedAsignaturaId && studentCount > 0 && !submitting);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -196,6 +269,7 @@ export default function TeacherAsistencias() {
 
     const payload = {
       cursoId: Number(selectedCourseId),
+      asignaturaId: Number(selectedAsignaturaId),
       fecha,
       periodo: Number(periodo),
       detalles: students.map((student) => ({
@@ -211,7 +285,7 @@ export default function TeacherAsistencias() {
       setSubmitMessage(null);
       await api.post("/Asistencias", payload);
       setSubmitMessage("Asistencia registrada correctamente");
-      await loadHistory(selectedCourseId);
+      await loadHistory(selectedCourseId, selectedAsignaturaId, periodo);
     } catch (err) {
       setSubmitError(err?.response?.data || "No se pudo registrar la asistencia");
     } finally {
@@ -245,11 +319,16 @@ export default function TeacherAsistencias() {
         <Col>
           <PageHero
             eyebrow="Control de asistencia"
-            title={selectedCourse ? `${selectedCourse.asignaturaNombre || "Asignatura"} • ${selectedCourse.grupo || "Sin grupo"}` : "Selecciona un curso"}
-            description="Marca asistencias en segundos y mantén un historial consolidado por curso."
+            title={assignmentDisplay || "Selecciona una asignatura"}
+            description={
+              selectedAssignment
+                ? "Cada marcación queda ligada al curso, la asignatura y el periodo vigente."
+                : "Elige una asignatura para empezar a registrar asistencias por curso y periodo."
+            }
             stats={[
-              { label: "Cursos asignados", value: assignments.length },
-              { label: "Estudiantes del curso", value: studentCount }
+              { label: "Asignaturas activas", value: assignments.length },
+              { label: "Periodo activo", value: periodoLabel },
+              { label: "Estudiantes listados", value: selectedAssignment ? studentCount : "-" }
             ]}
           />
         </Col>
@@ -261,20 +340,26 @@ export default function TeacherAsistencias() {
             <Card.Body>
               <Card.Title className="mb-3">Preparar registro</Card.Title>
               <Form.Group className="mb-3">
-                <Form.Label>Curso</Form.Label>
+                <Form.Label>Asignatura / curso</Form.Label>
                 <Form.Select
-                  value={selectedCourseId ?? ""}
-                  onChange={(e) => setSelectedCourseId(Number(e.target.value) || null)}
+                  value={selectedAssignmentId ?? ""}
+                  onChange={(e) => setSelectedAssignmentId(e.target.value || null)}
                 >
-                  {assignments.map((assignment) => (
-                    <option key={assignment.cursoId} value={assignment.cursoId}>
-                      {(assignment.asignaturaNombre || "Asignatura")}
-                      {" • "}
-                      {(assignment.gradoNombre || "Sin grado")}
-                      {assignment.grupo ? ` (${assignment.grupo})` : ""}
-                    </option>
-                  ))}
+                  {assignments.map((assignment) => {
+                    const optionKey = resolveAssignmentKey(assignment);
+                    return (
+                      <option key={optionKey} value={optionKey}>
+                        {assignment.asignaturaNombre || "Asignatura"}
+                        {" • "}
+                        {assignment.gradoNombre || "Sin grado"}
+                        {assignment.grupo ? ` (${assignment.grupo})` : ""}
+                      </option>
+                    );
+                  })}
                 </Form.Select>
+                <Form.Text className="text-muted">
+                  Selecciona la asignatura exacta; cada registro queda ligado al curso, grupo y periodo.
+                </Form.Text>
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Fecha</Form.Label>
@@ -397,8 +482,14 @@ export default function TeacherAsistencias() {
             <Card.Body>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                  <Card.Title className="mb-1">Historial reciente</Card.Title>
-                  <small className="text-muted">Últimos registros del curso.</small>
+                  <Card.Title className="mb-1">
+                    {selectedAssignment ? `Historial de ${selectedAssignment.asignaturaNombre || "Asignatura"}` : "Historial reciente"}
+                  </Card.Title>
+                  <small className="text-muted">
+                    {selectedAssignment
+                      ? `${periodoLabel} • ${selectedAssignment.gradoNombre || "Sin grado"}${selectedAssignment.grupo ? ` - ${selectedAssignment.grupo}` : ""}`
+                      : "Selecciona una asignatura y periodo para ver registros."}
+                  </small>
                 </div>
                 {historyLoading && <Spinner animation="border" size="sm" />}
               </div>
@@ -418,7 +509,9 @@ export default function TeacherAsistencias() {
                     {history.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="text-center text-muted">
-                          Aún no hay registros para este curso.
+                          {selectedAssignment
+                            ? "Aún no hay registros para esta asignatura en el periodo seleccionado."
+                            : "Selecciona una asignatura para ver su historial."}
                         </td>
                       </tr>
                     ) : (

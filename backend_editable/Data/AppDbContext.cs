@@ -179,7 +179,7 @@ namespace edutrack_academy_api.Data
                 .IsUnique();
 
             modelBuilder.Entity<Asistencia>()
-                .HasIndex(a => new { a.CursoId, a.EstudianteId, a.Fecha })
+                .HasIndex(a => new { a.CursoId, a.AsignaturaId, a.EstudianteId, a.Fecha, a.Periodo })
                 .IsUnique();
 
             modelBuilder.Entity<Asistencia>()
@@ -195,6 +195,12 @@ namespace edutrack_academy_api.Data
                 .WithMany()
                 .HasForeignKey(a => a.CursoId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Asistencia>()
+                .HasOne(a => a.Asignatura)
+                .WithMany()
+                .HasForeignKey(a => a.AsignaturaId)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<Asistencia>()
                 .HasOne(a => a.Estudiante)
