@@ -16,6 +16,7 @@ namespace edutrack_academy_api.Data
         public DbSet<CursoAsignatura> CursoAsignaturas { get; set; }
         public DbSet<NotaConfig> NotaConfigs { get; set; }
         public DbSet<Nota> Notas { get; set; }
+        public DbSet<Asistencia> Asistencias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -130,6 +131,30 @@ namespace edutrack_academy_api.Data
             modelBuilder.Entity<Nota>()
                 .Property(n => n.Valor)
                 .HasPrecision(4, 2);
+
+            modelBuilder.Entity<Asistencia>()
+                .HasOne(a => a.Curso)
+                .WithMany()
+                .HasForeignKey(a => a.CursoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Asistencia>()
+                .HasOne(a => a.Estudiante)
+                .WithMany()
+                .HasForeignKey(a => a.EstudianteId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Asistencia>()
+                .HasIndex(a => new { a.CursoId, a.EstudianteId, a.Fecha })
+                .IsUnique();
+
+            modelBuilder.Entity<Asistencia>()
+                .Property(a => a.Estado)
+                .HasMaxLength(20);
+
+            modelBuilder.Entity<Asistencia>()
+                .Property(a => a.Observacion)
+                .HasMaxLength(500);
         }
     }
 }

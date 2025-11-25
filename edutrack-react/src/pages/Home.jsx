@@ -19,13 +19,13 @@ export default function Home() {
     setError("")
     setCargando(true)
 
-    const exito = await iniciarSesion(email, contrasena)
-
-    if (!exito) {
-      setError("Credenciales incorrectas. Por favor, intente nuevamente.")
+    try {
+      await iniciarSesion(email, contrasena)
+    } catch (e) {
+      setError(e.message || "Ocurrió un error inesperado. Intente nuevamente.")
+    } finally {
+      setCargando(false)
     }
-
-    setCargando(false)
   }
 
   return (
@@ -87,11 +87,10 @@ export default function Home() {
                 )}
 
                 <div className="space-y-2">
-                  <Etiqueta htmlFor="email">Correo Electrónico</Etiqueta>
+                  <Etiqueta htmlFor="email">Usuario o correo</Etiqueta>
                   <Entrada
                     id="email"
-                    type="email"
-                    placeholder="usuario@edutrack.com"
+                    placeholder="admin@edutrack.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -114,20 +113,9 @@ export default function Home() {
                   {cargando ? "Iniciando sesión..." : "Iniciar Sesión"}
                 </Boton>
 
-                <div className="text-sm text-center space-y-2 pt-4 border-t">
-                  <p className="text-muted-foreground">Usuarios de prueba:</p>
-                  <div className="space-y-1 text-xs">
-                    <p>
-                      <strong>Admin:</strong> admin@edutrack.com / admin123
-                    </p>
-                    <p>
-                      <strong>Docente:</strong> docente@edutrack.com / docente123
-                    </p>
-                    <p>
-                      <strong>Estudiante:</strong> estudiante@edutrack.com / estudiante123
-                    </p>
-                  </div>
-                </div>
+                <p className="text-xs text-center text-muted-foreground">
+                  ¿Problemas para acceder? Comunícate con un administrador para restablecer tu cuenta.
+                </p>
               </form>
             </ContenidoTarjeta>
           </Tarjeta>

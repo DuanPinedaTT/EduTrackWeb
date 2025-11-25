@@ -1,0 +1,12 @@
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\bin\Debug\net8.0\EduTrack.Domain.deps.json
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\bin\Debug\net8.0\EduTrack.Domain.dll
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\bin\Debug\net8.0\EduTrack.Domain.pdb
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\EduTrack.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\EduTrack.Domain.AssemblyInfoInputs.cache
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\EduTrack.Domain.AssemblyInfo.cs
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\EduTrack.Domain.csproj.CoreCompileInputs.cache
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\EduTrack.Domain.sourcelink.json
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\EduTrack.Domain.dll
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\refint\EduTrack.Domain.dll
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\EduTrack.Domain.pdb
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Domain\obj\Debug\net8.0\ref\EduTrack.Domain.dll

@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react"
 import { DisenoTablero } from "@/components/layout-dashboard"
 import { Tarjeta, ContenidoTarjeta, DescripcionTarjeta, EncabezadoTarjeta, TituloTarjeta } from "@/components/ui/card"
 import { Etiqueta } from "@/components/ui/label"
 import { Selector, ContenidoSelector, ElementoSelector, DisparadorSelector, ValorSelector } from "@/components/ui/select"
 import { BarChart3, TrendingUp, Users } from "lucide-react"
+import { useEstadisticas } from "@/hooks/use-estadisticas"
+import { apiClient } from "@/lib/api-client"
 
 const rendimientosMaterias = [
   { materia: "Matemáticas", promedio: 3.8, color: "bg-blue-600" },
@@ -20,6 +23,24 @@ const distribucionNotas = [
 ]
 
 export default function PaginaEstadisticas() {
+  const { estadisticas, cargando, error } = useEstadisticas()
+  const [totalAsignaturas, setTotalAsignaturas] = useState(0)
+  const [errorAsignaturas, setErrorAsignaturas] = useState("")
+
+  useEffect(() => {
+    const cargarAsignaturas = async () => {
+      try {
+        setErrorAsignaturas("")
+        const data = await apiClient.get("/api/Asignaturas")
+        setTotalAsignaturas(data.length)
+      } catch (err) {
+        setErrorAsignaturas(err.message || "No se pudo obtener el total de materias")
+      }
+    }
+
+    cargarAsignaturas()
+  }, [])
+
   return (
     <DisenoTablero rolRequerido="administrador">
       <div className="space-y-6">
@@ -80,48 +101,52 @@ export default function PaginaEstadisticas() {
         <div className="grid gap-4 md:grid-cols-4">
           <Tarjeta>
             <EncabezadoTarjeta className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <TituloTarjeta className="text-sm font-medium">Promedio General</TituloTarjeta>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TituloTarjeta className="text-sm font-medium">Estudiantes Registrados</TituloTarjeta>
+              <Users className="h-4 w-4 text-green-600" />
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
-              <div className="text-2xl font-bold text-green-600">3.9</div>
-              <p className="text-xs text-muted-foreground">+0.2 vs periodo anterior</p>
+              <div className="text-2xl font-bold text-green-600">{estadisticas.totalEstudiantes}</div>
+              <p className="text-xs text-muted-foreground">{cargando ? "Actualizando..." : "Total en el sistema"}</p>
             </ContenidoTarjeta>
           </Tarjeta>
 
           <Tarjeta>
             <EncabezadoTarjeta className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <TituloTarjeta className="text-sm font-medium">Estudiantes Destacados</TituloTarjeta>
+              <TituloTarjeta className="text-sm font-medium">Docentes Activos</TituloTarjeta>
               <Users className="h-4 w-4 text-blue-600" />
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
-              <div className="text-2xl font-bold">45</div>
-              <p className="text-xs text-muted-foreground">Promedio ≥ 4.5</p>
+              <div className="text-2xl font-bold">{estadisticas.totalDocentes}</div>
+              <p className="text-xs text-muted-foreground">{cargando ? "Actualizando..." : "Con acceso vigente"}</p>
             </ContenidoTarjeta>
           </Tarjeta>
 
           <Tarjeta>
             <EncabezadoTarjeta className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <TituloTarjeta className="text-sm font-medium">En Riesgo</TituloTarjeta>
-              <Users className="h-4 w-4 text-red-600" />
+              <TituloTarjeta className="text-sm font-medium">Cursos</TituloTarjeta>
+              <TrendingUp className="h-4 w-4 text-red-600" />
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
-              <div className="text-2xl font-bold text-red-600">12</div>
-              <p className="text-xs text-muted-foreground">Promedio {"<"} 3.0</p>
+              <div className="text-2xl font-bold text-red-600">{estadisticas.totalCursos}</div>
+              <p className="text-xs text-muted-foreground">{cargando ? "Actualizando..." : "Registrados"}</p>
             </ContenidoTarjeta>
           </Tarjeta>
 
           <Tarjeta>
             <EncabezadoTarjeta className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <TituloTarjeta className="text-sm font-medium">Asistencia</TituloTarjeta>
+              <TituloTarjeta className="text-sm font-medium">Materias Activas</TituloTarjeta>
               <BarChart3 className="h-4 w-4 text-purple-600" />
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
-              <div className="text-2xl font-bold">92%</div>
-              <p className="text-xs text-muted-foreground">Promedio institucional</p>
+              <div className="text-2xl font-bold">{totalAsignaturas}</div>
+              <p className="text-xs text-muted-foreground">
+                {errorAsignaturas ? errorAsignaturas : "Disponibles por grado"}
+              </p>
             </ContenidoTarjeta>
           </Tarjeta>
         </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <div className="grid gap-4 md:grid-cols-2">
           <Tarjeta>

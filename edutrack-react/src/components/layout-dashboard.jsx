@@ -2,10 +2,14 @@ import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAutenticacion } from "@/components/proveedor-autenticacion"
 import { MenuNavegacion } from "@/components/navegacion-dashboard"
+import { mapUiRoleToApi } from "@/lib/roles"
 
 export function DisenoTablero({ children, rolRequerido }) {
   const { usuario, estaAutenticado } = useAutenticacion()
   const navigate = useNavigate()
+
+  const rolObjetivo = rolRequerido ? mapUiRoleToApi(rolRequerido) : undefined
+  const coincideRol = !rolObjetivo || usuario?.rolSistema === rolObjetivo
 
   useEffect(() => {
     if (!estaAutenticado) {
@@ -13,12 +17,12 @@ export function DisenoTablero({ children, rolRequerido }) {
       return
     }
 
-    if (rolRequerido && usuario?.rol !== rolRequerido) {
+    if (!coincideRol) {
       navigate("/")
     }
-  }, [estaAutenticado, usuario, rolRequerido, navigate])
+  }, [estaAutenticado, coincideRol, navigate])
 
-  if (!estaAutenticado || (rolRequerido && usuario?.rol !== rolRequerido)) {
+  if (!estaAutenticado || !coincideRol) {
     return null
   }
 

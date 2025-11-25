@@ -1,31 +1,84 @@
+import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { DisenoTablero } from "@/components/layout-dashboard"
 import { Boton } from "@/components/ui/button"
 import { Tarjeta, ContenidoTarjeta, DescripcionTarjeta, EncabezadoTarjeta, TituloTarjeta } from "@/components/ui/card"
 import { BookOpen, Users, Bell, TrendingUp, Calendar, ClipboardCheck } from "lucide-react"
-
-const estadisticas = [
-  { titulo: "Materias Asignadas", valor: "5", descripcion: "Materias activas", icono: BookOpen, color: "text-blue-600" },
-  { titulo: "Total Estudiantes", valor: "142", descripcion: "En todas las materias", icono: Users, color: "text-green-600" },
-  {
-    titulo: "Calificaciones Pendientes",
-    valor: "23",
-    descripcion: "Por registrar",
-    icono: ClipboardCheck,
-    color: "text-orange-600",
-  },
-  { titulo: "Alertas Activas", valor: "8", descripcion: "Estudiantes en riesgo", icono: Bell, color: "text-red-600" },
-]
-
-const materiasRecientes = [
-  { nombre: "Matemáticas 10-A", estudiantes: 32, promedio: 3.8 },
-  { nombre: "Física 11-B", estudiantes: 28, promedio: 3.5 },
-  { nombre: "Química 10-C", estudiantes: 30, promedio: 4.1 },
-  { nombre: "Matemáticas 11-A", estudiantes: 26, promedio: 3.9 },
-  { nombre: "Física 10-B", estudiantes: 26, promedio: 3.6 },
-]
+import { useAutenticacion } from "@/components/proveedor-autenticacion"
+import { apiClient } from "@/lib/api-client"
 
 export default function PaginaDashboardDocente() {
+  const { usuario } = useAutenticacion()
+  const [cursos, setCursos] = useState([])
+  const [conteoEstudiantes, setConteoEstudiantes] = useState({})
+  const [totalEstudiantes, setTotalEstudiantes] = useState(0)
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (!usuario?.id) return
+
+    const cargarCursos = async () => {
+      try {
+        setCargando(true)
+        setError("")
+        const data = await apiClient.get("/api/Cursos")
+        const asignados = data.filter((curso) => curso.docenteId === usuario.id)
+        setCursos(asignados)
+
+        const estudiantesPorCurso = await Promise.all(
+          asignados.map((curso) => apiClient.get(`/api/Cursos/${curso.id}/students`)),
+        )
+
+        const mapa = {}
+        let total = 0
+        estudiantesPorCurso.forEach((lista, index) => {
+          const cursoId = asignados[index].id
+          mapa[cursoId] = lista.length
+          total += lista.length
+        })
+
+        setConteoEstudiantes(mapa)
+        setTotalEstudiantes(total)
+      } catch (err) {
+        setError(err.message || "No se pudo cargar la información académica")
+      } finally {
+        setCargando(false)
+      }
+    }
+
+    cargarCursos()
+  }, [usuario?.id])
+
+  const promedioPorCurso = useMemo(() => {
+    if (cursos.length === 0) return 0
+    return Math.round(totalEstudiantes / cursos.length) || 0
+  }, [cursos.length, totalEstudiantes])
+
+  const gradosCubiertos = useMemo(() => {
+    const setGrados = new Set(cursos.map((curso) => curso.gradoNombre || "Sin grado"))
+    return setGrados.size
+  }, [cursos])
+
+  const estadisticas = [
+    { titulo: "Cursos Asignados", valor: cursos.length, descripcion: "Cursos activos", icono: BookOpen, color: "text-blue-600" },
+    { titulo: "Estudiantes", valor: totalEstudiantes, descripcion: "Inscritos en tus cursos", icono: Users, color: "text-green-600" },
+    {
+      titulo: "Promedio por Curso",
+      valor: promedioPorCurso,
+      descripcion: "Estudiantes por curso",
+      icono: ClipboardCheck,
+      color: "text-orange-600",
+    },
+    {
+      titulo: "Grados Cubiertos",
+      valor: gradosCubiertos,
+      descripcion: "Grados vinculados",
+      icono: Bell,
+      color: "text-red-600",
+    },
+  ]
+
   return (
     <DisenoTablero rolRequerido="docente">
       <div className="space-y-6">
@@ -33,6 +86,8 @@ export default function PaginaDashboardDocente() {
           <h1 className="text-3xl font-bold">Dashboard Docente</h1>
           <p className="text-muted-foreground">Bienvenido, aquí está el resumen de tu actividad académica</p>
         </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {estadisticas.map((stat) => {
@@ -44,7 +99,7 @@ export default function PaginaDashboardDocente() {
                   <Icono className={`h-4 w-4 ${stat.color}`} />
                 </EncabezadoTarjeta>
                 <ContenidoTarjeta>
-                  <div className="text-2xl font-bold">{stat.valor}</div>
+                  <div className="text-2xl font-bold">{cargando ? "--" : stat.valor}</div>
                   <p className="text-xs text-muted-foreground">{stat.descripcion}</p>
                 </ContenidoTarjeta>
               </Tarjeta>
@@ -59,31 +114,39 @@ export default function PaginaDashboardDocente() {
           </EncabezadoTarjeta>
           <ContenidoTarjeta>
             <div className="space-y-4">
-              {materiasRecientes.map((materia, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-primary" />
+              {cargando ? (
+                <p className="text-sm text-muted-foreground">Cargando cursos...</p>
+              ) : cursos.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aún no tienes cursos asignados.</p>
+              ) : (
+                cursos.slice(0, 5).map((curso) => (
+                  <div
+                    key={curso.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <BookOpen className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{curso.nombre}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {curso.gradoNombre || "Sin grado"} · {conteoEstudiantes[curso.id] ?? 0} estudiantes
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{materia.nombre}</p>
-                      <p className="text-sm text-muted-foreground">{materia.estudiantes} estudiantes</p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Grupo</p>
+                        <p className="text-lg font-bold">{curso.grupo || "-"}</p>
+                      </div>
+                      <Link to="/docente/calificaciones">
+                        <Boton size="sm">Ver Detalles</Boton>
+                      </Link>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">Promedio</p>
-                      <p className="text-lg font-bold">{materia.promedio}</p>
-                    </div>
-                    <Link to="/docente/calificaciones">
-                      <Boton size="sm">Ver Detalles</Boton>
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </ContenidoTarjeta>
         </Tarjeta>
@@ -121,18 +184,18 @@ export default function PaginaDashboardDocente() {
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
               <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-red-600" />
+                <div className="flex items-center gap-3 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-orange-600" />
                   <div>
-                    <p className="text-sm font-medium">8 estudiantes con bajo rendimiento</p>
-                    <p className="text-xs text-muted-foreground">Requieren atención inmediata</p>
+                    <p className="text-sm font-medium">Sin alertas automáticas</p>
+                    <p className="text-xs text-muted-foreground">Genera alertas desde calificaciones y asistencia</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
-                  <ClipboardCheck className="w-5 h-5 text-orange-600" />
+                <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-lg">
+                  <ClipboardCheck className="w-5 h-5 text-slate-600" />
                   <div>
-                    <p className="text-sm font-medium">23 calificaciones pendientes</p>
-                    <p className="text-xs text-muted-foreground">Por registrar este periodo</p>
+                    <p className="text-sm font-medium">Registra tus calificaciones</p>
+                    <p className="text-xs text-muted-foreground">Esto permitirá monitorear el desempeño en tiempo real</p>
                   </div>
                 </div>
               </div>

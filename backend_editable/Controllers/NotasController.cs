@@ -40,6 +40,37 @@ namespace edutrack_academy_api.Controllers
         public decimal? Promedio { get; set; }
     }
 
+    public class PeriodoCursoDetalleDTO
+    {
+        public int Periodo { get; set; }
+        public int Evaluaciones { get; set; }
+        public decimal PesoTotal { get; set; }
+        public List<string> Actividades { get; set; } = new();
+    }
+
+    public class CursoPeriodoResumenDTO
+    {
+        public int CursoId { get; set; }
+        public string CursoNombre { get; set; } = string.Empty;
+        public string? GradoNombre { get; set; }
+        public string? DocenteNombre { get; set; }
+        public bool EstaCompleto { get; set; }
+        public int TotalEvaluaciones { get; set; }
+        public List<PeriodoCursoDetalleDTO> Periodos { get; set; } = new();
+    }
+
+    public class PeriodosDashboardDTO
+    {
+        public int PeriodoActual { get; set; }
+        public DateTime InicioPeriodoActual { get; set; }
+        public DateTime FinPeriodoActual { get; set; }
+        public int DiasRestantes { get; set; }
+        public int TotalPeriodosConfigurados { get; set; }
+        public int CursosConConfig { get; set; }
+        public int EvaluacionesRegistradas { get; set; }
+        public List<CursoPeriodoResumenDTO> Cursos { get; set; } = new();
+    }
+
     [ApiController]
     [Route("api/[controller]")]
     public class NotasController : ControllerBase
@@ -144,6 +175,84 @@ namespace edutrack_academy_api.Controllers
             return Ok();
         }
 
+        // GET /api/Notas/periodos/resumen
+        [HttpGet("periodos/resumen")]
+        public async Task<IActionResult> GetPeriodosResumen()
+        {
+            var configs = await _context.NotaConfigs
+                .Select(nc => new
+                {
+                    nc.Id,
+                    nc.CursoId,
+                    CursoNombre = nc.Curso != null ? nc.Curso.Nombre : string.Empty,
+                    CursoGrupo = nc.Curso != null ? nc.Curso.Grupo : string.Empty,
+                    DocenteNombre = nc.Curso != null && nc.Curso.Docente != null ? nc.Curso.Docente.Nombre : null,
+                    GradoNombre = nc.Curso != null && nc.Curso.Grado != null ? nc.Curso.Grado.Nombre : null,
+                    nc.Periodo,
+                    nc.Nombre,
+                    nc.Peso
+                })
+                .ToListAsync();
+
+            var cursos = configs
+                .GroupBy(c => new { c.CursoId, c.CursoNombre, c.CursoGrupo, c.DocenteNombre, c.GradoNombre })
+                .Select(g =>
+                {
+                    var periodos = g
+                        .GroupBy(x => x.Periodo)
+                        .OrderBy(pg => pg.Key)
+                        .Select(pg => new PeriodoCursoDetalleDTO
+                        {
+                            Periodo = pg.Key,
+                            Evaluaciones = pg.Count(),
+                            PesoTotal = pg.Sum(x => x.Peso),
+                            Actividades = pg.Select(x => x.Nombre).ToList()
+                        })
+                        .ToList();
+
+                    var cursoNombre = string.IsNullOrWhiteSpace(g.Key.CursoGrupo)
+                        ? g.Key.CursoNombre
+                        : $"{g.Key.CursoNombre} {g.Key.CursoGrupo}";
+
+                    var estaCompleto = periodos.Count > 0 && periodos.All(p => p.PesoTotal >= 100);
+
+                    return new CursoPeriodoResumenDTO
+                    {
+                        CursoId = g.Key.CursoId,
+                        CursoNombre = cursoNombre,
+                        GradoNombre = g.Key.GradoNombre,
+                        DocenteNombre = g.Key.DocenteNombre,
+                        EstaCompleto = estaCompleto,
+                        TotalEvaluaciones = g.Count(),
+                        Periodos = periodos
+                    };
+                })
+                .OrderBy(c => c.CursoNombre)
+                .ToList();
+
+            var hoy = DateTime.Now.Date;
+            var periodoActual = ((hoy.Month - 1) / 3) + 1;
+            if (periodoActual < 1) periodoActual = 1;
+            if (periodoActual > 4) periodoActual = 4;
+
+            var (inicio, fin) = ObtenerRangoPeriodo(hoy.Year, periodoActual);
+            var diasRestantes = Math.Max(0, (fin - hoy).Days);
+
+            var dashboard = new PeriodosDashboardDTO
+            {
+                PeriodoActual = periodoActual,
+                InicioPeriodoActual = inicio,
+                FinPeriodoActual = fin,
+                DiasRestantes = diasRestantes,
+                TotalPeriodosConfigurados = configs.Select(c => c.Periodo).Distinct().Count(),
+                CursosConConfig = cursos.Count,
+                EvaluacionesRegistradas = configs.Count,
+                Cursos = cursos
+            };
+
+            return Ok(dashboard);
+        }
+
         // GET /api/Notas/curso/{cursoId}
         [HttpGet("curso/{cursoId}")]
         public async Task<IActionResult> GetNotas(int cursoId)
@@ -225,6 +334,15 @@ namespace edutrack_academy_api.Controllers
 
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        private static (DateTime inicio, DateTime fin) ObtenerRangoPeriodo(int anio, int periodo)
+        {
+            var periodoNormalizado = Math.Max(1, Math.Min(4, periodo));
+            var mesInicio = (periodoNormalizado - 1) * 3 + 1;
+            var inicio = new DateTime(anio, mesInicio, 1);
+            var fin = inicio.AddMonths(3).AddDays(-1);
+            return (inicio, fin);
         }
     }
 }

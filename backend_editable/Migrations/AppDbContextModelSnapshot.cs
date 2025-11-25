@@ -44,6 +44,53 @@ namespace edutrack_academy_api.Migrations
                     b.ToTable("Asignaturas");
                 });
 
+            modelBuilder.Entity("edutrack_academy_api.Models.Asistencia", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ActualizadoEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CursoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("EstudianteId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Observacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("RegistradoEn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("RegistradoPorId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstudianteId");
+
+                    b.HasIndex("RegistradoPorId");
+
+                    b.HasIndex("CursoId", "EstudianteId", "Fecha")
+                        .IsUnique();
+
+                    b.ToTable("Asistencias");
+                });
+
             modelBuilder.Entity("edutrack_academy_api.Models.Curso", b =>
                 {
                     b.Property<int>("Id")
@@ -289,6 +336,31 @@ namespace edutrack_academy_api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Usuarios");
+                });
+
+            modelBuilder.Entity("edutrack_academy_api.Models.Asistencia", b =>
+                {
+                    b.HasOne("edutrack_academy_api.Models.Curso", "Curso")
+                        .WithMany()
+                        .HasForeignKey("CursoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("edutrack_academy_api.Models.Estudiante", "Estudiante")
+                        .WithMany()
+                        .HasForeignKey("EstudianteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("edutrack_academy_api.Models.Usuario", "RegistradoPor")
+                        .WithMany()
+                        .HasForeignKey("RegistradoPorId");
+
+                    b.Navigation("Curso");
+
+                    b.Navigation("Estudiante");
+
+                    b.Navigation("RegistradoPor");
                 });
 
             modelBuilder.Entity("edutrack_academy_api.Models.Curso", b =>

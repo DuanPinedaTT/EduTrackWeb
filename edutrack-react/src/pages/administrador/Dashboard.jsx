@@ -1,8 +1,11 @@
+import { useEffect, useState } from "react"
 import { DisenoTablero } from "@/components/layout-dashboard"
 import { Boton } from "@/components/ui/button"
 import { Tarjeta, ContenidoTarjeta, DescripcionTarjeta, EncabezadoTarjeta, TituloTarjeta } from "@/components/ui/card"
 import { Users, BookOpen, GraduationCap, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
+import { useEstadisticas } from "@/hooks/use-estadisticas"
+import { apiClient } from "@/lib/api-client"
 
 const datosEstadisticas = [
   { mes: "Ene", promedio: 3.8 },
@@ -20,6 +23,24 @@ const datosRendimiento = [
 ]
 
 export default function DashboardAdministrador() {
+  const { estadisticas, cargando, error } = useEstadisticas()
+  const [totalAsignaturas, setTotalAsignaturas] = useState(0)
+  const [errorAsignaturas, setErrorAsignaturas] = useState("")
+
+  useEffect(() => {
+    const cargarAsignaturas = async () => {
+      try {
+        setErrorAsignaturas("")
+        const data = await apiClient.get("/api/Asignaturas")
+        setTotalAsignaturas(data.length)
+      } catch (err) {
+        setErrorAsignaturas(err.message || "No se pudo obtener el total de asignaturas")
+      }
+    }
+
+    cargarAsignaturas()
+  }, [])
+
   return (
     <DisenoTablero rolRequerido="administrador">
       <div className="space-y-6">
@@ -35,8 +56,8 @@ export default function DashboardAdministrador() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
-              <div className="text-2xl font-bold">1,234</div>
-              <p className="text-xs text-muted-foreground">+12% desde el mes pasado</p>
+              <div className="text-2xl font-bold">{estadisticas.totalEstudiantes}</div>
+              <p className="text-xs text-muted-foreground">{cargando ? "Cargando..." : "En toda la institución"}</p>
             </ContenidoTarjeta>
           </Tarjeta>
 
@@ -46,8 +67,8 @@ export default function DashboardAdministrador() {
               <GraduationCap className="h-4 w-4 text-muted-foreground" />
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
-              <div className="text-2xl font-bold">87</div>
-              <p className="text-xs text-muted-foreground">+3 nuevos este mes</p>
+              <div className="text-2xl font-bold">{estadisticas.totalDocentes}</div>
+              <p className="text-xs text-muted-foreground">{cargando ? "Cargando..." : "Registrados en el sistema"}</p>
             </ContenidoTarjeta>
           </Tarjeta>
 
@@ -57,8 +78,10 @@ export default function DashboardAdministrador() {
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
-              <div className="text-2xl font-bold">45</div>
-              <p className="text-xs text-muted-foreground">En el periodo actual</p>
+              <div className="text-2xl font-bold">{totalAsignaturas}</div>
+              <p className="text-xs text-muted-foreground">
+                {errorAsignaturas ? errorAsignaturas : "Disponibles para asignar"}
+              </p>
             </ContenidoTarjeta>
           </Tarjeta>
 
@@ -69,10 +92,12 @@ export default function DashboardAdministrador() {
             </EncabezadoTarjeta>
             <ContenidoTarjeta>
               <div className="text-2xl font-bold">4.1</div>
-              <p className="text-xs text-muted-foreground">+0.2 puntos este mes</p>
+              <p className="text-xs text-muted-foreground">Referencia estimada</p>
             </ContenidoTarjeta>
           </Tarjeta>
         </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <div className="grid gap-4 md:grid-cols-2">
           <Tarjeta>

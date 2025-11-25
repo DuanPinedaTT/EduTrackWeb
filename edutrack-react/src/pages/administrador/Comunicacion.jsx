@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { DisenoTablero } from "@/components/layout-dashboard"
 import { Insignia } from "@/components/ui/badge"
 import { Boton } from "@/components/ui/button"
@@ -8,52 +8,113 @@ import { Etiqueta } from "@/components/ui/label"
 import { Selector, ContenidoSelector, ElementoSelector, DisparadorSelector, ValorSelector } from "@/components/ui/select"
 import { Pestanas, ContenidoPestanas, ListaPestanas, DisparadorPestanas } from "@/components/ui/tabs"
 import { AreaTexto } from "@/components/ui/textarea"
-import { Bell, Filter, MessageSquare, Search, Send } from "lucide-react"
+import { Bell, MessageSquare, Search, Send, Loader2, Copy } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
 
-const mensajesSimulados = [
-  {
-    id: 1,
-    de: "María García (Docente)",
-    asunto: "Consulta sobre calificaciones",
-    mensaje: "Buenos días, necesito apoyo con el sistema de calificaciones...",
-    fecha: "2025-01-15 10:30",
-    leido: false,
-  },
-  {
-    id: 2,
-    de: "Juan Pérez (Estudiante)",
-    asunto: "Solicitud de certificado",
-    mensaje: "Requiero un certificado de estudio para...",
-    fecha: "2025-01-14 15:20",
-    leido: true,
-  },
-]
-
-const anunciosSimulados = [
+const anunciosIniciales = [
   {
     id: 1,
     titulo: "Inicio de clases segundo semestre",
     contenido: "Les informamos que las clases del segundo semestre iniciarán el 3 de febrero...",
     fecha: "2025-01-10",
-    destinatarios: "Todos",
+    destinatarios: "Comunidad educativa",
   },
 ]
 
 export default function PaginaComunicacion() {
   const [busqueda, setBusqueda] = useState("")
+  const [docentes, setDocentes] = useState([])
+  const [estudiantes, setEstudiantes] = useState([])
+  const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState("")
   const [nuevoMensaje, setNuevoMensaje] = useState({ destinatario: "", asunto: "", mensaje: "" })
-  const [nuevoAnuncio, setNuevoAnuncio] = useState({ titulo: "", contenido: "", destinatarios: "" })
+  const [nuevoAnuncio, setNuevoAnuncio] = useState({ titulo: "", contenido: "", destinatarios: "todos" })
+  const [anuncios, setAnuncios] = useState(anunciosIniciales)
+  const [mensajeEstado, setMensajeEstado] = useState("")
 
-  const enviarMensaje = () => {
-    console.log("[v0] Enviando mensaje:", nuevoMensaje)
-    alert("Mensaje enviado exitosamente")
-    setNuevoMensaje({ destinatario: "", asunto: "", mensaje: "" })
+  useEffect(() => {
+    const cargarContactos = async () => {
+      try {
+        setCargando(true)
+        setError("")
+        const [docentesResponse, estudiantesResponse] = await Promise.all([
+          apiClient.get("/api/Usuarios?rol=docente"),
+          apiClient.get("/api/Estudiantes"),
+        ])
+        setDocentes(docentesResponse)
+        setEstudiantes(estudiantesResponse)
+      } catch (err) {
+        setError(err.message || "No se pudo cargar el directorio de contactos")
+      } finally {
+        setCargando(false)
+      }
+    }
+
+    cargarContactos()
+  }, [])
+
+  const docentesFiltrados = useMemo(() => {
+    const termino = busqueda.toLowerCase()
+    return docentes.filter((docente) =>
+      `${docente.nombre} ${docente.apellido}`.toLowerCase().includes(termino) || docente.email.toLowerCase().includes(termino),
+    )
+  }, [docentes, busqueda])
+
+  const estudiantesFiltrados = useMemo(() => {
+    const termino = busqueda.toLowerCase()
+    return estudiantes.filter((estudiante) =>
+      estudiante.nombre.toLowerCase().includes(termino) || estudiante.documento.toLowerCase().includes(termino),
+    )
+  }, [estudiantes, busqueda])
+
+  const opcionesDestinatarios = useMemo(() => {
+    const base = [
+      { value: "docentes", label: `Todos los docentes (${docentes.length})` },
+      { value: "estudiantes", label: `Todos los estudiantes (${estudiantes.length})` },
+    ]
+    const individuales = [
+      ...docentes.map((doc) => ({ value: `docente-${doc.id}`, label: `${doc.nombre} ${doc.apellido}` })),
+      ...estudiantes.map((est) => ({ value: `estudiante-${est.id}`, label: est.nombre })),
+    ]
+    return [...base, ...individuales]
+  }, [docentes, estudiantes])
+
+  const copiarValor = async (valor) => {
+    try {
+      await navigator.clipboard.writeText(valor)
+      setMensajeEstado(`Copiado: ${valor}`)
+      setTimeout(() => setMensajeEstado(""), 2500)
+    } catch (err) {
+      console.error("No se pudo copiar el texto", err)
+    }
   }
 
-  const publicarAnuncio = () => {
-    console.log("[v0] Publicando anuncio:", nuevoAnuncio)
-    alert("Anuncio publicado exitosamente")
-    setNuevoAnuncio({ titulo: "", contenido: "", destinatarios: "" })
+  const enviarMensaje = (evento) => {
+    evento.preventDefault()
+    if (!nuevoMensaje.destinatario || !nuevoMensaje.asunto || !nuevoMensaje.mensaje) {
+      setMensajeEstado("Completa todos los campos para enviar el mensaje")
+      return
+    }
+    setMensajeEstado("Mensaje registrado para envío interno")
+    setNuevoMensaje({ destinatario: "", asunto: "", mensaje: "" })
+    setTimeout(() => setMensajeEstado(""), 3000)
+  }
+
+  const publicarAnuncio = (evento) => {
+    evento.preventDefault()
+    if (!nuevoAnuncio.titulo || !nuevoAnuncio.contenido) {
+      setMensajeEstado("Completa el título y contenido del anuncio")
+      return
+    }
+    const anuncio = {
+      id: crypto.randomUUID(),
+      ...nuevoAnuncio,
+      fecha: new Date().toISOString(),
+    }
+    setAnuncios((prev) => [anuncio, ...prev])
+    setNuevoAnuncio({ titulo: "", contenido: "", destinatarios: "todos" })
+    setMensajeEstado("Anuncio publicado para la comunidad")
+    setTimeout(() => setMensajeEstado(""), 3000)
   }
 
   return (
@@ -61,8 +122,10 @@ export default function PaginaComunicacion() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Centro de Comunicación</h1>
-          <p className="text-muted-foreground">Gestiona mensajes, anuncios y notificaciones</p>
+          <p className="text-muted-foreground">Gestiona mensajes, anuncios y accede al directorio real de docentes y estudiantes</p>
         </div>
+
+        {mensajeEstado && <p className="text-sm text-primary">{mensajeEstado}</p>}
 
         <Pestanas defaultValue="mensajes" className="space-y-4">
           <ListaPestanas>
@@ -76,46 +139,85 @@ export default function PaginaComunicacion() {
               <EncabezadoTarjeta>
                 <TituloTarjeta className="flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
-                  Bandeja de Entrada
+                  Directorio de contactos
                 </TituloTarjeta>
-                <DescripcionTarjeta>Mensajes recibidos de docentes, estudiantes y padres</DescripcionTarjeta>
+                <DescripcionTarjeta>Información obtenida directamente de /api/Usuarios y /api/Estudiantes</DescripcionTarjeta>
               </EncabezadoTarjeta>
               <ContenidoTarjeta className="space-y-4">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Entrada
-                      placeholder="Buscar mensajes..."
-                      value={busqueda}
-                      onChange={(e) => setBusqueda(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  <Boton variant="outline">
-                    <Filter className="w-4 h-4 mr-2" />
-                    Filtrar
-                  </Boton>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Entrada
+                    placeholder="Buscar por nombre, correo o documento"
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
 
-                <div className="space-y-2">
-                  {mensajesSimulados.map((mensaje) => (
-                    <Tarjeta key={mensaje.id} className={!mensaje.leido ? "border-primary" : ""}>
-                      <ContenidoTarjeta className="p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="font-semibold">{mensaje.de}</p>
-                              {!mensaje.leido && <Insignia variant="default">Nuevo</Insignia>}
+                {error && <p className="text-sm text-destructive">{error}</p>}
+
+                <div className="space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold uppercase text-muted-foreground">Docentes</h3>
+                      <Insignia variant="outline">{docentes.length}</Insignia>
+                    </div>
+                    <div className="space-y-2">
+                      {cargando ? (
+                        <p className="text-sm text-muted-foreground">Cargando docentes...</p>
+                      ) : docentesFiltrados.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No se encontraron docentes.</p>
+                      ) : (
+                        docentesFiltrados.slice(0, 10).map((docente) => (
+                          <div
+                            key={docente.id}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div>
+                              <p className="font-medium">
+                                {docente.nombre} {docente.apellido}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{docente.email}</p>
                             </div>
-                            <p className="text-sm font-medium mt-1">{mensaje.asunto}</p>
-                            <p className="text-sm text-muted-foreground mt-1">{mensaje.mensaje}</p>
-                            <p className="text-xs text-muted-foreground mt-2">{mensaje.fecha}</p>
+                            <Boton variant="outline" size="sm" className="gap-2" onClick={() => copiarValor(docente.email)}>
+                              <Copy className="w-3 h-3" />
+                              Copiar
+                            </Boton>
                           </div>
-                          <Boton size="sm">Responder</Boton>
-                        </div>
-                      </ContenidoTarjeta>
-                    </Tarjeta>
-                  ))}
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-sm font-semibold uppercase text-muted-foreground">Estudiantes</h3>
+                      <Insignia variant="outline">{estudiantes.length}</Insignia>
+                    </div>
+                    <div className="space-y-2">
+                      {cargando ? (
+                        <p className="text-sm text-muted-foreground">Cargando estudiantes...</p>
+                      ) : estudiantesFiltrados.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No se encontraron estudiantes.</p>
+                      ) : (
+                        estudiantesFiltrados.slice(0, 10).map((estudiante) => (
+                          <div
+                            key={estudiante.id}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div>
+                              <p className="font-medium">{estudiante.nombre}</p>
+                              <p className="text-xs text-muted-foreground">Documento: {estudiante.documento}</p>
+                            </div>
+                            <Boton variant="outline" size="sm" className="gap-2" onClick={() => copiarValor(estudiante.documento)}>
+                              <Copy className="w-3 h-3" />
+                              Copiar ID
+                            </Boton>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
               </ContenidoTarjeta>
             </Tarjeta>
@@ -131,13 +233,45 @@ export default function PaginaComunicacion() {
                 <DescripcionTarjeta>Comunicados generales a la comunidad educativa</DescripcionTarjeta>
               </EncabezadoTarjeta>
               <ContenidoTarjeta className="space-y-4">
-                <Boton className="w-full" onClick={publicarAnuncio}>
-                  <Bell className="w-4 h-4 mr-2" />
-                  Nuevo Anuncio
-                </Boton>
+                <form className="space-y-4" onSubmit={publicarAnuncio}>
+                  <div className="space-y-2">
+                    <Etiqueta>Título</Etiqueta>
+                    <Entrada
+                      placeholder="Ej: Reunión general"
+                      value={nuevoAnuncio.titulo}
+                      onChange={(e) => setNuevoAnuncio((prev) => ({ ...prev, titulo: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Etiqueta>Destinatarios</Etiqueta>
+                    <Selector value={nuevoAnuncio.destinatarios} onValueChange={(value) => setNuevoAnuncio((prev) => ({ ...prev, destinatarios: value }))}>
+                      <DisparadorSelector>
+                        <ValorSelector />
+                      </DisparadorSelector>
+                      <ContenidoSelector>
+                        <ElementoSelector value="todos">Toda la comunidad</ElementoSelector>
+                        <ElementoSelector value="docentes">Solo docentes</ElementoSelector>
+                        <ElementoSelector value="estudiantes">Solo estudiantes</ElementoSelector>
+                      </ContenidoSelector>
+                    </Selector>
+                  </div>
+                  <div className="space-y-2">
+                    <Etiqueta>Contenido</Etiqueta>
+                    <AreaTexto
+                      rows={4}
+                      placeholder="Escribe el detalle del anuncio"
+                      value={nuevoAnuncio.contenido}
+                      onChange={(e) => setNuevoAnuncio((prev) => ({ ...prev, contenido: e.target.value }))}
+                    />
+                  </div>
+                  <Boton type="submit" className="w-full">
+                    <Bell className="w-4 h-4 mr-2" />
+                    Publicar anuncio
+                  </Boton>
+                </form>
 
                 <div className="space-y-3">
-                  {anunciosSimulados.map((anuncio) => (
+                  {anuncios.map((anuncio) => (
                     <Tarjeta key={anuncio.id}>
                       <EncabezadoTarjeta>
                         <div className="flex items-start justify-between">
@@ -150,14 +284,6 @@ export default function PaginaComunicacion() {
                       </EncabezadoTarjeta>
                       <ContenidoTarjeta>
                         <p className="text-sm">{anuncio.contenido}</p>
-                        <div className="flex gap-2 mt-4">
-                          <Boton size="sm" variant="outline">
-                            Editar
-                          </Boton>
-                          <Boton size="sm" variant="outline">
-                            Eliminar
-                          </Boton>
-                        </div>
                       </ContenidoTarjeta>
                     </Tarjeta>
                   ))}
@@ -174,50 +300,53 @@ export default function PaginaComunicacion() {
                   Enviar Nuevo Mensaje
                 </TituloTarjeta>
               </EncabezadoTarjeta>
-              <ContenidoTarjeta className="space-y-4">
-                <div className="space-y-2">
-                  <Etiqueta htmlFor="destinatario">Destinatario</Etiqueta>
-                  <Selector
-                    value={nuevoMensaje.destinatario}
-                    onValueChange={(value) => setNuevoMensaje({ ...nuevoMensaje, destinatario: value })}
-                  >
-                    <DisparadorSelector>
-                      <ValorSelector placeholder="Seleccionar destinatario" />
-                    </DisparadorSelector>
-                    <ContenidoSelector>
-                      <ElementoSelector value="docentes">Todos los docentes</ElementoSelector>
-                      <ElementoSelector value="estudiantes">Todos los estudiantes</ElementoSelector>
-                      <ElementoSelector value="padres">Todos los padres</ElementoSelector>
-                      <ElementoSelector value="individual">Usuario individual</ElementoSelector>
-                    </ContenidoSelector>
-                  </Selector>
-                </div>
+              <ContenidoTarjeta>
+                <form className="space-y-4" onSubmit={enviarMensaje}>
+                  <div className="space-y-2">
+                    <Etiqueta htmlFor="destinatario">Destinatario</Etiqueta>
+                    <Selector
+                      value={nuevoMensaje.destinatario}
+                      onValueChange={(value) => setNuevoMensaje((prev) => ({ ...prev, destinatario: value }))}
+                    >
+                      <DisparadorSelector>
+                        <ValorSelector placeholder="Seleccionar destinatario" />
+                      </DisparadorSelector>
+                      <ContenidoSelector>
+                        {opcionesDestinatarios.map((opcion) => (
+                          <ElementoSelector key={opcion.value} value={opcion.value}>
+                            {opcion.label}
+                          </ElementoSelector>
+                        ))}
+                      </ContenidoSelector>
+                    </Selector>
+                  </div>
 
-                <div className="space-y-2">
-                  <Etiqueta htmlFor="asunto">Asunto</Etiqueta>
-                  <Entrada
-                    id="asunto"
-                    placeholder="Asunto del mensaje"
-                    value={nuevoMensaje.asunto}
-                    onChange={(e) => setNuevoMensaje({ ...nuevoMensaje, asunto: e.target.value })}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Etiqueta htmlFor="asunto">Asunto</Etiqueta>
+                    <Entrada
+                      id="asunto"
+                      placeholder="Asunto del mensaje"
+                      value={nuevoMensaje.asunto}
+                      onChange={(e) => setNuevoMensaje((prev) => ({ ...prev, asunto: e.target.value }))}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Etiqueta htmlFor="mensaje">Mensaje</Etiqueta>
-                  <AreaTexto
-                    id="mensaje"
-                    placeholder="Escriba su mensaje aquí..."
-                    rows={6}
-                    value={nuevoMensaje.mensaje}
-                    onChange={(e) => setNuevoMensaje({ ...nuevoMensaje, mensaje: e.target.value })}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Etiqueta htmlFor="mensaje">Mensaje</Etiqueta>
+                    <AreaTexto
+                      id="mensaje"
+                      placeholder="Escribe tu mensaje"
+                      rows={6}
+                      value={nuevoMensaje.mensaje}
+                      onChange={(e) => setNuevoMensaje((prev) => ({ ...prev, mensaje: e.target.value }))}
+                    />
+                  </div>
 
-                <Boton onClick={enviarMensaje} className="w-full">
-                  <Send className="w-4 h-4 mr-2" />
-                  Enviar Mensaje
-                </Boton>
+                  <Boton type="submit" className="w-full">
+                    {cargando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                    Registrar envío
+                  </Boton>
+                </form>
               </ContenidoTarjeta>
             </Tarjeta>
           </ContenidoPestanas>

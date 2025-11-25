@@ -13,9 +13,15 @@ namespace edutrack_academy_api.Services
             _context = context;
         }
 
-        public async Task<Usuario?> LoginAsync(string user, string password)
+        public async Task<Usuario?> LoginAsync(string userOrEmail, string password)
         {
-            var persona = await _context.Usuarios.FirstOrDefaultAsync(p => p.User == user);
+            if (string.IsNullOrWhiteSpace(userOrEmail))
+                return null;
+
+            var normalized = userOrEmail.Trim().ToLower();
+
+            var persona = await _context.Usuarios
+                .FirstOrDefaultAsync(p => p.User.ToLower() == normalized || p.Email.ToLower() == normalized);
             if (persona == null) return null;
 
             var valid = BCrypt.Net.BCrypt.Verify(password, persona.PasswordHash);
@@ -76,10 +82,17 @@ namespace edutrack_academy_api.Services
             return true;
         }
 
-        public async Task<IEnumerable<UsuarioResponseDTO>> ListarDocentesAsync()
+        public async Task<IEnumerable<UsuarioResponseDTO>> ListarUsuariosAsync(string? rol = null)
         {
-            var lista = await _context.Usuarios
-                .Where(u => u.Rol == "docente")
+            var query = _context.Usuarios.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(rol))
+            {
+                var normalized = rol.Trim().ToLower();
+                query = query.Where(u => u.Rol.ToLower() == normalized);
+            }
+
+            var lista = await query
                 .Select(u => new UsuarioResponseDTO
                 {
                     Id = u.Id,

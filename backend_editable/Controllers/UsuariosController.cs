@@ -19,9 +19,9 @@ namespace edutrack_academy_api.Controllers
 
         // GET: api/Usuarios
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UsuarioResponseDTO>>> GetDocentes()
+        public async Task<ActionResult<IEnumerable<UsuarioResponseDTO>>> GetUsuarios([FromQuery] string? rol)
         {
-            var lista = await _usuarioService.ListarDocentesAsync();
+            var lista = await _usuarioService.ListarUsuariosAsync(rol);
             return Ok(lista);
         }
 
