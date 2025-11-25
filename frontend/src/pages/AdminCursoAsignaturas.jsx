@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Form, Button, Table, Alert, Modal } from "react-bootstrap";
 import api, { Asignaturas, CursoAsignaturas, Grados, Cursos } from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import PageHero from "../components/PageHero.jsx";
 
 export default function AdminCursoAsignaturas() {
   const [courses, setCourses] = useState([]);
@@ -95,81 +96,103 @@ export default function AdminCursoAsignaturas() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Container fluid>
-      <Row className="mb-3">
+    <Container fluid className="pb-5">
+      <Row className="mb-4">
         <Col>
-          <h3>Asignaciones (Grado → Grupo → Asignaturas)</h3>
-          <p className="text-muted">Selecciona un grado y luego el grupo (salón) de ese grado. Asigna materias al grupo y, opcionalmente, un docente por asignatura.</p>
+          <PageHero
+            eyebrow="Administración"
+            title="Asignaciones por curso"
+            description="Selecciona un grado y grupo para vincular asignaturas y docentes."
+            stats={[{ label: "Asignaciones activas", value: assignments.length }]}
+          />
         </Col>
       </Row>
 
       {error && <Row className="mb-3"><Col><Alert variant="danger">{String(error)}</Alert></Col></Row>}
 
-      <Row className="mb-3">
+      <p className="text-muted">Selecciona un curso para ver sus asignaciones.</p>
+      <Row className="mb-3 g-3">
         <Col md={4}>
-          <Form.Group>
-            <Form.Label>Selecciona un grado</Form.Label>
-            <Form.Select value={selectedGrade} onChange={(e) => { setSelectedGrade(e.target.value); setSelectedCourse(""); }}>
-              <option value="">-- Selecciona grado --</option>
-              {grados.map(g => (
-                <option key={g.id} value={g.id}>{g.nombre}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
+          <Card className="glass-card border-0 h-100">
+            <Card.Body>
+              <Form.Group>
+                <Form.Label>Selecciona un grado</Form.Label>
+                <Form.Select value={selectedGrade} onChange={(e) => { setSelectedGrade(e.target.value); setSelectedCourse(""); }}>
+                  <option value="">-- Selecciona grado --</option>
+                  {grados.map(g => (
+                    <option key={g.id} value={g.id}>{g.nombre}</option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </Card.Body>
+          </Card>
         </Col>
 
         <Col md={4}>
-          <Form.Group>
-            <Form.Label>Selecciona un grupo (salón)</Form.Label>
-            <Form.Select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} disabled={!selectedGrade}>
-              <option value="">-- Selecciona grupo --</option>
-              {courses.filter(c => String(c.gradoId) === String(selectedGrade)).map(c => (
-                <option key={c.id} value={c.id}>{c.grupo || c.nombre || `Grupo ${c.id}`}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
+          <Card className="glass-card border-0 h-100">
+            <Card.Body>
+              <Form.Group>
+                <Form.Label>Selecciona un grupo (salón)</Form.Label>
+                <Form.Select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} disabled={!selectedGrade}>
+                  <option value="">-- Selecciona grupo --</option>
+                  {courses.filter(c => String(c.gradoId) === String(selectedGrade)).map(c => (
+                    <option key={c.id} value={c.id}>{c.grupo || c.nombre || `Grupo ${c.id}`}</option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </Card.Body>
+          </Card>
         </Col>
 
-        <Col md={4} className="d-flex align-items-end">
-          <div>
-            <Button variant="primary" onClick={openAdd} disabled={!selectedCourse}>+ Agregar asignatura al salón</Button>
-          </div>
+        <Col md={4}>
+          <Card className="glass-card border-0 h-100 d-flex align-items-center justify-content-center text-center">
+            <div>
+              <p className="text-muted mb-2">Agregar asignatura al salón</p>
+              <Button variant="light" className="pill-button active" onClick={openAdd} disabled={!selectedCourse}>
+                + Asignar
+              </Button>
+            </div>
+          </Card>
         </Col>
       </Row>
 
       <Row>
         <Col>
-          <Card className="card-surface">
+          <Card className="glass-card border-0">
             <Card.Body>
               <Card.Title>Asignaciones del salón</Card.Title>
               {selectedCourse === "" ? (
                 <p className="text-muted">Selecciona un curso para ver sus asignaciones.</p>
               ) : (
-                <Table hover responsive>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Asignatura</th>
-                      <th>Docente</th>
-                      <th className="text-end">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentAssignments.length === 0 ? (
-                      <tr><td colSpan={4} className="text-center text-muted">No hay asignaciones.</td></tr>
-                    ) : currentAssignments.map((a,i) => (
-                      <tr key={a.id}>
-                        <td>{i+1}</td>
-                        <td>{(a.asignaturaNombre || a.asignatura?.nombre) || 'Asignatura #' + a.asignaturaId}</td>
-                        <td>{(a.docenteNombre) || (a.docente ? `${a.docente.nombre} ${a.docente.apellido}` : 'Sin asignar')}</td>
-                        <td className="text-end">
-                          <Button size="sm" variant="outline-primary" onClick={() => openEdit(a)}>Editar</Button>{' '}
-                          <Button size="sm" variant="outline-danger" onClick={() => handleDelete(a.id)}>Eliminar</Button>
-                        </td>
+                <div className="table-card">
+                  <Table hover responsive className="mb-0">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Asignatura</th>
+                        <th>Docente</th>
+                        <th className="text-end">Acciones</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
+                    </thead>
+                    <tbody>
+                      {currentAssignments.length === 0 ? (
+                        <tr><td colSpan={4} className="text-center text-muted">No hay asignaciones.</td></tr>
+                      ) : currentAssignments.map((a,i) => (
+                        <tr key={a.id}>
+                          <td>{i+1}</td>
+                          <td>{(a.asignaturaNombre || a.asignatura?.nombre) || 'Asignatura #' + a.asignaturaId}</td>
+                          <td>{(a.docenteNombre) || (a.docente ? `${a.docente.nombre} ${a.docente.apellido}` : 'Sin asignar')}</td>
+                          <td className="text-end">
+                            <div className="d-flex justify-content-end gap-2 flex-wrap">
+                              <Button size="sm" variant="light" className="pill-button" onClick={() => openEdit(a)}>Editar</Button>
+                              <Button size="sm" variant="light" className="pill-button" onClick={() => handleDelete(a.id)}>Eliminar</Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
               )}
             </Card.Body>
           </Card>
@@ -202,8 +225,8 @@ export default function AdminCursoAsignaturas() {
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave}>{editingId ? 'Guardar' : 'Crear'}</Button>
+          <Button variant="light" className="pill-button" onClick={() => setShowModal(false)}>Cancelar</Button>
+          <Button variant="light" className="pill-button active" onClick={handleSave}>{editingId ? 'Guardar' : 'Crear'}</Button>
         </Modal.Footer>
       </Modal>
     </Container>

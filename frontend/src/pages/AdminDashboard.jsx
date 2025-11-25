@@ -3,6 +3,7 @@ import { Container, Row, Col, Alert, Card } from "react-bootstrap";
 import api from "../services/api.js";
 import StatsCard from "../components/StatsCard.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import PageHero from "../components/PageHero.jsx";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -29,13 +30,19 @@ export default function AdminDashboard() {
   if (loading) return <LoadingSpinner message="Cargando panel..." />;
 
   return (
-    <Container fluid>
+    <Container fluid className="pb-5">
       <Row className="mb-4">
         <Col>
-          <h3>Panel de administración</h3>
-          <p className="text-muted">
-            Resumen general del sistema académico
-          </p>
+          <PageHero
+            eyebrow="Administración"
+            title="Panel de administración"
+            description="Monitorea el estado general de cursos, docentes y estudiantes."
+            stats={[
+              { label: "Docentes", value: stats?.totalDocentes ?? 0 },
+              { label: "Cursos", value: stats?.totalCursos ?? 0 },
+              { label: "Estudiantes", value: stats?.totalEstudiantes ?? 0 }
+            ]}
+          />
         </Col>
       </Row>
 
@@ -73,7 +80,7 @@ export default function AdminDashboard() {
 
       <Row>
         <Col>
-          <Card className="border-0 shadow-sm">
+          <Card className="glass-card border-0">
             <Card.Body className="p-4">
               <h5 className="mb-3">Bienvenido al panel de administración</h5>
               <p className="text-muted mb-0">

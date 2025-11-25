@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Form, Button, Table, Alert } from "react-bootstrap";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import PageHero from "../components/PageHero.jsx";
 
 export default function AdminGrados() {
   const [grados, setGrados] = useState([]);
@@ -64,11 +65,15 @@ export default function AdminGrados() {
   };
 
   return (
-    <Container fluid>
-      <Row className="mb-3">
+    <Container fluid className="pb-5">
+      <Row className="mb-4">
         <Col>
-          <h3>Gestión de grados</h3>
-          <p className="text-muted">Crea grados y define los grupos (ej: 10-01,10-02).</p>
+          <PageHero
+            eyebrow="Administración"
+            title="Gestión de grados"
+            description="Crea grados y define los grupos (ej: 10-01, 10-02)."
+            stats={[{ label: "Grados", value: grados.length }]}
+          />
         </Col>
       </Row>
 
@@ -76,7 +81,7 @@ export default function AdminGrados() {
 
       <Row>
         <Col md={4}>
-          <Card className="mb-3 card-surface">
+          <Card className="mb-3 glass-card border-0">
             <Card.Body>
               <Card.Title>{editing ? "Editar grado" : "Nuevo grado"}</Card.Title>
               <Form onSubmit={handleSubmit}>
@@ -93,37 +98,41 @@ export default function AdminGrados() {
                   <Form.Control name="grupos" value={form.grupos} onChange={handleChange} placeholder="Ej: 01, 02, 03" />
                 </Form.Group>
                 <div className="d-flex justify-content-between">
-                  <Button type="submit" variant="primary">{editing ? "Guardar" : "Crear"}</Button>
-                  {editing && <Button variant="secondary" onClick={() => { setEditing(null); setForm({ codigo: "", nombre: "", grupos: "" }); }}>Cancelar</Button>}
+                  <Button type="submit" variant="light" className="pill-button active">{editing ? "Guardar" : "Crear"}</Button>
+                  {editing && <Button variant="light" className="pill-button" onClick={() => { setEditing(null); setForm({ codigo: "", nombre: "", grupos: "" }); }}>Cancelar</Button>}
                 </div>
               </Form>
             </Card.Body>
           </Card>
         </Col>
         <Col md={8}>
-          <Card className="card-surface">
+          <Card className="glass-card border-0">
             <Card.Body>
               <Card.Title>Listado</Card.Title>
               {loading ? <LoadingSpinner /> : (
-                <Table hover responsive>
-                  <thead><tr><th>#</th><th>Código</th><th>Nombre</th><th>Grupos</th><th className="text-end">Acciones</th></tr></thead>
-                  <tbody>
-                    {grados.length === 0 ? (
-                      <tr><td colSpan={5} className="text-center text-muted">No hay grados.</td></tr>
-                    ) : grados.map((g, i) => (
-                      <tr key={g.id}>
-                        <td>{i+1}</td>
-                        <td>{g.codigo}</td>
-                        <td>{g.nombre}</td>
-                        <td>{(g.grupos || []).join(', ')}</td>
-                        <td className="text-end">
-                          <Button variant="outline-primary" size="sm" onClick={() => handleEdit(g)}>Editar</Button>{' '}
-                          <Button variant="outline-danger" size="sm" onClick={() => handleDelete(g.id)}>Eliminar</Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
+                <div className="table-card">
+                  <Table hover responsive className="mb-0">
+                    <thead><tr><th>#</th><th>Código</th><th>Nombre</th><th>Grupos</th><th className="text-end">Acciones</th></tr></thead>
+                    <tbody>
+                      {grados.length === 0 ? (
+                        <tr><td colSpan={5} className="text-center text-muted">No hay grados.</td></tr>
+                      ) : grados.map((g, i) => (
+                        <tr key={g.id}>
+                          <td>{i+1}</td>
+                          <td>{g.codigo}</td>
+                          <td>{g.nombre}</td>
+                          <td>{(g.grupos || []).join(', ')}</td>
+                          <td className="text-end">
+                            <div className="d-flex justify-content-end gap-2 flex-wrap">
+                              <Button variant="light" size="sm" className="pill-button" onClick={() => handleEdit(g)}>Editar</Button>
+                              <Button variant="light" size="sm" className="pill-button" onClick={() => handleDelete(g.id)}>Eliminar</Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
               )}
             </Card.Body>
           </Card>

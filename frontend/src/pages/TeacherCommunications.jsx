@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Form, Button, Alert, ListGroup, Badge, Spinn
 import { useAuth } from "../contexts/AuthContext.jsx";
 import api, { Comunicaciones } from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import PageHero from "../components/PageHero.jsx";
 
 const MENSAJE_TIPOS = [
   { id: "general", label: "General" },
@@ -196,6 +197,10 @@ export default function TeacherCommunications() {
     setExpandedHistoryId((prev) => (prev === id ? null : id));
   };
 
+  const selectedCourseLabel = selectedCourse
+    ? `${selectedCourse.asignaturaNombre || "Asignatura"} · ${selectedCourse.gradoNombre || "Sin grado"} (${selectedCourse.grupo || "-"})`
+    : "Selecciona un curso";
+
   if (assignmentsLoading) return <LoadingSpinner message="Preparando tu bandeja de comunicaciones..." />;
 
   if (assignmentsError) {
@@ -215,17 +220,24 @@ export default function TeacherCommunications() {
   }
 
   return (
-    <Container fluid>
+    <Container fluid className="pb-5">
       <Row className="mb-4">
         <Col>
-          <h3 className="mb-1">Centro de Comunicaciones</h3>
-          <p className="text-muted mb-0">Comparte novedades con estudiantes y tutores desde un único lugar.</p>
+          <PageHero
+            eyebrow="Centro de comunicaciones"
+            title={selectedCourseLabel}
+            description="Gestiona mensajes segmentados a estudiantes y tutores desde un único lugar."
+            stats={[
+              { label: "Cursos asignados", value: assignments.length },
+              { label: "Destinatarios actuales", value: destinatariosCount }
+            ]}
+          />
         </Col>
       </Row>
 
       <Row className="mb-4">
         <Col lg={7} className="mb-3">
-          <Card className="shadow-sm h-100">
+          <Card className="glass-card border-0 h-100">
             <Card.Body>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <Card.Title className="mb-0">Redactar mensaje</Card.Title>
@@ -326,7 +338,7 @@ export default function TeacherCommunications() {
                       Destinatarios estimados: <strong>{destinatariosCount}</strong>
                     </small>
                   </div>
-                  <Button type="submit" disabled={!formValid || sending}>
+                  <Button type="submit" disabled={!formValid || sending} className="pill-button active" variant="light">
                     {sending ? (
                       <>
                         <Spinner animation="border" size="sm" className="me-2" /> Enviando...
@@ -342,7 +354,7 @@ export default function TeacherCommunications() {
         </Col>
 
         <Col lg={5} className="mb-3">
-          <Card className="shadow-sm h-100">
+          <Card className="glass-card border-0 h-100">
             <Card.Body>
               <Card.Title>Destinatarios</Card.Title>
               {studentsLoading ? (
@@ -357,10 +369,10 @@ export default function TeacherCommunications() {
                 <>
                   {form.alcance === "seleccion" && (
                     <div className="d-flex gap-2 flex-wrap mb-3">
-                      <Button size="sm" variant="outline-secondary" onClick={handleSelectAll}>
+                      <Button size="sm" variant="light" className="pill-button" onClick={handleSelectAll}>
                         Seleccionar todos
                       </Button>
-                      <Button size="sm" variant="outline-secondary" onClick={handleClearSelection}>
+                      <Button size="sm" variant="light" className="pill-button" onClick={handleClearSelection}>
                         Limpiar selección
                       </Button>
                     </div>
@@ -397,11 +409,11 @@ export default function TeacherCommunications() {
 
       <Row>
         <Col>
-          <Card className="shadow-sm">
+          <Card className="glass-card border-0">
             <Card.Body>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <Card.Title className="mb-0">Historial reciente</Card.Title>
-                <Button size="sm" variant="outline-secondary" onClick={refreshHistory} disabled={historyLoading}>
+                <Button size="sm" variant="light" className="pill-button" onClick={refreshHistory} disabled={historyLoading}>
                   {historyLoading ? "Actualizando..." : "Refrescar"}
                 </Button>
               </div>
@@ -419,32 +431,33 @@ export default function TeacherCommunications() {
                       : "Sin curso asociado";
                     return (
                       <ListGroup.Item key={item.id} className="px-0">
-                        <div className="d-flex justify-content-between flex-wrap gap-3 align-items-start">
-                          <div>
-                            <div className="d-flex align-items-center gap-2">
-                              <strong>{item.titulo}</strong>
-                              <Badge bg="secondary" pill>
-                                {item.tipo}
-                              </Badge>
+                        <div className="history-card">
+                          <div className="d-flex justify-content-between flex-wrap gap-3 align-items-start">
+                            <div>
+                              <div className="d-flex align-items-center gap-2">
+                                <strong>{item.titulo}</strong>
+                                <Badge bg="secondary" pill>
+                                  {item.tipo}
+                                </Badge>
+                              </div>
+                              <small className="d-block text-muted">
+                                {formatDateTime(item.creadaEn)} • {item.destinatarios ?? 0} destinos
+                              </small>
+                              <small className="text-muted">{courseLabel}</small>
                             </div>
-                            <small className="d-block text-muted">
-                              {formatDateTime(item.creadaEn)} • {item.destinatarios ?? 0} destinos
-                            </small>
-                            <small className="text-muted">{courseLabel}</small>
+                            <div className="text-end">
+                              <Button
+                                size="sm"
+                                variant="light"
+                                className="pill-button"
+                                onClick={() => handleToggleHistory(item.id)}
+                              >
+                                {isExpanded ? "Ocultar" : "Detalles"}
+                              </Button>
+                            </div>
                           </div>
-                          <div className="text-end">
-                            <Button
-                              size="sm"
-                              variant="outline-secondary"
-                              onClick={() => handleToggleHistory(item.id)}
-                            >
-                              {isExpanded ? "Ocultar detalles" : "Ver detalles"}
-                            </Button>
-                          </div>
-                        </div>
-                        <Collapse in={isExpanded}>
-                          <div className="mt-3">
-                            <div className="bg-light rounded p-3">
+                          <Collapse in={isExpanded}>
+                            <div className="mt-3 message-detail">
                               <p className="mb-2">{item.mensaje}</p>
                               <div className="d-flex flex-wrap gap-3 small text-muted">
                                 <span>Hora local: {formatDateTime(item.creadaEn, { hour: "2-digit", minute: "2-digit" })}</span>
@@ -452,8 +465,8 @@ export default function TeacherCommunications() {
                                 <span>Tutores: {item.tutoresDestinatarios ?? 0}</span>
                               </div>
                             </div>
-                          </div>
-                        </Collapse>
+                          </Collapse>
+                        </div>
                       </ListGroup.Item>
                     );
                   })}

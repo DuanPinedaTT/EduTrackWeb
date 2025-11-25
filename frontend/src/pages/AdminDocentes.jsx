@@ -8,11 +8,11 @@ import {
   Button,
   Table,
   Alert,
-  Badge,
-  ButtonGroup
+  Badge
 } from "react-bootstrap";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import PageHero from "../components/PageHero.jsx";
 
 export default function AdminDocentes() {
   const [teachers, setTeachers] = useState([]);
@@ -162,13 +162,18 @@ export default function AdminDocentes() {
   };
 
   return (
-    <Container fluid>
-      <Row className="mb-3">
+    <Container fluid className="pb-5">
+      <Row className="mb-4">
         <Col>
-          <h3>Gestión de docentes</h3>
-          <p className="text-muted">
-            Crea y administra las cuentas de los docentes del sistema.
-          </p>
+          <PageHero
+            eyebrow="Administración"
+            title="Gestión de docentes"
+            description="Crea y administra las cuentas de los docentes del sistema."
+            stats={[
+              { label: "Docentes", value: teachers.length },
+              { label: "Asignaturas", value: asignaturas.length }
+            ]}
+          />
         </Col>
       </Row>
 
@@ -184,7 +189,7 @@ export default function AdminDocentes() {
 
       <Row>
         <Col md={4}>
-          <Card className="shadow-sm mb-3">
+          <Card className="glass-card border-0 mb-3">
             <Card.Body>
               <Card.Title className="mb-3">
                 {editingId ? "Editar docente" : "Nuevo docente"}
@@ -252,15 +257,16 @@ export default function AdminDocentes() {
                       asignaturas.map((a) => {
                         const selected = selectedAsignaturas.includes(String(a.id));
                         return (
-                          <Button
-                            type="button"
-                            key={a.id}
-                            size="sm"
-                            variant={selected ? "success" : "outline-secondary"}
-                            onClick={() => toggleAsignatura(a.id)}
-                          >
-                            {a.codigo ? `${a.codigo} - ${a.nombre}` : a.nombre}
-                          </Button>
+                            <Button
+                              type="button"
+                              key={a.id}
+                              size="sm"
+                              variant="light"
+                              className={`pill-button ${selected ? "active" : ""}`}
+                              onClick={() => toggleAsignatura(a.id)}
+                            >
+                              {a.codigo ? `${a.codigo} - ${a.nombre}` : a.nombre}
+                            </Button>
                         );
                       })
                     )}
@@ -303,7 +309,8 @@ export default function AdminDocentes() {
                                   type="button"
                                   key={key}
                                   size="sm"
-                                  variant={selected ? "success" : "outline-secondary"}
+                                  variant="light"
+                                  className={`pill-button ${selected ? "active" : ""}`}
                                   onClick={() => toggleAsignacion(grado.id, grupo)}
                                 >
                                   {grupo}
@@ -329,11 +336,11 @@ export default function AdminDocentes() {
                   )}
                 </Form.Group>
                 <div className="d-flex justify-content-between">
-                  <Button type="submit" variant="primary">
+                  <Button type="submit" variant="light" className="pill-button active">
                     {editingId ? "Guardar cambios" : "Crear docente"}
                   </Button>
                   {editingId && (
-                    <Button variant="secondary" onClick={resetForm}>
+                    <Button variant="light" className="pill-button" onClick={resetForm}>
                       Cancelar
                     </Button>
                   )}
@@ -344,7 +351,7 @@ export default function AdminDocentes() {
         </Col>
 
         <Col md={8}>
-          <Card className="shadow-sm mb-3">
+          <Card className="glass-card border-0 mb-3">
             <Card.Body>
               <Card.Title className="d-flex justify-content-between align-items-center mb-3">
                 <span>Lista de docentes</span>
@@ -357,67 +364,73 @@ export default function AdminDocentes() {
               {loading ? (
                 <LoadingSpinner />
               ) : (
-                <Table striped hover responsive>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Usuario</th>
-                      <th>Nombre completo</th>
-                      <th>Email</th>
-                      <th>Asignaturas</th>
-                      <th className="text-end">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {teachers.length === 0 ? (
+                <div className="table-card">
+                  <Table hover responsive className="mb-0">
+                    <thead>
                       <tr>
-                        <td colSpan={6} className="text-center text-muted">
-                          No hay docentes registrados.
-                        </td>
+                        <th>#</th>
+                        <th>Usuario</th>
+                        <th>Nombre completo</th>
+                        <th>Email</th>
+                        <th>Asignaturas</th>
+                        <th className="text-end">Acciones</th>
                       </tr>
-                    ) : (
-                      teachers.map((t, index) => (
-                        <tr key={t.id}>
-                          <td>{index + 1}</td>
-                          <td>{t.user}</td>
-                          <td>
-                            {t.nombre} {t.apellido}
-                          </td>
-                          <td>{t.email}</td>
-                          <td>
-                            {t.asignaturas && t.asignaturas.length > 0 ? (
-                              <div className="d-flex flex-wrap gap-1">
-                                {t.asignaturas.map((a) => (
-                                  <Badge key={`${t.id}-asig-${a.asignaturaId}`} bg="light" text="dark">
-                                    {a.codigo || a.nombre}
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-muted">Sin asignar</span>
-                            )}
-                          </td>
-                          <td className="text-end">
-                            <ButtonGroup size="sm">
-                              <Button
-                                variant="outline-primary"
-                                onClick={() => handleEdit(t)}
-                              >
-                                Editar
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                onClick={() => handleDelete(t.id)}
-                              >
-                                Eliminar
-                              </Button>
-                            </ButtonGroup>
+                    </thead>
+                    <tbody>
+                      {teachers.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="text-center text-muted">
+                            No hay docentes registrados.
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </Table>
+                      ) : (
+                        teachers.map((t, index) => (
+                          <tr key={t.id}>
+                            <td>{index + 1}</td>
+                            <td>{t.user}</td>
+                            <td>
+                              {t.nombre} {t.apellido}
+                            </td>
+                            <td>{t.email}</td>
+                            <td>
+                              {t.asignaturas && t.asignaturas.length > 0 ? (
+                                <div className="d-flex flex-wrap gap-1">
+                                  {t.asignaturas.map((a) => (
+                                    <Badge key={`${t.id}-asig-${a.asignaturaId}`} bg="light" text="dark">
+                                      {a.codigo || a.nombre}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-muted">Sin asignar</span>
+                              )}
+                            </td>
+                            <td className="text-end">
+                              <div className="d-flex justify-content-end gap-2 flex-wrap">
+                                <Button
+                                  size="sm"
+                                  variant="light"
+                                  className="pill-button"
+                                  onClick={() => handleEdit(t)}
+                                >
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="light"
+                                  className="pill-button"
+                                  onClick={() => handleDelete(t.id)}
+                                >
+                                  Eliminar
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </Table>
+                </div>
               )}
             </Card.Body>
           </Card>

@@ -9,7 +9,6 @@ import {
   Table,
   Alert,
   Badge,
-  ButtonGroup,
   Modal,
   Tabs,
   Tab,
@@ -18,6 +17,7 @@ import {
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { CursoAsignaturas } from "../services/api.js";
+import PageHero from "../components/PageHero.jsx";
 
 export default function AdminEstudiantes() {
   const [estudiantes, setEstudiantes] = useState([]);
@@ -520,13 +520,18 @@ export default function AdminEstudiantes() {
   };
 
   return (
-    <Container fluid>
-      <Row className="mb-3">
+    <Container fluid className="pb-5">
+      <Row className="mb-4">
         <Col>
-          <h3>Gestión de estudiantes y tutores</h3>
-          <p className="text-muted">
-            Administra matrículas y accesos al portal familiar.
-          </p>
+          <PageHero
+            eyebrow="Administración"
+            title="Gestión de estudiantes y tutores"
+            description="Administra matrículas y accesos al portal familiar."
+            stats={[
+              { label: "Estudiantes", value: estudiantes.length },
+              { label: "Tutores", value: tutores.length }
+            ]}
+          />
         </Col>
       </Row>
 
@@ -544,7 +549,7 @@ export default function AdminEstudiantes() {
         <Tab eventKey="estudiantes" title="Estudiantes">
           <Row>
             <Col md={4}>
-              <Card className="card-surface mb-3">
+              <Card className="glass-card border-0 mb-3">
                 <Card.Body>
                   <Card.Title className="mb-3">
                     {editingId ? "Editar estudiante" : "Nuevo estudiante"}
@@ -645,7 +650,7 @@ export default function AdminEstudiantes() {
             </Col>
 
             <Col md={8}>
-              <Card className="card-surface mb-3">
+              <Card className="glass-card border-0 mb-3">
                 <Card.Body>
                   <Card.Title className="d-flex justify-content-between align-items-center mb-3">
                     <span>Lista de estudiantes</span>
@@ -735,83 +740,102 @@ export default function AdminEstudiantes() {
                   {loadingEst ? (
                     <LoadingSpinner />
                   ) : (
-                    <Table striped hover responsive>
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Nombre</th>
-                          <th>Documento</th>
-                          <th>Grado</th>
-                          <th>Grupo</th>
-                          <th>Usuario portal</th>
-                          <th className="text-end">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredEstudiantes.length === 0 ? (
+                    <div className="table-card">
+                      <Table hover responsive className="mb-0">
+                        <thead>
                           <tr>
-                            <td colSpan={6} className="text-center text-muted">
-                              {selectedCursoFilter || selectedGradoFilter
-                                ? "No hay estudiantes que coincidan con los filtros."
-                                : "No hay estudiantes registrados."}
-                            </td>
+                            <th>#</th>
+                            <th>Nombre</th>
+                            <th>Documento</th>
+                            <th>Grado</th>
+                            <th>Grupo</th>
+                            <th>Usuario portal</th>
+                            <th className="text-end">Acciones</th>
                           </tr>
-                        ) : (
-                          filteredEstudiantes.map((e, index) => (
-                            <tr key={e.id}>
-                              <td>{index + 1}</td>
-                              <td>{e.nombre}</td>
-                              <td>{e.documento}</td>
-                              <td>
-                                {(() => {
-                                  const grado = e.gradoNombre || (() => {
-                                    const ins = (inscripcionesByStudent[e.id] || [])[0];
-                                    return ins ? getCursoGrado(ins.cursoId) : null;
-                                  })();
-                                  return grado ? <Badge bg="secondary">{grado}</Badge> : <span className="text-muted">-</span>;
-                                })()}
-                              </td>
-                              <td>
-                                {(() => {
-                                  if (e.grupo) return e.grupo;
-                                  const ins = (inscripcionesByStudent[e.id] || [])[0];
-                                  if (!ins) return "Sin grupo";
-                                  const curso = cursos.find((c) => c.id === ins.cursoId);
-                                  return curso?.grupo || getCursoNombre(ins.cursoId) || "Sin grupo";
-                                })()}
-                              </td>
-                              <td>
-                                {e.usuarioPortal ? (
-                                  <Badge bg="light" text="dark">{e.usuarioPortal}</Badge>
-                                ) : (
-                                  <span className="text-muted">Pendiente</span>
-                                )}
-                              </td>
-                              <td className="text-end">
-                                <ButtonGroup size="sm">
-                                  <Button
-                                    aria-label={`Ver inscripciones de ${e.nombre}`}
-                                    variant="outline-info"
-                                    onClick={() => handleViewInscripciones(e.id)}
-                                  >
-                                    Ver
-                                  </Button>
-                                  <Button variant="outline-primary" onClick={() => handleEdit(e)}>
-                                    Editar
-                                  </Button>
-                                  <Button variant="outline-secondary" onClick={() => handleResetPortal(e.id)}>
-                                    Portal
-                                  </Button>
-                                  <Button variant="outline-danger" onClick={() => handleDelete(e.id)}>
-                                    Eliminar
-                                  </Button>
-                                </ButtonGroup>
+                        </thead>
+                        <tbody>
+                          {filteredEstudiantes.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="text-center text-muted">
+                                {selectedCursoFilter || selectedGradoFilter
+                                  ? "No hay estudiantes que coincidan con los filtros."
+                                  : "No hay estudiantes registrados."}
                               </td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </Table>
+                          ) : (
+                            filteredEstudiantes.map((e, index) => (
+                              <tr key={e.id}>
+                                <td>{index + 1}</td>
+                                <td>{e.nombre}</td>
+                                <td>{e.documento}</td>
+                                <td>
+                                  {(() => {
+                                    const grado = e.gradoNombre || (() => {
+                                      const ins = (inscripcionesByStudent[e.id] || [])[0];
+                                      return ins ? getCursoGrado(ins.cursoId) : null;
+                                    })();
+                                    return grado ? <Badge bg="secondary">{grado}</Badge> : <span className="text-muted">-</span>;
+                                  })()}
+                                </td>
+                                <td>
+                                  {(() => {
+                                    if (e.grupo) return e.grupo;
+                                    const ins = (inscripcionesByStudent[e.id] || [])[0];
+                                    if (!ins) return "Sin grupo";
+                                    const curso = cursos.find((c) => c.id === ins.cursoId);
+                                    return curso?.grupo || getCursoNombre(ins.cursoId) || "Sin grupo";
+                                  })()}
+                                </td>
+                                <td>
+                                  {e.usuarioPortal ? (
+                                    <Badge bg="light" text="dark">{e.usuarioPortal}</Badge>
+                                  ) : (
+                                    <span className="text-muted">Pendiente</span>
+                                  )}
+                                </td>
+                                <td className="text-end">
+                                  <div className="d-flex justify-content-end gap-2 flex-wrap">
+                                    <Button
+                                      aria-label={`Ver inscripciones de ${e.nombre}`}
+                                      size="sm"
+                                      variant="light"
+                                      className="pill-button"
+                                      onClick={() => handleViewInscripciones(e.id)}
+                                    >
+                                      Ver
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="light"
+                                      className="pill-button"
+                                      onClick={() => handleEdit(e)}
+                                    >
+                                      Editar
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="light"
+                                      className="pill-button"
+                                      onClick={() => handleResetPortal(e.id)}
+                                    >
+                                      Portal
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="light"
+                                      className="pill-button"
+                                      onClick={() => handleDelete(e.id)}
+                                    >
+                                      Eliminar
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </Table>
+                    </div>
                   )}
                 </Card.Body>
               </Card>
@@ -821,7 +845,7 @@ export default function AdminEstudiantes() {
         <Tab eventKey="tutores" title="Tutores">
           <Row>
             <Col md={5}>
-              <Card className="card-surface mb-3">
+              <Card className="glass-card border-0 mb-3">
                 <Card.Body>
                   <Card.Title className="mb-3">
                     {editingTutorId ? "Editar tutor" : "Nuevo tutor"}
@@ -956,7 +980,7 @@ export default function AdminEstudiantes() {
             </Col>
 
             <Col md={7}>
-              <Card className="card-surface mb-3">
+              <Card className="glass-card border-0 mb-3">
                 <Card.Body>
                   <Card.Title className="d-flex justify-content-between align-items-center mb-3">
                     <span>Tutores registrados</span>
@@ -965,51 +989,53 @@ export default function AdminEstudiantes() {
                   {loadingTutores ? (
                     <LoadingSpinner />
                   ) : (
-                    <Table striped hover responsive>
-                      <thead>
-                        <tr>
-                          <th>Usuario</th>
-                          <th>Nombre</th>
-                          <th>Correo</th>
-                          <th>Hijos</th>
-                          <th className="text-end">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tutores.length === 0 ? (
+                    <div className="table-card">
+                      <Table hover responsive className="mb-0">
+                        <thead>
                           <tr>
-                            <td colSpan={5} className="text-center text-muted">
-                              No hay tutores registrados.
-                            </td>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
+                            <th>Correo</th>
+                            <th>Hijos</th>
+                            <th className="text-end">Acciones</th>
                           </tr>
-                        ) : (
-                          tutores.map((t) => (
-                            <tr key={t.id}>
-                              <td>{t.user}</td>
-                              <td>{t.nombre} {t.apellido}</td>
-                              <td>{t.email}</td>
-                              <td>
-                                {(t.estudiantes || []).map((h) => (
-                                  <Badge bg={h.esPrincipal ? "primary" : "light"} key={`${t.id}-${h.estudianteId}`} className="me-1">
-                                    {h.nombre}
-                                  </Badge>
-                                ))}
-                              </td>
-                              <td className="text-end">
-                                <ButtonGroup size="sm">
-                                  <Button variant="outline-primary" onClick={() => handleEditTutor(t)}>
-                                    Editar
-                                  </Button>
-                                  <Button variant="outline-danger" onClick={() => handleDeleteTutor(t.id)}>
-                                    Eliminar
-                                  </Button>
-                                </ButtonGroup>
+                        </thead>
+                        <tbody>
+                          {tutores.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="text-center text-muted">
+                                No hay tutores registrados.
                               </td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </Table>
+                          ) : (
+                            tutores.map((t) => (
+                              <tr key={t.id}>
+                                <td>{t.user}</td>
+                                <td>{t.nombre} {t.apellido}</td>
+                                <td>{t.email}</td>
+                                <td>
+                                  {(t.estudiantes || []).map((h) => (
+                                    <Badge bg={h.esPrincipal ? "primary" : "light"} key={`${t.id}-${h.estudianteId}`} className="me-1">
+                                      {h.nombre}
+                                    </Badge>
+                                  ))}
+                                </td>
+                                <td className="text-end">
+                                  <div className="d-flex justify-content-end gap-2 flex-wrap">
+                                    <Button size="sm" variant="light" className="pill-button" onClick={() => handleEditTutor(t)}>
+                                      Editar
+                                    </Button>
+                                    <Button size="sm" variant="light" className="pill-button" onClick={() => handleDeleteTutor(t.id)}>
+                                      Eliminar
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </Table>
+                    </div>
                   )}
                 </Card.Body>
               </Card>

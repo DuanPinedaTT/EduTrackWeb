@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Container, Row, Col, Alert, Card, Form, Badge, Button, ListGroup, Spinner, ButtonGroup, Table } from "react-bootstrap";
+import { Container, Row, Col, Alert, Card, Form, Badge, Button, ListGroup, Spinner, Table } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 import {
@@ -18,6 +18,7 @@ import {
 import api from "../services/api.js";
 import StatsCard from "../components/StatsCard.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import PageHero from "../components/PageHero.jsx";
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
@@ -395,22 +396,34 @@ export default function TeacherDashboard() {
 
   if (loading) return <LoadingSpinner message="Cargando estadísticas..." />;
 
+  const heroDescription = selectedAsignatura
+    ? `Supervisa ${selectedAsignatura} en tus grupos activos.`
+    : "Selecciona una asignatura para comenzar.";
+  const heroStats = [
+    { label: "Asignaturas activas", value: subjectList.length },
+    { label: "Total estudiantes", value: totalStudents }
+  ];
+
   return (
-    <Container fluid>
-      <Row className="mb-3">
+    <Container fluid className="pb-5">
+      <Row className="mb-4">
         <Col>
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h3 className="mb-0">Panel del docente</h3>
-              <small className="text-muted">
-                Vista actual: <strong>{selectedAsignatura || "Ninguno"}</strong>
-              </small>
-            </div>
-            <Button variant="outline-primary" size="sm" onClick={() => navigate("/teacher/comunicaciones")}
-              className="d-flex align-items-center">
-              Centro de comunicaciones
-            </Button>
-          </div>
+          <PageHero
+            eyebrow="Panel del docente"
+            title={`Hola ${user?.nombre || user?.username || "Docente"}`}
+            description={heroDescription}
+            stats={heroStats}
+            action={(
+              <Button
+                variant="light"
+                size="sm"
+                className="pill-button active"
+                onClick={() => navigate("/teacher/comunicaciones")}
+              >
+                Centro de comunicaciones
+              </Button>
+            )}
+          />
         </Col>
       </Row>
 
@@ -424,13 +437,13 @@ export default function TeacherDashboard() {
 
       <Row className="mb-4">
         <Col lg={4} className="mb-3 mb-lg-0">
-          <Card className="shadow-sm h-100">
+          <Card className="glass-card border-0 h-100">
             <Card.Body>
               <Card.Title className="mb-3">Tus asignaturas</Card.Title>
               {courseAssignments.length === 0 ? (
-                <Alert variant="info" className="mb-0">No tienes asignaturas asignadas.</Alert>
+                <Alert variant="light" className="mb-0">No tienes asignaturas asignadas.</Alert>
               ) : (
-                <ListGroup variant="flush" className="subject-list-group">
+                <ListGroup variant="flush" className="list-quiet subject-list-group">
                   {subjectList.map((nombre) => {
                     const totals = getSubjectTotals(nombre);
                     const isActive = selectedAsignatura === nombre;
@@ -440,15 +453,13 @@ export default function TeacherDashboard() {
                         action
                         active={isActive}
                         onClick={() => setSelectedAsignatura(nombre)}
-                        className="subject-item"
+                        className={`d-flex flex-column gap-1 ${isActive ? "active" : ""}`}
                       >
                         <div className="d-flex justify-content-between align-items-center">
                           <span className="fw-semibold">{nombre}</span>
-                          <Badge bg={isActive ? "light" : "primary"} text={isActive ? "dark" : "light"}>
-                            {totals.grupos} grupos
-                          </Badge>
+                          <span className="chip">{totals.grupos} grupos</span>
                         </div>
-                        <small>{totals.estudiantes} estudiantes asignados</small>
+                        <small className="text-muted">{totals.estudiantes} estudiantes asignados</small>
                       </ListGroup.Item>
                     );
                   })}
@@ -458,7 +469,7 @@ export default function TeacherDashboard() {
           </Card>
         </Col>
         <Col lg={8}>
-          <Card className="shadow-sm h-100">
+          <Card className="glass-card border-0 h-100">
             <Card.Body>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <Card.Title className="mb-0">
@@ -484,7 +495,7 @@ export default function TeacherDashboard() {
                     <div className="d-flex justify-content-between align-items-center">
                       <small className="text-muted">Selecciona un grado/grupo</small>
                       {selectedCourses.length > 1 && (
-                        <span className="badge bg-light text-dark">{selectedCourses.length} grupos</span>
+                        <span className="chip">{selectedCourses.length} grupos</span>
                       )}
                     </div>
                     <div className="d-flex flex-wrap gap-2 mt-2">
@@ -494,10 +505,11 @@ export default function TeacherDashboard() {
                           <Button
                             key={course.id || course.cursoId}
                             size="sm"
-                            variant={isActive ? "primary" : "outline-primary"}
+                            variant="light"
+                            className={`pill-button ${isActive ? "active" : ""}`}
                             onClick={() => setSelectedCourseId(course.cursoId)}
                           >
-                            {(course.gradoNombre || "Sin grado")} - {course.grupo || "Sin grupo"}
+                            {(course.gradoNombre || "Sin grado")} · {course.grupo || "Sin grupo"}
                           </Button>
                         );
                       })}
@@ -507,7 +519,7 @@ export default function TeacherDashboard() {
                   {!selectedCourse ? (
                     <Alert variant="light">Selecciona un grupo para ver sus notas.</Alert>
                   ) : (
-                    <Card className="border-0 shadow-sm teacher-course-card">
+                    <Card className="glass-card border-0 teacher-course-card">
                       <Card.Body>
                         <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
                           <div>
@@ -516,9 +528,12 @@ export default function TeacherDashboard() {
                               Grupo {selectedCourse.grupo || "Sin grupo"} · Aula #{selectedCourse.cursoId}
                             </div>
                           </div>
-                          <Badge bg="light" text="dark" className="course-meta-badge">
-                            {selectedCourseMeta?.studentCount ?? courseDetail.students.length} estudiantes
-                          </Badge>
+                          <div className="text-end">
+                            <small className="text-muted d-block">Estudiantes asignados</small>
+                            <span className="chip">
+                              {selectedCourseMeta?.studentCount ?? courseDetail.students.length}
+                            </span>
+                          </div>
                         </div>
 
                         {courseDetailError && (
@@ -531,18 +546,17 @@ export default function TeacherDashboard() {
                           {periodos.map((periodo) => {
                             const summary = periodSummarySelectedCourse[periodo.id] || { peso: 0, columnas: 0 };
                             const isActive = selectedPeriod === periodo.id;
-                            const variant = isActive ? "primary" : "outline-secondary";
                             return (
                               <Button
                                 key={`${selectedCourse.cursoId}-${periodo.id}`}
-                                variant={variant}
+                                variant="light"
                                 size="sm"
-                                className="period-chip"
+                                className={`pill-button ${isActive ? "active" : ""}`}
                                 onClick={() => setSelectedPeriod(periodo.id)}
                                 disabled={courseDetailLoading}
                               >
-                                <span className="fw-semibold">{periodo.nombre}</span>
-                                <small>
+                                <span className="fw-semibold d-block">{periodo.nombre}</span>
+                                <small className="text-muted">
                                   {summary.peso}% peso · {summary.columnas} columnas
                                 </small>
                               </Button>
@@ -573,14 +587,15 @@ export default function TeacherDashboard() {
                                 </div>
                                 <Button
                                   size="sm"
-                                  variant="outline-primary"
+                                  variant="light"
+                                  className="pill-button"
                                   onClick={() => handleOpenCourse(selectedCourse.cursoId, selectedPeriod)}
                                 >
                                   Abrir vista completa
                                 </Button>
                               </div>
-                              <div className="table-responsive">
-                                <Table size="sm" hover>
+                              <div className="table-card table-responsive">
+                                <Table size="sm" hover className="mb-0">
                                   <thead>
                                     <tr>
                                       <th>Estudiante</th>
@@ -626,36 +641,44 @@ export default function TeacherDashboard() {
 
       {/* Filtros */}
       <Row className="mb-4">
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Analizar curso</Form.Label>
-            <Form.Select
-              value={selectedAsignatura}
-              onChange={(e) => setSelectedAsignatura(e.target.value)}
-            >
-              <option value="">-- Selecciona un curso --</option>
-              {subjectList.map((nombre) => (
-                <option key={nombre} value={nombre}>
-                  {nombre}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
+        <Col md={6} className="mb-3">
+          <Card className="glass-card border-0 h-100">
+            <Card.Body>
+              <p className="section-title mb-1">Analizar curso</p>
+              <small className="text-muted">Cambia entre tus asignaturas vinculadas.</small>
+              <Form.Select
+                className="mt-2"
+                value={selectedAsignatura}
+                onChange={(e) => setSelectedAsignatura(e.target.value)}
+              >
+                <option value="">-- Selecciona un curso --</option>
+                {subjectList.map((nombre) => (
+                  <option key={nombre} value={nombre}>
+                    {nombre}
+                  </option>
+                ))}
+              </Form.Select>
+            </Card.Body>
+          </Card>
         </Col>
-        <Col md={6}>
-          <Form.Group>
-            <Form.Label>Periodo académico</Form.Label>
-            <Form.Select
-              value={selectedPeriod}
-              onChange={(e) => setSelectedPeriod(Number(e.target.value))}
-            >
-              {periodos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
+        <Col md={6} className="mb-3">
+          <Card className="glass-card border-0 h-100">
+            <Card.Body>
+              <p className="section-title mb-1">Periodo académico</p>
+              <small className="text-muted">Ajusta los indicadores visualizados.</small>
+              <Form.Select
+                className="mt-2"
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(Number(e.target.value))}
+              >
+                {periodos.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nombre}
+                  </option>
+                ))}
+              </Form.Select>
+            </Card.Body>
+          </Card>
         </Col>
       </Row>
 
@@ -663,7 +686,7 @@ export default function TeacherDashboard() {
       {selectedAsignatura && (
         <Row className="mb-4">
           <Col lg={7}>
-            <Card className="card-surface">
+            <Card className="glass-card border-0 h-100">
               <Card.Body>
                 <Card.Title className="mb-3">
                   Comparación por grado - {selectedAsignatura}
@@ -694,7 +717,7 @@ export default function TeacherDashboard() {
           </Col>
 
           <Col lg={5}>
-            <Card className="card-surface">
+            <Card className="glass-card border-0 h-100">
               <Card.Body>
                 <Card.Title className="mb-3">Distribución de rendimiento</Card.Title>
                 {statsLoading ? (

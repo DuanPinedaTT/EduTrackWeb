@@ -8,12 +8,12 @@ import {
   Button,
   Table,
   Alert,
-  Badge,
-  ButtonGroup
+  Badge
 } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import PageHero from "../components/PageHero.jsx";
 
 export default function AdminCursos() {
   const [teachers, setTeachers] = useState([]);
@@ -189,13 +189,18 @@ export default function AdminCursos() {
   };
 
   return (
-    <Container fluid>
-      <Row className="mb-3">
+    <Container fluid className="pb-5">
+      <Row className="mb-4">
         <Col>
-          <h3>Gestión de cursos</h3>
-          <p className="text-muted">
-            Crea, asigna y administra cursos, sus docentes y estudiantes.
-          </p>
+          <PageHero
+            eyebrow="Administración"
+            title="Gestión de cursos"
+            description="Crea, asigna y administra cursos, sus docentes y estudiantes."
+            stats={[
+              { label: "Cursos activos", value: courses.length },
+              { label: "Docentes registrados", value: teachers.length }
+            ]}
+          />
         </Col>
       </Row>
 
@@ -211,7 +216,7 @@ export default function AdminCursos() {
 
       <Row>
         <Col md={5}>
-          <Card className="shadow-sm mb-3">
+          <Card className="glass-card border-0 mb-3">
             <Card.Body>
               <Card.Title className="mb-3">
                 {editingCourseId ? "Editar curso" : "Nuevo curso"}
@@ -288,7 +293,7 @@ export default function AdminCursos() {
         </Col>
 
         <Col md={7}>
-          <Card className="shadow-sm mb-3">
+          <Card className="glass-card border-0 mb-3">
             <Card.Body>
               <Card.Title className="d-flex justify-content-between align-items-center mb-3">
                 <span>Listado de cursos</span>
@@ -301,67 +306,75 @@ export default function AdminCursos() {
               {loadingCourses ? (
                 <LoadingSpinner />
               ) : (
-                <Table striped hover responsive>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Curso</th>
-                      <th>Grupo</th>
-                      <th>Grado</th>
-                      <th>Asignatura</th>
-                      <th>Docente</th>
-                      <th>Estudiantes</th>
-                      <th className="text-end">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                        {courses.length === 0 ? (
+                <div className="table-card">
+                  <Table hover responsive className="mb-0">
+                    <thead>
                       <tr>
-                        <td colSpan={8} className="text-center text-muted">
-                          No hay cursos registrados.
-                        </td>
+                        <th>#</th>
+                        <th>Curso</th>
+                        <th>Grupo</th>
+                        <th>Grado</th>
+                        <th>Asignatura</th>
+                        <th>Docente</th>
+                        <th>Estudiantes</th>
+                        <th className="text-end">Acciones</th>
                       </tr>
-                    ) : (
-                      courses.map((c, index) => (
-                        <tr key={c.id}>
-                          <td>{index + 1}</td>
-                          <td>{c.nombre}</td>
-                          <td>{c.grupo || "-"}</td>
-                          <td>{c.gradoNombre || c.grado || "-"}</td>
-                          <td>{c.asignaturaNombre || "-"}</td>
-                          <td>{c.docenteNombre || "Sin asignar"}</td>
-                          <td>
-                            <Badge bg="info">
-                              {studentCounts[c.id] ?? "—"} est.
-                            </Badge>
-                          </td>
-                          <td className="text-end">
-                            <ButtonGroup size="sm">
-                              <Button
-                                variant="outline-secondary"
-                                onClick={() => handleViewStudents(c.id)}
-                              >
-                                Ver
-                              </Button>
-                              <Button
-                                variant="outline-primary"
-                                onClick={() => handleEditCourse(c)}
-                              >
-                                Editar
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                onClick={() => handleDeleteCourse(c.id)}
-                              >
-                                Eliminar
-                              </Button>
-                            </ButtonGroup>
+                    </thead>
+                    <tbody>
+                      {courses.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="text-center text-muted">
+                            No hay cursos registrados.
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </Table>
+                      ) : (
+                        courses.map((c, index) => (
+                          <tr key={c.id}>
+                            <td>{index + 1}</td>
+                            <td>{c.nombre}</td>
+                            <td>{c.grupo || "-"}</td>
+                            <td>{c.gradoNombre || c.grado || "-"}</td>
+                            <td>{c.asignaturaNombre || "-"}</td>
+                            <td>{c.docenteNombre || "Sin asignar"}</td>
+                            <td>
+                              <Badge bg="info">
+                                {studentCounts[c.id] ?? "—"} est.
+                              </Badge>
+                            </td>
+                            <td className="text-end">
+                              <div className="d-flex justify-content-end gap-2 flex-wrap">
+                                <Button
+                                  size="sm"
+                                  variant="light"
+                                  className="pill-button"
+                                  onClick={() => handleViewStudents(c.id)}
+                                >
+                                  Ver
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="light"
+                                  className="pill-button"
+                                  onClick={() => handleEditCourse(c)}
+                                >
+                                  Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="light"
+                                  className="pill-button"
+                                  onClick={() => handleDeleteCourse(c.id)}
+                                >
+                                  Eliminar
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </Table>
+                </div>
               )}
             </Card.Body>
           </Card>
