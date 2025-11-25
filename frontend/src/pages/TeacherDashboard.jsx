@@ -414,14 +414,24 @@ export default function TeacherDashboard() {
             description={heroDescription}
             stats={heroStats}
             action={(
-              <Button
-                variant="light"
-                size="sm"
-                className="pill-button active"
-                onClick={() => navigate("/teacher/comunicaciones")}
-              >
-                Centro de comunicaciones
-              </Button>
+              <div className="d-flex gap-2 flex-wrap">
+                <Button
+                  variant="light"
+                  size="sm"
+                  className="pill-button"
+                  onClick={() => navigate("/teacher/asistencias")}
+                >
+                  Registrar asistencias
+                </Button>
+                <Button
+                  variant="light"
+                  size="sm"
+                  className="pill-button active"
+                  onClick={() => navigate("/teacher/comunicaciones")}
+                >
+                  Centro de comunicaciones
+                </Button>
+              </div>
             )}
           />
         </Col>

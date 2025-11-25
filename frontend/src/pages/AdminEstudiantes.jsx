@@ -12,7 +12,8 @@ import {
   Modal,
   Tabs,
   Tab,
-  ListGroup
+  ListGroup,
+  Spinner
 } from "react-bootstrap";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
@@ -34,6 +35,7 @@ export default function AdminEstudiantes() {
   const [reportLoading, setReportLoading] = useState(false);
   const [studentReport, setStudentReport] = useState(null);
   const [activeTab, setActiveTab] = useState("estudiantes");
+  const [summaryModal, setSummaryModal] = useState({ show: false, loading: false, student: null, courses: [], error: null });
   
   const [selectedCursoFilter, setSelectedCursoFilter] = useState("");
   const [selectedGradoFilter, setSelectedGradoFilter] = useState("");
@@ -367,32 +369,56 @@ export default function AdminEstudiantes() {
     return grado?.grupos || [];
   };
 
-  const handleViewInscripciones = (studentId) => {
-    const list = (inscripcionesByStudent[studentId] || []).map(i => {
-      const curso = cursos.find(c => c.id === i.cursoId);
-      return curso ? `${curso.nombre} (${curso.gradoNombre || curso.grado || '-'})` : `Curso #${i.cursoId}`;
-    });
-    alert(list.length ? list.join('\n') : 'Sin inscripciones');
+  const handleViewStudentSummary = async (student) => {
+    const inscripciones = inscripcionesByStudent[student.id] || [];
+    setSummaryModal({ show: true, loading: true, student, courses: [], error: null });
+
+    if (inscripciones.length === 0) {
+      setSummaryModal((prev) => ({ ...prev, loading: false, error: "El estudiante no tiene cursos asignados." }));
+      return;
+    }
+
+    try {
+      const summaries = await Promise.all(
+        inscripciones.map(async (inscripcion) => {
+          const curso = cursos.find((c) => c.id === inscripcion.cursoId);
+          let promedio = null;
+          let notasDestacadas = [];
+
+          try {
+            const notasRes = await api.get(`/Notas/curso/${inscripcion.cursoId}`);
+            const notasData = Array.isArray(notasRes.data) ? notasRes.data : [];
+            const match = notasData.find((entry) => Number(entry.id) === Number(student.id));
+            promedio = match?.promedio ?? null;
+            notasDestacadas = (match?.notas || [])
+              .filter((nota) => nota.valor != null)
+              .slice(0, 4)
+              .map((nota) => ({ nombre: nota.nombre, valor: nota.valor }));
+          } catch (notesErr) {
+            console.error("Error cargando notas del curso", inscripcion.cursoId, notesErr);
+          }
+
+          return {
+            cursoId: inscripcion.cursoId,
+            cursoNombre: curso?.nombre || `Curso #${inscripcion.cursoId}`,
+            grado: curso?.gradoNombre || curso?.grado || "Sin grado",
+            grupo: curso?.grupo || "-",
+            promedio,
+            notas: notasDestacadas
+          };
+        })
+      );
+
+      setSummaryModal((prev) => ({ ...prev, loading: false, courses: summaries, error: null }));
+    } catch (err) {
+      console.error("Error generando resumen", err);
+      setSummaryModal((prev) => ({ ...prev, loading: false, error: err.response?.data || "No se pudo generar el resumen" }));
+    }
   };
 
   const handleResetFilters = () => {
     setSelectedCursoFilter("");
     setSelectedGradoFilter("");
-  };
-
-  const handleResetPortal = async (studentId) => {
-    try {
-      const res = await api.post(`/Estudiantes/${studentId}/reset-portal`);
-      const cred = res.data;
-      alert(
-        cred?.passwordTemporal
-          ? `Portal reiniciado. Usuario: ${cred.usuario}, Contraseña: ${cred.passwordTemporal}`
-          : "Portal actualizado."
-      );
-      await loadEstudiantes();
-    } catch (err) {
-      setError(err.response?.data || "Error reiniciando acceso");
-    }
   };
 
   const upsertTutorHijo = (nuevo) => {
@@ -800,7 +826,7 @@ export default function AdminEstudiantes() {
                                       size="sm"
                                       variant="light"
                                       className="pill-button"
-                                      onClick={() => handleViewInscripciones(e.id)}
+                                      onClick={() => handleViewStudentSummary(e)}
                                     >
                                       Ver
                                     </Button>
@@ -811,14 +837,6 @@ export default function AdminEstudiantes() {
                                       onClick={() => handleEdit(e)}
                                     >
                                       Editar
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="light"
-                                      className="pill-button"
-                                      onClick={() => handleResetPortal(e.id)}
-                                    >
-                                      Portal
                                     </Button>
                                     <Button
                                       size="sm"
@@ -1044,6 +1062,69 @@ export default function AdminEstudiantes() {
         </Tab>
       </Tabs>
       {/* Modal informe por estudiante (documento) */}
+      <Modal
+        show={summaryModal.show}
+        onHide={() => setSummaryModal((prev) => ({ ...prev, show: false }))}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Resumen académico{summaryModal.student ? ` • ${summaryModal.student.nombre}` : ""}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {summaryModal.loading ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" />
+            </div>
+          ) : summaryModal.error ? (
+            <Alert variant="light" className="mb-0">
+              {summaryModal.error}
+            </Alert>
+          ) : summaryModal.courses.length === 0 ? (
+            <Alert variant="light" className="mb-0">
+              No se encontraron cursos con notas asociadas.
+            </Alert>
+          ) : (
+            summaryModal.courses.map((course) => (
+              <Card key={course.cursoId} className="glass-card border-0 mb-3">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                      <strong>{course.cursoNombre}</strong>
+                      <small className="d-block text-muted">
+                        {course.grado} • Grupo {course.grupo}
+                      </small>
+                    </div>
+                    <div className="text-end">
+                      <p className="text-muted mb-1">Promedio</p>
+                      <h4 className="mb-0">{course.promedio != null ? Number(course.promedio).toFixed(2) : "—"}</h4>
+                    </div>
+                  </div>
+                  {course.notas.length === 0 ? (
+                    <small className="text-muted">Sin notas cargadas para este curso.</small>
+                  ) : (
+                    <div className="table-card">
+                      <Table size="sm" className="mb-0">
+                        <tbody>
+                          {course.notas.map((nota) => (
+                            <tr key={`${course.cursoId}-${nota.nombre}`}>
+                              <td>{nota.nombre}</td>
+                              <td className="text-end">{nota.valor != null ? Number(nota.valor).toFixed(1) : "—"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            ))
+          )}
+        </Modal.Body>
+      </Modal>
+
       <Modal show={showReportModal} onHide={() => setShowReportModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Informe del estudiante</Modal.Title>

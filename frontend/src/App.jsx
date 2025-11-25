@@ -18,6 +18,7 @@ import Profile from "./pages/Profile.jsx";
 import StudentDashboard from "./pages/StudentDashboard.jsx";
 import ParentDashboard from "./pages/ParentDashboard.jsx";
 import TeacherCommunications from "./pages/TeacherCommunications.jsx";
+import TeacherAsistencias from "./pages/TeacherAsistencias.jsx";
 
 import Navbar from "./components/Navbar.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
@@ -161,6 +162,17 @@ export default function App() {
               <PrivateRoute roles={["docente"]}>
                 <DashboardLayout>
                   <TeacherCommunications />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/teacher/asistencias"
+            element={
+              <PrivateRoute roles={["docente"]}>
+                <DashboardLayout>
+                  <TeacherAsistencias />
                 </DashboardLayout>
               </PrivateRoute>
             }

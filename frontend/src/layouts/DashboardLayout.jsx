@@ -138,6 +138,14 @@ export default function DashboardLayout({ children }) {
           Centro de comunicaciones
         </ListGroup.Item>
 
+        <ListGroup.Item
+          as={Link}
+          to="/teacher/asistencias"
+          className={`menu-item mb-1 ${location.pathname === "/teacher/asistencias" ? "active" : ""}`}
+        >
+          Registro de asistencias
+        </ListGroup.Item>
+
         <ListGroup.Item className="menu-item mb-1" onClick={() => setShowAssignments((prev) => !prev)}>
           <div className="d-flex justify-content-between align-items-center">
             <span>Mis asignaturas</span>

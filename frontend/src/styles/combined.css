@@ -159,11 +159,16 @@ body {
   display: grid;
   grid-template-columns: 260px 1fr;
   min-height: calc(100vh - 80px);
+  align-items: flex-start;
 }
 .shell-sidebar {
   padding: 2rem 1.5rem;
   background: rgba(255, 255, 255, 0.75);
   border-right: 1px solid rgba(99, 102, 241, 0.12);
+  position: sticky;
+  top: 80px;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
 }
 .shell-main {
   padding: 2.5rem;
@@ -433,6 +438,9 @@ body {
     order: 2;
     border-right: none;
     border-top: 1px solid rgba(99, 102, 241, 0.12);
+    position: static;
+    height: auto;
+    overflow: visible;
   }
   .shell-main {
     order: 1;
