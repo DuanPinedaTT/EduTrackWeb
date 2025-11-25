@@ -22,6 +22,10 @@ body {
   color: var(--text-dark);
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Navbar */
 .app-navbar {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
@@ -147,6 +151,19 @@ body {
 .home-hero-wrapper { background: linear-gradient(to bottom, #f8f9ff, #ffffff); }
 .hero-card { border-radius: 16px; height: 360px; display:flex; align-items:center; justify-content:center; box-shadow: var(--shadow-lg); background: var(--bg-gradient); }
 .feature-card { border: none; }
+.role-card {
+  border-radius: 16px;
+  background: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.role-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+.role-card .btn {
+  width: 100%;
+  font-weight: 600;
+}
 
 /* Utilities */
 .transparent-bg { background: transparent !important; }
@@ -200,4 +217,30 @@ body {
 }
 .icon-btn svg {
   font-size: 0.9rem;
+}
+
+.destinatarios-list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+@media (max-width: 991px) {
+  .sidebar-panel {
+    min-height: auto;
+    margin-bottom: 1rem;
+  }
+
+  .sidebar-panel .menu-item {
+    width: 100%;
+  }
+}
+
+@media (max-width: 575px) {
+  .role-card {
+    text-align: center;
+  }
+
+  .role-card .btn {
+    align-self: stretch;
+  }
 }

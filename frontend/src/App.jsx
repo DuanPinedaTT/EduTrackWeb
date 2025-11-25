@@ -15,6 +15,9 @@ import AdminAsignaturas from "./pages/AdminAsignaturas.jsx";
 import AdminGrados from "./pages/AdminGrados.jsx";
 import AdminCursoAsignaturas from "./pages/AdminCursoAsignaturas.jsx";
 import Profile from "./pages/Profile.jsx";
+import StudentDashboard from "./pages/StudentDashboard.jsx";
+import ParentDashboard from "./pages/ParentDashboard.jsx";
+import TeacherCommunications from "./pages/TeacherCommunications.jsx";
 
 import Navbar from "./components/Navbar.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
@@ -147,6 +150,39 @@ export default function App() {
               <PrivateRoute roles={["docente"]}>
                 <DashboardLayout>
                   <TeacherDashboard />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/teacher/comunicaciones"
+            element={
+              <PrivateRoute roles={["docente"]}>
+                <DashboardLayout>
+                  <TeacherCommunications />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/student"
+            element={
+              <PrivateRoute roles={["estudiante"]}>
+                <DashboardLayout>
+                  <StudentDashboard />
+                </DashboardLayout>
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/familia"
+            element={
+              <PrivateRoute roles={["tutor"]}>
+                <DashboardLayout>
+                  <ParentDashboard />
                 </DashboardLayout>
               </PrivateRoute>
             }

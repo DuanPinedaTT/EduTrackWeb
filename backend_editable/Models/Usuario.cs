@@ -11,12 +11,16 @@ namespace edutrack_academy_api.Models
         public string Nombre { get; set; } = null!;
         public string Apellido { get; set; } = null!;
         public string Email { get; set; } = null!;
-        public string Rol { get; set; } = null!; // "admin" | "docente"
+        public string Rol { get; set; } = null!; // "admin" | "docente" | "estudiante" | "tutor"
         public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
 
         public ICollection<Curso> CursosAsignados { get; set; } = new List<Curso>();
         public ICollection<DocenteAsignatura> DocenteAsignaturas { get; set; } = new List<DocenteAsignatura>();
         public ICollection<DocenteGradoGrupo> DocenteGradoGrupos { get; set; } = new List<DocenteGradoGrupo>();
+        public ICollection<TutorEstudiante> TutorEstudiantes { get; set; } = new List<TutorEstudiante>();
+        public ICollection<Asistencia> AsistenciasRegistradas { get; set; } = new List<Asistencia>();
+        public ICollection<Comunicacion> ComunicacionesEmitidas { get; set; } = new List<Comunicacion>();
+        public ICollection<ComunicacionDestino> ComunicacionesRecibidas { get; set; } = new List<ComunicacionDestino>();
     }
 
     public class RegistroUsuarioDTO

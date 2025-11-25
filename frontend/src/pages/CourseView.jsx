@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Container,
   Row,
@@ -49,8 +49,6 @@ export default function CourseView() {
   const [editingConfig, setEditingConfig] = useState(null);
   const [activePeriod, setActivePeriod] = useState(() => resolvePeriodFromSearch(location.search));
 
-  const hasCreatedDefault = useRef(false);
-
   const [newColumn, setNewColumn] = useState({
     nombre: "",
     peso: "",
@@ -90,64 +88,7 @@ export default function CourseView() {
   };
 
   useEffect(() => {
-    const nextPeriod = resolvePeriodFromSearch(location.search);
-    setActivePeriod(nextPeriod);
-    setNewColumn((prev) => ({ ...prev, periodo: nextPeriod }));
-  }, [location.search]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const init = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const [coursesRes, configsRes, studentsRes] = await Promise.all([
-          api.get("/cursos"),
-          api.get(`/Notas/curso/${id}/config`),
-          api.get(`/Notas/curso/${id}`)
-        ]);
-
-        if (!isMounted) return;
-
-        const c = coursesRes.data.find((x) => x.id === Number(id));
-        setCourse(c || null);
-        setConfigs(configsRes.data || []);
-        setStudents(studentsRes.data || []);
-
-        if ((configsRes.data || []).length === 0 && !hasCreatedDefault.current) {
-          hasCreatedDefault.current = true;
-          
-          await api.post(`/Notas/curso/${id}/config`, {
-            nombre: "Nota 1",
-            orden: 1,
-            peso: 100,
-            periodo: 1
-          });
-
-          const newConfigsRes = await api.get(`/Notas/curso/${id}/config`);
-          if (isMounted) {
-            setConfigs(newConfigsRes.data || []);
-          }
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err.response?.data || "Error cargando datos");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    hasCreatedDefault.current = false;
-    init();
-
-    return () => {
-      isMounted = false;
-    };
+    loadAll();
   }, [id]);
 
   const handleAddColumn = async () => {
@@ -272,6 +213,24 @@ export default function CourseView() {
     (sum, c) => sum + Number(c.peso || 0),
     0
   );
+
+  const calculateStudentPeriodAverage = (student) => {
+    if (!student || configsForSelectedPeriod.length === 0) return null;
+    let sumaPesos = 0;
+    let sumaProductos = 0;
+
+    configsForSelectedPeriod.forEach((cfg) => {
+      const nota = (student.notas || []).find((n) => n.notaConfigId === cfg.id);
+      const peso = Number(cfg.peso || 0);
+      if (nota?.valor != null && peso > 0) {
+        sumaPesos += peso;
+        sumaProductos += nota.valor * peso;
+      }
+    });
+
+    if (sumaPesos === 0) return null;
+    return Number((sumaProductos / sumaPesos).toFixed(2));
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -436,46 +395,49 @@ export default function CourseView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((est) => (
-                    <tr key={est.id}>
-                      <td>{est.nombre}</td>
-                      <td>{est.documento}</td>
-                      {configsForSelectedPeriod.map((cfg) => {
-                        const nota = est.notas.find((n) => n.notaConfigId === cfg.id);
-                        return (
-                          <td key={`${est.id}-${cfg.id}`}>
-                            <Form.Control
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              max="5"
-                              value={nota?.valor ?? ""}
-                              onChange={(e) =>
-                                handleGradeChange(
-                                  est.id,
-                                  cfg.id,
-                                  e.target.value === "" ? "" : Number(e.target.value)
-                                )
-                              }
-                              style={{
-                                borderLeft: nota?.valor
-                                  ? `4px solid ${getGradeColor(nota.valor)}`
-                                  : "none",
-                                width: "85px"
-                              }}
-                            />
-                          </td>
-                        );
-                      })}
-                      <td>
-                        {est.promedio != null ? (
-                          <Badge bg="primary">{est.promedio.toFixed(2)}</Badge>
-                        ) : (
-                          <Badge bg="secondary">-</Badge>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {students.map((est) => {
+                    const promedioPeriodo = calculateStudentPeriodAverage(est);
+                    return (
+                      <tr key={est.id}>
+                        <td>{est.nombre}</td>
+                        <td>{est.documento}</td>
+                        {configsForSelectedPeriod.map((cfg) => {
+                          const nota = est.notas.find((n) => n.notaConfigId === cfg.id);
+                          return (
+                            <td key={`${est.id}-${cfg.id}`}>
+                              <Form.Control
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="5"
+                                value={nota?.valor ?? ""}
+                                onChange={(e) =>
+                                  handleGradeChange(
+                                    est.id,
+                                    cfg.id,
+                                    e.target.value === "" ? "" : Number(e.target.value)
+                                  )
+                                }
+                                style={{
+                                  borderLeft: nota?.valor
+                                    ? `4px solid ${getGradeColor(nota.valor)}`
+                                    : "none",
+                                  width: "85px"
+                                }}
+                              />
+                            </td>
+                          );
+                        })}
+                        <td>
+                          {promedioPeriodo != null ? (
+                            <Badge bg="primary">{promedioPeriodo.toFixed(2)}</Badge>
+                          ) : (
+                            <Badge bg="secondary">-</Badge>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </Table>
             </div>

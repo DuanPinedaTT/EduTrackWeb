@@ -10,7 +10,9 @@ import {
   Alert,
   Badge,
   ButtonGroup,
-  Modal
+  Modal,
+  Tabs,
+  Tab
 } from "react-bootstrap";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
@@ -30,6 +32,7 @@ export default function AdminEstudiantes() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportLoading, setReportLoading] = useState(false);
   const [studentReport, setStudentReport] = useState(null);
+  const [activeTab, setActiveTab] = useState("estudiantes");
   
   const [selectedCursoFilter, setSelectedCursoFilter] = useState("");
   const [selectedGradoFilter, setSelectedGradoFilter] = useState("");
@@ -40,6 +43,19 @@ export default function AdminEstudiantes() {
     gradoId: "",
     grupo: ""
   });
+
+  const [tutores, setTutores] = useState([]);
+  const [loadingTutores, setLoadingTutores] = useState(false);
+  const [editingTutorId, setEditingTutorId] = useState(null);
+  const initialTutorState = {
+    nombre: "",
+    apellido: "",
+    email: "",
+    user: "",
+    password: "",
+    hijos: []
+  };
+  const [tutorForm, setTutorForm] = useState({ ...initialTutorState });
 
   const loadEstudiantes = async () => {
     try {
@@ -85,8 +101,20 @@ export default function AdminEstudiantes() {
     }
   };
 
+  const loadTutores = async () => {
+    try {
+      setLoadingTutores(true);
+      const res = await api.get("/Tutores");
+      setTutores(res.data || []);
+    } catch (err) {
+      console.error("Error cargando tutores", err);
+    } finally {
+      setLoadingTutores(false);
+    }
+  };
+
   useEffect(() => {
-    Promise.all([loadEstudiantes(), loadCursos(), loadGrados()]);
+    Promise.all([loadEstudiantes(), loadCursos(), loadGrados(), loadTutores()]);
   }, []);
 
   const handleSearchByDocumento = async () => {
@@ -272,13 +300,145 @@ export default function AdminEstudiantes() {
     setSelectedGradoFilter("");
   };
 
+  const handleResetPortal = async (studentId) => {
+    try {
+      const res = await api.post(`/Estudiantes/${studentId}/reset-portal`);
+      const cred = res.data;
+      alert(
+        cred?.passwordTemporal
+          ? `Portal reiniciado. Usuario: ${cred.usuario}, Contraseña: ${cred.passwordTemporal}`
+          : "Portal actualizado."
+      );
+    } catch (err) {
+      setError(err.response?.data || "Error reiniciando acceso");
+    }
+  };
+
+  const upsertTutorHijo = (nuevo) => {
+    setTutorForm((prev) => {
+      const exists = prev.hijos.some((h) => h.estudianteId === nuevo.estudianteId);
+      const hijos = exists
+        ? prev.hijos.map((h) => (h.estudianteId === nuevo.estudianteId ? nuevo : h))
+        : [...prev.hijos, nuevo];
+      return { ...prev, hijos };
+    });
+  };
+
+  const removeTutorHijo = (estudianteId) => {
+    setTutorForm((prev) => ({
+      ...prev,
+      hijos: prev.hijos.filter((h) => h.estudianteId !== estudianteId)
+    }));
+  };
+
+  const handleTutorFieldChange = (e) => {
+    const { name, value } = e.target;
+    setTutorForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddTutorStudent = (estudianteId) => {
+    const est = estudiantes.find((s) => s.id === estudianteId);
+    if (!est) return;
+    upsertTutorHijo({
+      estudianteId,
+      nombre: est.nombre,
+      documento: est.documento,
+      relacion: "Tutor",
+      esPrincipal: tutorForm.hijos.length === 0
+    });
+  };
+
+  const handleUpdateHijoField = (estudianteId, field, value) => {
+    setTutorForm((prev) => ({
+      ...prev,
+      hijos: prev.hijos.map((h) =>
+        h.estudianteId === estudianteId ? { ...h, [field]: value } : h
+      )
+    }));
+  };
+
+  const resetTutorForm = () => {
+    setEditingTutorId(null);
+    setTutorForm({ ...initialTutorState });
+  };
+
+  const handleEditTutor = (tutor) => {
+    setEditingTutorId(tutor.id);
+    setTutorForm({
+      nombre: tutor.nombre,
+      apellido: tutor.apellido,
+      email: tutor.email,
+      user: tutor.user,
+      password: "",
+      hijos: (tutor.estudiantes || []).map((h) => ({
+        estudianteId: h.estudianteId,
+        nombre: h.nombre,
+        documento: h.documento,
+        relacion: h.relacion,
+        esPrincipal: h.esPrincipal
+      }))
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setActiveTab("tutores");
+  };
+
+  const handleSubmitTutor = async (e) => {
+    e.preventDefault();
+    if (!tutorForm.hijos.length) {
+      alert("Debes vincular al menos un estudiante");
+      return;
+    }
+
+    try {
+      setError(null);
+      const payload = {
+        nombre: tutorForm.nombre,
+        apellido: tutorForm.apellido,
+        email: tutorForm.email,
+        user: tutorForm.user || undefined,
+        password: tutorForm.password || undefined,
+        hijos: tutorForm.hijos.map((h) => ({
+          estudianteId: h.estudianteId,
+          relacion: h.relacion,
+          esPrincipal: h.esPrincipal
+        }))
+      };
+
+      if (editingTutorId) {
+        await api.put(`/Tutores/${editingTutorId}`, payload);
+      } else {
+        const res = await api.post("/Tutores", payload);
+        if (res.data?.credenciales) {
+          alert(
+            `Tutor creado. Usuario: ${res.data.credenciales.usuario}, Contraseña temporal: ${res.data.credenciales.passwordTemporal}`
+          );
+        }
+      }
+
+      await loadTutores();
+      resetTutorForm();
+    } catch (err) {
+      setError(err.response?.data || "Error guardando tutor");
+    }
+  };
+
+  const handleDeleteTutor = async (id) => {
+    if (!window.confirm("¿Eliminar este tutor y su acceso al portal?")) return;
+    try {
+      await api.delete(`/Tutores/${id}`);
+      await loadTutores();
+    } catch (err) {
+      setError(err.response?.data || "Error eliminando tutor");
+    }
+  };
+
   return (
     <Container fluid>
       <Row className="mb-3">
         <Col>
-          <h3>Gestión de estudiantes</h3>
+          <h3>Gestión de estudiantes y tutores</h3>
           <p className="text-muted">
-            Crea, edita y asigna estudiantes a grados y grupos.
+            Administra matrículas y accesos al portal familiar.
           </p>
         </Col>
       </Row>
@@ -293,228 +453,438 @@ export default function AdminEstudiantes() {
         </Row>
       )}
 
-      <Row>
-        <Col md={4}>
-          <Card className="card-surface mb-3">
-            <Card.Body>
-              <Card.Title className="mb-3">
-                {editingId ? "Editar estudiante" : "Nuevo estudiante"}
-              </Card.Title>
-              <Form onSubmit={handleSubmit}>
-                <Form.Group className="mb-2">
-                  <Form.Label>Nombre completo</Form.Label>
-                  <Form.Control
-                    name="nombre"
-                    value={form.nombre}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-2">
-                  <Form.Label>Documento</Form.Label>
-                  <Form.Control
-                    name="documento"
-                    value={form.documento}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-2">
-                  <Form.Label>Grado</Form.Label>
-                  <Form.Select
-                    name="gradoId"
-                    value={form.gradoId}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Selecciona grado</option>
-                    {grados.map((g) => (
-                      <option key={g.id} value={g.id}>{g.nombre}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Grupo</Form.Label>
-                  <Form.Select
-                    name="grupo"
-                    value={form.grupo}
-                    onChange={handleChange}
-                    disabled={!form.gradoId}
-                    required
-                  >
-                    <option value="">Selecciona grupo</option>
-                    {gruposDisponibles().map((gr) => (
-                      <option key={gr} value={gr}>{gr}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <div className="d-flex justify-content-between">
-                  <Button type="submit" className="primary-btn">
-                    {editingId ? "Guardar cambios" : "Crear estudiante"}
-                  </Button>
-                  {editingId && (
-                    <Button variant="secondary" onClick={resetForm}>
-                      Cancelar
-                    </Button>
-                  )}
-                </div>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col md={8}>
-          <Card className="card-surface mb-3">
-            <Card.Body>
-              <Card.Title className="d-flex justify-content-between align-items-center mb-3">
-                <span>Lista de estudiantes</span>
-                {(loadingEst || loadingCursos) && (
-                  <Badge bg="secondary" pill>
-                    Cargando...
-                  </Badge>
-                )}
-              </Card.Title>
-
-              {/* Filtros */}
-              <Row className="mb-3">
-                <Col md={4}>
-                  <Form.Group>
-                    <Form.Label>Filtrar por grado</Form.Label>
-                    <Form.Select
-                      value={selectedGradoFilter}
-                      onChange={(e) => setSelectedGradoFilter(e.target.value)}
-                    >
-                      <option value="">Todos los grados</option>
-                      {grados.map((g) => (
-                        <option key={g.id} value={g.nombre}>
-                          {g.nombre}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={5}>
-                  <Form.Group>
-                    <Form.Label>Filtrar por curso</Form.Label>
-                    <Form.Select
-                      value={selectedCursoFilter}
-                      onChange={(e) => setSelectedCursoFilter(e.target.value)}
-                    >
-                      <option value="">Todos los cursos</option>
-                      {cursos
-                        .filter((c) => 
-                          selectedGradoFilter === "" || (c.gradoNombre || c.grado) === selectedGradoFilter
-                        )
-                        .map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.nombre} {c.gradoNombre ? `(${c.gradoNombre})` : c.grado ? `(${c.grado})` : ""}
-                          </option>
+      <Tabs activeKey={activeTab} onSelect={(key) => setActiveTab(key)} className="mb-3">
+        <Tab eventKey="estudiantes" title="Estudiantes">
+          <Row>
+            <Col md={4}>
+              <Card className="card-surface mb-3">
+                <Card.Body>
+                  <Card.Title className="mb-3">
+                    {editingId ? "Editar estudiante" : "Nuevo estudiante"}
+                  </Card.Title>
+                  <Form onSubmit={handleSubmit}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>Nombre completo</Form.Label>
+                      <Form.Control
+                        name="nombre"
+                        value={form.nombre}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Form.Group>
+                    <Form.Group className="mb-2">
+                      <Form.Label>Documento</Form.Label>
+                      <Form.Control
+                        name="documento"
+                        value={form.documento}
+                        onChange={handleChange}
+                        required
+                      />
+                    </Form.Group>
+                    <Form.Group className="mb-2">
+                      <Form.Label>Grado</Form.Label>
+                      <Form.Select
+                        name="gradoId"
+                        value={form.gradoId}
+                        onChange={handleChange}
+                        required
+                      >
+                        <option value="">Selecciona grado</option>
+                        {grados.map((g) => (
+                          <option key={g.id} value={g.id}>{g.nombre}</option>
                         ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={3} className="d-flex align-items-end">
-                  <div className="w-100 d-flex gap-2">
-                    <Form.Control placeholder="Buscar por documento" value={searchDocumento} onChange={(e) => setSearchDocumento(e.target.value)} />
-                    <Button variant="outline-primary" size="sm" onClick={handleSearchByDocumento} disabled={reportLoading}>{reportLoading ? 'Buscando...' : 'Buscar'}</Button>
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      onClick={handleResetFilters}
-                    >
-                      Limpiar
-                    </Button>
-                  </div>
-                </Col>
-              </Row>
+                      </Form.Select>
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                      <Form.Label>Grupo</Form.Label>
+                      <Form.Select
+                        name="grupo"
+                        value={form.grupo}
+                        onChange={handleChange}
+                        disabled={!form.gradoId}
+                        required
+                      >
+                        <option value="">Selecciona grupo</option>
+                        {gruposDisponibles().map((gr) => (
+                          <option key={gr} value={gr}>{gr}</option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                    <div className="d-flex justify-content-between">
+                      <Button type="submit" className="primary-btn">
+                        {editingId ? "Guardar cambios" : "Crear estudiante"}
+                      </Button>
+                      {editingId && (
+                        <Button variant="secondary" onClick={resetForm}>
+                          Cancelar
+                        </Button>
+                      )}
+                    </div>
+                  </Form>
+                </Card.Body>
+              </Card>
+            </Col>
 
-              <Row className="mb-2">
-                <Col>
-                  <small className="text-muted">
-                    Mostrando <strong>{filteredEstudiantes.length}</strong> de{" "}
-                    <strong>{estudiantes.length}</strong> estudiantes
-                    {(selectedGradoFilter || selectedCursoFilter) && (
-                      <Badge bg="info" className="ms-2">
-                        Filtros activos
+            <Col md={8}>
+              <Card className="card-surface mb-3">
+                <Card.Body>
+                  <Card.Title className="d-flex justify-content-between align-items-center mb-3">
+                    <span>Lista de estudiantes</span>
+                    {(loadingEst || loadingCursos) && (
+                      <Badge bg="secondary" pill>
+                        Cargando...
                       </Badge>
                     )}
-                  </small>
-                </Col>
-              </Row>
+                  </Card.Title>
+                  <Row className="mb-3">
+                    <Col md={4}>
+                      <Form.Group>
+                        <Form.Label>Filtrar por grado</Form.Label>
+                        <Form.Select
+                          value={selectedGradoFilter}
+                          onChange={(e) => setSelectedGradoFilter(e.target.value)}
+                        >
+                          <option value="">Todos los grados</option>
+                          {grados.map((g) => (
+                            <option key={g.id} value={g.nombre}>
+                              {g.nombre}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={5}>
+                      <Form.Group>
+                        <Form.Label>Filtrar por curso</Form.Label>
+                        <Form.Select
+                          value={selectedCursoFilter}
+                          onChange={(e) => setSelectedCursoFilter(e.target.value)}
+                        >
+                          <option value="">Todos los cursos</option>
+                          {cursos
+                            .filter((c) =>
+                              selectedGradoFilter === "" || (c.gradoNombre || c.grado) === selectedGradoFilter
+                            )
+                            .map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.nombre} {c.gradoNombre ? `(${c.gradoNombre})` : c.grado ? `(${c.grado})` : ""}
+                              </option>
+                            ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={3} className="d-flex align-items-end">
+                      <div className="w-100 d-flex gap-2">
+                        <Form.Control
+                          placeholder="Buscar por documento"
+                          value={searchDocumento}
+                          onChange={(e) => setSearchDocumento(e.target.value)}
+                        />
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          onClick={handleSearchByDocumento}
+                          disabled={reportLoading}
+                        >
+                          {reportLoading ? "Buscando..." : "Buscar"}
+                        </Button>
+                        <Button
+                          variant="outline-secondary"
+                          size="sm"
+                          onClick={handleResetFilters}
+                        >
+                          Limpiar
+                        </Button>
+                      </div>
+                    </Col>
+                  </Row>
 
-              {loadingEst ? (
-                <LoadingSpinner />
-              ) : (
-                <Table striped hover responsive>
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Nombre</th>
-                      <th>Documento</th>
-                      <th>Grado</th>
-                      <th>Grupo</th>
-                      <th className="text-end">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEstudiantes.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="text-center text-muted">
-                          {selectedCursoFilter || selectedGradoFilter
-                            ? "No hay estudiantes que coincidan con los filtros."
-                            : "No hay estudiantes registrados."}
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredEstudiantes.map((e, index) => (
-                        <tr key={e.id}>
-                          <td>{index + 1}</td>
-                          <td>{e.nombre}</td>
-                          <td>{e.documento}</td>
-                          <td>
-                            {(() => {
-                              const grado = e.gradoNombre || (() => {
-                                const ins = (inscripcionesByStudent[e.id] || [])[0];
-                                return ins ? getCursoGrado(ins.cursoId) : null;
-                              })();
-                              return grado ? <Badge bg="secondary">{grado}</Badge> : <span className="text-muted">-</span>;
-                            })()}
-                          </td>
-                          <td>{(() => {
-                              if (e.grupo) return e.grupo;
-                              const ins = (inscripcionesByStudent[e.id] || [])[0];
-                              if (!ins) return "Sin grupo";
-                              const curso = cursos.find(c => c.id === ins.cursoId);
-                              return curso?.grupo || getCursoNombre(ins.cursoId) || "Sin grupo";
-                            })()}</td>
-                          <td className="text-end">
-                            <ButtonGroup size="sm">
-                              <Button aria-label={`Ver inscripciones de ${e.nombre}`} variant="outline-info" onClick={() => handleViewInscripciones(e.id)}>Ver</Button>
-                              <Button
-                                variant="outline-primary"
-                                onClick={() => handleEdit(e)}
-                              >
-                                Editar
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                onClick={() => handleDelete(e.id)}
-                              >
-                                Eliminar
-                              </Button>
-                            </ButtonGroup>
-                          </td>
+                  <Row className="mb-2">
+                    <Col>
+                      <small className="text-muted">
+                        Mostrando <strong>{filteredEstudiantes.length}</strong> de{" "}
+                        <strong>{estudiantes.length}</strong> estudiantes
+                        {(selectedGradoFilter || selectedCursoFilter) && (
+                          <Badge bg="info" className="ms-2">
+                            Filtros activos
+                          </Badge>
+                        )}
+                      </small>
+                    </Col>
+                  </Row>
+
+                  {loadingEst ? (
+                    <LoadingSpinner />
+                  ) : (
+                    <Table striped hover responsive>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Nombre</th>
+                          <th>Documento</th>
+                          <th>Grado</th>
+                          <th>Grupo</th>
+                          <th>Usuario portal</th>
+                          <th className="text-end">Acciones</th>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </Table>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                      </thead>
+                      <tbody>
+                        {filteredEstudiantes.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="text-center text-muted">
+                              {selectedCursoFilter || selectedGradoFilter
+                                ? "No hay estudiantes que coincidan con los filtros."
+                                : "No hay estudiantes registrados."}
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredEstudiantes.map((e, index) => (
+                            <tr key={e.id}>
+                              <td>{index + 1}</td>
+                              <td>{e.nombre}</td>
+                              <td>{e.documento}</td>
+                              <td>
+                                {(() => {
+                                  const grado = e.gradoNombre || (() => {
+                                    const ins = (inscripcionesByStudent[e.id] || [])[0];
+                                    return ins ? getCursoGrado(ins.cursoId) : null;
+                                  })();
+                                  return grado ? <Badge bg="secondary">{grado}</Badge> : <span className="text-muted">-</span>;
+                                })()}
+                              </td>
+                              <td>
+                                {(() => {
+                                  if (e.grupo) return e.grupo;
+                                  const ins = (inscripcionesByStudent[e.id] || [])[0];
+                                  if (!ins) return "Sin grupo";
+                                  const curso = cursos.find((c) => c.id === ins.cursoId);
+                                  return curso?.grupo || getCursoNombre(ins.cursoId) || "Sin grupo";
+                                })()}
+                              </td>
+                              <td>
+                                {e.usuarioPortal ? (
+                                  <Badge bg="light" text="dark">{e.usuarioPortal}</Badge>
+                                ) : (
+                                  <span className="text-muted">Pendiente</span>
+                                )}
+                              </td>
+                              <td className="text-end">
+                                <ButtonGroup size="sm">
+                                  <Button
+                                    aria-label={`Ver inscripciones de ${e.nombre}`}
+                                    variant="outline-info"
+                                    onClick={() => handleViewInscripciones(e.id)}
+                                  >
+                                    Ver
+                                  </Button>
+                                  <Button variant="outline-primary" onClick={() => handleEdit(e)}>
+                                    Editar
+                                  </Button>
+                                  <Button variant="outline-secondary" onClick={() => handleResetPortal(e.id)}>
+                                    Portal
+                                  </Button>
+                                  <Button variant="outline-danger" onClick={() => handleDelete(e.id)}>
+                                    Eliminar
+                                  </Button>
+                                </ButtonGroup>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </Table>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Tab>
+        <Tab eventKey="tutores" title="Tutores">
+          <Row>
+            <Col md={5}>
+              <Card className="card-surface mb-3">
+                <Card.Body>
+                  <Card.Title className="mb-3">
+                    {editingTutorId ? "Editar tutor" : "Nuevo tutor"}
+                  </Card.Title>
+                  <Form onSubmit={handleSubmitTutor}>
+                    <Form.Group className="mb-2">
+                      <Form.Label>Nombre</Form.Label>
+                      <Form.Control name="nombre" value={tutorForm.nombre} onChange={handleTutorFieldChange} required />
+                    </Form.Group>
+                    <Form.Group className="mb-2">
+                      <Form.Label>Apellido</Form.Label>
+                      <Form.Control name="apellido" value={tutorForm.apellido} onChange={handleTutorFieldChange} required />
+                    </Form.Group>
+                    <Form.Group className="mb-2">
+                      <Form.Label>Email</Form.Label>
+                      <Form.Control type="email" name="email" value={tutorForm.email} onChange={handleTutorFieldChange} required />
+                    </Form.Group>
+                    <Form.Group className="mb-2">
+                      <Form.Label>Usuario (opcional)</Form.Label>
+                      <Form.Control name="user" value={tutorForm.user} onChange={handleTutorFieldChange} placeholder="Ej: padre.juan" />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                      <Form.Label>
+                        Contraseña
+                        {editingTutorId && <small className="text-muted"> (vacío = mantener)</small>}
+                      </Form.Label>
+                      <Form.Control type="password" name="password" value={tutorForm.password} onChange={handleTutorFieldChange} placeholder={editingTutorId ? "••••••" : ""} required={!editingTutorId} />
+                    </Form.Group>
 
+                    <Card className="mb-3">
+                      <Card.Body>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <strong>Hijos vinculados</strong>
+                          <Form.Select size="sm" style={{ width: 200 }} onChange={(e) => {
+                            const value = Number(e.target.value);
+                            if (value) {
+                              handleAddTutorStudent(value);
+                              e.target.value = "";
+                            }
+                          }}>
+                            <option value="">Seleccionar estudiante</option>
+                            {estudiantes
+                              .filter((s) => !tutorForm.hijos.some((h) => h.estudianteId === s.id))
+                              .map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.nombre} ({s.documento})
+                                </option>
+                              ))}
+                          </Form.Select>
+                        </div>
+                        {tutorForm.hijos.length === 0 ? (
+                          <p className="text-muted mb-0">No hay estudiantes vinculados.</p>
+                        ) : (
+                          <Table size="sm" responsive>
+                            <thead>
+                              <tr>
+                                <th>Nombre</th>
+                                <th>Relación</th>
+                                <th>Principal</th>
+                                <th></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {tutorForm.hijos.map((h) => (
+                                <tr key={h.estudianteId}>
+                                  <td>
+                                    <div className="fw-semibold">{h.nombre}</div>
+                                    <small className="text-muted">{h.documento}</small>
+                                  </td>
+                                  <td>
+                                    <Form.Control
+                                      size="sm"
+                                      value={h.relacion}
+                                      onChange={(e) => handleUpdateHijoField(h.estudianteId, "relacion", e.target.value)}
+                                    />
+                                  </td>
+                                  <td className="text-center">
+                                    <Form.Check
+                                      type="radio"
+                                      name="principal"
+                                      checked={h.esPrincipal}
+                                      onChange={() => {
+                                        setTutorForm((prev) => ({
+                                          ...prev,
+                                          hijos: prev.hijos.map((child) => ({
+                                            ...child,
+                                            esPrincipal: child.estudianteId === h.estudianteId
+                                          }))
+                                        }));
+                                      }}
+                                    />
+                                  </td>
+                                  <td className="text-end">
+                                    <Button variant="outline-danger" size="sm" onClick={() => removeTutorHijo(h.estudianteId)}>
+                                      Quitar
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        )}
+                      </Card.Body>
+                    </Card>
+
+                    <div className="d-flex justify-content-between">
+                      <Button type="submit" className="primary-btn">
+                        {editingTutorId ? "Guardar tutor" : "Crear tutor"}
+                      </Button>
+                      {editingTutorId && (
+                        <Button variant="secondary" onClick={resetTutorForm}>
+                          Cancelar
+                        </Button>
+                      )}
+                    </div>
+                  </Form>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col md={7}>
+              <Card className="card-surface mb-3">
+                <Card.Body>
+                  <Card.Title className="d-flex justify-content-between align-items-center mb-3">
+                    <span>Tutores registrados</span>
+                    {loadingTutores && <Badge bg="secondary">Cargando...</Badge>}
+                  </Card.Title>
+                  {loadingTutores ? (
+                    <LoadingSpinner />
+                  ) : (
+                    <Table striped hover responsive>
+                      <thead>
+                        <tr>
+                          <th>Usuario</th>
+                          <th>Nombre</th>
+                          <th>Correo</th>
+                          <th>Hijos</th>
+                          <th className="text-end">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tutores.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="text-center text-muted">
+                              No hay tutores registrados.
+                            </td>
+                          </tr>
+                        ) : (
+                          tutores.map((t) => (
+                            <tr key={t.id}>
+                              <td>{t.user}</td>
+                              <td>{t.nombre} {t.apellido}</td>
+                              <td>{t.email}</td>
+                              <td>
+                                {(t.estudiantes || []).map((h) => (
+                                  <Badge bg={h.esPrincipal ? "primary" : "light"} key={`${t.id}-${h.estudianteId}`} className="me-1">
+                                    {h.nombre}
+                                  </Badge>
+                                ))}
+                              </td>
+                              <td className="text-end">
+                                <ButtonGroup size="sm">
+                                  <Button variant="outline-primary" onClick={() => handleEditTutor(t)}>
+                                    Editar
+                                  </Button>
+                                  <Button variant="outline-danger" onClick={() => handleDeleteTutor(t.id)}>
+                                    Eliminar
+                                  </Button>
+                                </ButtonGroup>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </Table>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Tab>
+      </Tabs>
       {/* Modal informe por estudiante (documento) */}
       <Modal show={showReportModal} onHide={() => setShowReportModal(false)} size="lg">
         <Modal.Header closeButton>

@@ -406,6 +406,10 @@ export default function TeacherDashboard() {
                 Vista actual: <strong>{selectedAsignatura || "Ninguno"}</strong>
               </small>
             </div>
+            <Button variant="outline-primary" size="sm" onClick={() => navigate("/teacher/comunicaciones")}
+              className="d-flex align-items-center">
+              Centro de comunicaciones
+            </Button>
           </div>
         </Col>
       </Row>

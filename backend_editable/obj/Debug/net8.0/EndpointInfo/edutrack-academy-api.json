@@ -130,6 +130,76 @@
         }
       }
     },
+    "/api/Asistencias": {
+      "post": {
+        "tags": [
+          "Asistencias"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarAsistenciaDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarAsistenciaDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarAsistenciaDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Asistencias/curso/{cursoId}": {
+      "get": {
+        "tags": [
+          "Asistencias"
+        ],
+        "parameters": [
+          {
+            "name": "cursoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Auth/login": {
       "post": {
         "tags": [
@@ -154,6 +224,49 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Comunicaciones": {
+      "post": {
+        "tags": [
+          "Comunicaciones"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearComunicacionDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearComunicacionDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CrearComunicacionDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Comunicaciones/emitidas": {
+      "get": {
+        "tags": [
+          "Comunicaciones"
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -521,6 +634,29 @@
         }
       },
       "delete": {
+        "tags": [
+          "Estudiantes"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Estudiantes/{id}/reset-portal": {
+      "post": {
         "tags": [
           "Estudiantes"
         ],
@@ -931,6 +1067,349 @@
         }
       }
     },
+    "/api/PortalEstudiante/resumen": {
+      "get": {
+        "tags": [
+          "PortalEstudiante"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalEstudiante/notas": {
+      "get": {
+        "tags": [
+          "PortalEstudiante"
+        ],
+        "parameters": [
+          {
+            "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalEstudiante/asistencias": {
+      "get": {
+        "tags": [
+          "PortalEstudiante"
+        ],
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalEstudiante/comunicaciones": {
+      "get": {
+        "tags": [
+          "PortalEstudiante"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalEstudiante/comunicaciones/{destinoId}/leido": {
+      "post": {
+        "tags": [
+          "PortalEstudiante"
+        ],
+        "parameters": [
+          {
+            "name": "destinoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalTutor/hijos": {
+      "get": {
+        "tags": [
+          "PortalTutor"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalTutor/notas/{estudianteId}": {
+      "get": {
+        "tags": [
+          "PortalTutor"
+        ],
+        "parameters": [
+          {
+            "name": "estudianteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalTutor/asistencias/{estudianteId}": {
+      "get": {
+        "tags": [
+          "PortalTutor"
+        ],
+        "parameters": [
+          {
+            "name": "estudianteId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalTutor/comunicaciones": {
+      "get": {
+        "tags": [
+          "PortalTutor"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/PortalTutor/comunicaciones/{destinoId}/leido": {
+      "post": {
+        "tags": [
+          "PortalTutor"
+        ],
+        "parameters": [
+          {
+            "name": "destinoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Tutores": {
+      "get": {
+        "tags": [
+          "Tutores"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tutores"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TutorRequestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TutorRequestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TutorRequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Tutores/{id}": {
+      "put": {
+        "tags": [
+          "Tutores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TutorRequestDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TutorRequestDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TutorRequestDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tutores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Tutores/{id}/reset-password": {
+      "post": {
+        "tags": [
+          "Tutores"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Usuarios": {
       "get": {
         "tags": [
@@ -1219,6 +1698,210 @@
         },
         "additionalProperties": false
       },
+      "Asistencia": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "cursoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "curso": {
+            "$ref": "#/components/schemas/Curso"
+          },
+          "estudianteId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "estudiante": {
+            "$ref": "#/components/schemas/Estudiante"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "periodo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "observacion": {
+            "type": "string",
+            "nullable": true
+          },
+          "registradoPorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "registradoPor": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "creadoEn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AsistenciaDetalleDTO": {
+        "required": [
+          "estado",
+          "estudianteId"
+        ],
+        "type": "object",
+        "properties": {
+          "estudianteId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "estado": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "observacion": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Comunicacion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "titulo": {
+            "type": "string",
+            "nullable": true
+          },
+          "mensaje": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "creadaEn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "remitenteId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "remitente": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "cursoId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "curso": {
+            "$ref": "#/components/schemas/Curso"
+          },
+          "destinatarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComunicacionDestino"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ComunicacionDestino": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comunicacionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comunicacion": {
+            "$ref": "#/components/schemas/Comunicacion"
+          },
+          "estudianteId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "estudiante": {
+            "$ref": "#/components/schemas/Estudiante"
+          },
+          "tutorId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "tutor": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "leido": {
+            "type": "boolean"
+          },
+          "leidoEn": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "canal": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CrearComunicacionDTO": {
+        "required": [
+          "mensaje",
+          "titulo"
+        ],
+        "type": "object",
+        "properties": {
+          "titulo": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "mensaje": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string",
+            "nullable": true
+          },
+          "cursoId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "estudianteIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "nullable": true
+          },
+          "incluirTutores": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "Curso": {
         "type": "object",
         "properties": {
@@ -1459,10 +2142,32 @@
             "type": "string",
             "nullable": true
           },
+          "usuarioId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
           "inscripciones": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Inscripcion"
+            },
+            "nullable": true
+          },
+          "tutores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TutorEstudiante"
+            },
+            "nullable": true
+          },
+          "comunicacionesRecibidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComunicacionDestino"
             },
             "nullable": true
           }
@@ -1495,6 +2200,10 @@
             "nullable": true
           },
           "grupo": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuarioPortal": {
             "type": "string",
             "nullable": true
           }
@@ -1682,6 +2391,35 @@
         },
         "additionalProperties": false
       },
+      "RegistrarAsistenciaDTO": {
+        "required": [
+          "cursoId"
+        ],
+        "type": "object",
+        "properties": {
+          "cursoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "periodo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detalles": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AsistenciaDetalleDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "RegistroUsuarioDTO": {
         "type": "object",
         "properties": {
@@ -1721,6 +2459,97 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DocenteGrupoRequestDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TutorEstudiante": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tutorId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tutor": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "estudianteId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "estudiante": {
+            "$ref": "#/components/schemas/Estudiante"
+          },
+          "relacion": {
+            "type": "string",
+            "nullable": true
+          },
+          "esPrincipal": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TutorEstudianteRequestDTO": {
+        "required": [
+          "estudianteId"
+        ],
+        "type": "object",
+        "properties": {
+          "estudianteId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "relacion": {
+            "type": "string",
+            "nullable": true
+          },
+          "esPrincipal": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TutorRequestDTO": {
+        "required": [
+          "apellido",
+          "email",
+          "nombre"
+        ],
+        "type": "object",
+        "properties": {
+          "nombre": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "apellido": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "email": {
+            "minLength": 1,
+            "type": "string",
+            "format": "email"
+          },
+          "user": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "hijos": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TutorEstudianteRequestDTO"
             },
             "nullable": true
           }
@@ -1780,6 +2609,34 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DocenteGradoGrupo"
+            },
+            "nullable": true
+          },
+          "tutorEstudiantes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TutorEstudiante"
+            },
+            "nullable": true
+          },
+          "asistenciasRegistradas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Asistencia"
+            },
+            "nullable": true
+          },
+          "comunicacionesEmitidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Comunicacion"
+            },
+            "nullable": true
+          },
+          "comunicacionesRecibidas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComunicacionDestino"
             },
             "nullable": true
           }

@@ -1,8 +1,35 @@
 import React from "react";
-import { Container, Row, Col, Button, Modal, Card, Carousel } from "react-bootstrap";
+import { Container, Row, Col, Button, Modal, Card, Carousel, Badge } from "react-bootstrap";
 import Login from "./Login.jsx";
 
 export default function Home({ showLogin, onOpenLogin, onCloseLogin }) {
+  const accesoRoles = [
+    {
+      label: "Administración",
+      rol: "Administradores",
+      descripcion: "Configura grados, asignaturas y gestiona la operación completa.",
+      cta: "Ir al panel admin"
+    },
+    {
+      label: "Docentes",
+      rol: "Profesores",
+      descripcion: "Carga notas, registra asistencias y envía comunicaciones.",
+      cta: "Entrar como docente"
+    },
+    {
+      label: "Estudiantes",
+      rol: "Alumnos",
+      descripcion: "Consulta promedios, seguimiento y mensajes desde cualquier dispositivo.",
+      cta: "Abrir portal estudiantil"
+    },
+    {
+      label: "Familias",
+      rol: "Padres y tutores",
+      descripcion: "Monitorea en tiempo real el progreso de tus hijos.",
+      cta: "Portal de familias"
+    }
+  ];
+
   return (
     <>
       <div
@@ -131,6 +158,31 @@ export default function Home({ showLogin, onOpenLogin, onCloseLogin }) {
                 </Card.Body>
               </Card>
             </Col>
+          </Row>
+
+          <Row className="mt-5">
+            <Col className="text-center mb-4">
+              <h3 className="mb-2">Accesos directos</h3>
+              <p className="text-muted">Cada rol cuenta con un portal optimizado</p>
+            </Col>
+          </Row>
+          <Row>
+            {accesoRoles.map((rol) => (
+              <Col key={rol.label} md={3} sm={6} className="mb-3">
+                <Card className="role-card h-100 border-0 shadow-sm">
+                  <Card.Body className="d-flex flex-column">
+                    <Badge bg="light" text="dark" className="mb-2 align-self-start">
+                      {rol.label}
+                    </Badge>
+                    <Card.Title className="mb-1">{rol.rol}</Card.Title>
+                    <Card.Text className="text-muted flex-grow-1">{rol.descripcion}</Card.Text>
+                    <Button variant="outline-primary" onClick={onOpenLogin} className="mt-3">
+                      {rol.cta}
+                    </Button>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
           </Row>
         </Container>
       </div>

@@ -18,6 +18,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Servicios
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IGrupoSyncService, GrupoSyncService>();
+builder.Services.AddScoped<IPortalCredentialService, PortalCredentialService>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 
 builder.Services.AddControllers();

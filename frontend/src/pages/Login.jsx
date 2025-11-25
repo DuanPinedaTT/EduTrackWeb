@@ -12,6 +12,15 @@ export default function Login({ onSuccess }) {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const getDashboardRoute = (rol) => {
+    if (!rol) return "/";
+    if (rol === "admin") return "/admin";
+    if (rol === "docente") return "/teacher";
+    if (rol === "estudiante") return "/student";
+    if (rol === "tutor") return "/familia";
+    return "/";
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -35,8 +44,7 @@ export default function Login({ onSuccess }) {
 
       if (onSuccess) onSuccess();
 
-      if (normalizedUser.rol === "admin") navigate("/admin");
-      else navigate("/teacher");
+      navigate(getDashboardRoute(normalizedUser.rol));
     } catch (err) {
       setError(err.response?.data || "Error al iniciar sesión");
     } finally {

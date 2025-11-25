@@ -53,3 +53,30 @@ export const Cursos = {
   remove: (id) => api.delete(`/cursos/${id}`),
   students: (id) => api.get(`/cursos/${id}/students`)
 };
+
+export const PortalEstudiante = {
+  resumen: () => api.get('/PortalEstudiante/resumen'),
+  notas: (periodo) => {
+    const config = periodo != null ? { params: { periodo } } : undefined;
+    return api.get('/PortalEstudiante/notas', config);
+  },
+  asistencias: (params = {}) => api.get('/PortalEstudiante/asistencias', { params }),
+  comunicaciones: () => api.get('/PortalEstudiante/comunicaciones'),
+  marcarComunicacionLeida: (destinoId) => api.post(`/PortalEstudiante/comunicaciones/${destinoId}/leido`)
+};
+
+export const PortalTutor = {
+  hijos: () => api.get('/PortalTutor/hijos'),
+  notas: (estudianteId, periodo) => {
+    const config = periodo != null ? { params: { periodo } } : undefined;
+    return api.get(`/PortalTutor/notas/${estudianteId}`, config);
+  },
+  asistencias: (estudianteId, params = {}) => api.get(`/PortalTutor/asistencias/${estudianteId}`, { params }),
+  comunicaciones: () => api.get('/PortalTutor/comunicaciones'),
+  marcarComunicacionLeida: (destinoId) => api.post(`/PortalTutor/comunicaciones/${destinoId}/leido`)
+};
+
+export const Comunicaciones = {
+  crear: (payload) => api.post('/Comunicaciones', payload),
+  emitidas: () => api.get('/Comunicaciones/emitidas')
+};

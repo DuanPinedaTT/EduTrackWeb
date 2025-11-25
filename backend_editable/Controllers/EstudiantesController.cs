@@ -17,6 +17,7 @@ namespace edutrack_academy_api.Controllers
         public int? GradoId { get; set; }
         public string? GradoNombre { get; set; }
         public string? Grupo { get; set; }
+        public string? UsuarioPortal { get; set; }
     }
 
     [ApiController]
@@ -25,11 +26,16 @@ namespace edutrack_academy_api.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IGrupoSyncService _grupoSyncService;
+        private readonly IPortalCredentialService _portalCredentialService;
 
-        public EstudiantesController(AppDbContext context, IGrupoSyncService grupoSyncService)
+        public EstudiantesController(
+            AppDbContext context,
+            IGrupoSyncService grupoSyncService,
+            IPortalCredentialService portalCredentialService)
         {
             _context = context;
             _grupoSyncService = grupoSyncService;
+            _portalCredentialService = portalCredentialService;
         }
 
         [HttpGet]
@@ -37,6 +43,7 @@ namespace edutrack_academy_api.Controllers
         {
             var estudiantes = await _context.Estudiantes
                 .Include(e => e.Grado)
+                .Include(e => e.Usuario)
                 .Select(e => new EstudianteDTO
                 {
                     Id = e.Id,
@@ -44,7 +51,8 @@ namespace edutrack_academy_api.Controllers
                     Documento = e.Documento,
                     GradoId = e.GradoId,
                     GradoNombre = e.Grado != null ? e.Grado.Nombre : null,
-                    Grupo = string.IsNullOrWhiteSpace(e.Grupo) ? null : e.Grupo
+                    Grupo = string.IsNullOrWhiteSpace(e.Grupo) ? null : e.Grupo,
+                    UsuarioPortal = e.Usuario != null ? e.Usuario.User : null
                 })
                 .ToListAsync();
             return Ok(estudiantes);
@@ -53,7 +61,10 @@ namespace edutrack_academy_api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var estudiante = await _context.Estudiantes.Include(e => e.Grado).FirstOrDefaultAsync(e => e.Id == id);
+            var estudiante = await _context.Estudiantes
+                .Include(e => e.Grado)
+                .Include(e => e.Usuario)
+                .FirstOrDefaultAsync(e => e.Id == id);
             if (estudiante == null) return NotFound();
 
             return Ok(new EstudianteDTO
@@ -63,7 +74,8 @@ namespace edutrack_academy_api.Controllers
                 Documento = estudiante.Documento,
                 GradoId = estudiante.GradoId,
                 GradoNombre = estudiante.Grado?.Nombre,
-                Grupo = string.IsNullOrWhiteSpace(estudiante.Grupo) ? null : estudiante.Grupo
+                Grupo = string.IsNullOrWhiteSpace(estudiante.Grupo) ? null : estudiante.Grupo,
+                UsuarioPortal = estudiante.Usuario?.User
             });
         }
 
@@ -84,10 +96,23 @@ namespace edutrack_academy_api.Controllers
             await _context.SaveChangesAsync();
             await EnsureGrupoInscripcionAsync(estudiante, grupoNormalizado);
 
+            var credenciales = await _portalCredentialService.EnsureStudentAccountAsync(estudiante, forcePasswordReset: true);
+            dto.UsuarioPortal = credenciales.Usuario;
+
             dto.Id = estudiante.Id;
             dto.GradoNombre = grado?.Nombre;
             dto.Grupo = grupoNormalizado;
-            return Ok(dto);
+            return Ok(new
+            {
+                estudiante = dto,
+                credenciales = credenciales.PasswordTemporal != null
+                    ? new
+                    {
+                        usuario = credenciales.Usuario,
+                        passwordTemporal = credenciales.PasswordTemporal
+                    }
+                    : null
+            });
         }
 
         [HttpPut("{id}")]
@@ -107,7 +132,26 @@ namespace edutrack_academy_api.Controllers
             await EnsureGrupoInscripcionAsync(estudiante, grupoNormalizado);
             dto.GradoNombre = grado?.Nombre;
             dto.Grupo = grupoNormalizado;
+            await _context.Entry(estudiante).Reference(e => e.Usuario).LoadAsync();
+            dto.UsuarioPortal = estudiante.Usuario?.User;
             return Ok(dto);
+        }
+
+        [HttpPost("{id:int}/reset-portal")]
+        public async Task<IActionResult> ResetPortalCredentials(int id)
+        {
+            var estudiante = await _context.Estudiantes.FindAsync(id);
+            if (estudiante == null)
+            {
+                return NotFound();
+            }
+
+            var credenciales = await _portalCredentialService.EnsureStudentAccountAsync(estudiante, forcePasswordReset: true);
+            return Ok(new
+            {
+                usuario = credenciales.Usuario,
+                passwordTemporal = credenciales.PasswordTemporal
+            });
         }
 
         private async Task<(Grado? grado, string grupoNormalizado, string? error)> ValidateGradoYGrupo(int? gradoId, string? grupo)
@@ -160,6 +204,11 @@ namespace edutrack_academy_api.Controllers
         {
             var estudiante = await _context.Estudiantes.FindAsync(id);
             if (estudiante == null) return NotFound();
+
+            if (estudiante.UsuarioId.HasValue)
+            {
+                await _portalCredentialService.DeleteAccountAsync(estudiante.UsuarioId.Value);
+            }
 
             _context.Estudiantes.Remove(estudiante);
             await _context.SaveChangesAsync();

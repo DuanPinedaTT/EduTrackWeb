@@ -79,6 +79,48 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "edutrack_academy_api.Controllers.AsistenciasController",
+    "Method": "RegistrarAsistencia",
+    "RelativePath": "api/Asistencias",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "edutrack_academy_api.Controllers.AsistenciasController\u002BRegistrarAsistenciaDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.AsistenciasController",
+    "Method": "GetAsistenciasCurso",
+    "RelativePath": "api/Asistencias/curso/{cursoId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cursoId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "desde",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "hasta",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "edutrack_academy_api.Controllers.AuthController",
     "Method": "Login",
     "RelativePath": "api/Auth/login",
@@ -92,6 +134,32 @@
         "IsRequired": true
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.ComunicacionesController",
+    "Method": "Crear",
+    "RelativePath": "api/Comunicaciones",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "edutrack_academy_api.Controllers.ComunicacionesController\u002BCrearComunicacionDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.ComunicacionesController",
+    "Method": "GetEmitidas",
+    "RelativePath": "api/Comunicaciones/emitidas",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {
@@ -337,6 +405,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "edutrack_academy_api.Controllers.EstudiantesController",
+    "Method": "ResetPortalCredentials",
+    "RelativePath": "api/Estudiantes/{id}/reset-portal",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "edutrack_academy_api.Controllers.ExportsController",
     "Method": "ExportCourseExcel",
     "RelativePath": "api/Exports/course/{courseId}/xlsx",
@@ -569,6 +653,241 @@
       {
         "Name": "dto",
         "Type": "edutrack_academy_api.Controllers.NotaConfigDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalEstudianteController",
+    "Method": "GetAsistencias",
+    "RelativePath": "api/PortalEstudiante/asistencias",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "desde",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "hasta",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalEstudianteController",
+    "Method": "GetComunicaciones",
+    "RelativePath": "api/PortalEstudiante/comunicaciones",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalEstudianteController",
+    "Method": "MarcarComunicacionLeida",
+    "RelativePath": "api/PortalEstudiante/comunicaciones/{destinoId}/leido",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "destinoId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalEstudianteController",
+    "Method": "GetNotas",
+    "RelativePath": "api/PortalEstudiante/notas",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "periodo",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalEstudianteController",
+    "Method": "GetResumen",
+    "RelativePath": "api/PortalEstudiante/resumen",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalTutorController",
+    "Method": "GetAsistencias",
+    "RelativePath": "api/PortalTutor/asistencias/{estudianteId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "estudianteId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "desde",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "hasta",
+        "Type": "System.Nullable\u00601[[System.DateTime, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalTutorController",
+    "Method": "GetComunicaciones",
+    "RelativePath": "api/PortalTutor/comunicaciones",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalTutorController",
+    "Method": "MarcarComunicacionLeida",
+    "RelativePath": "api/PortalTutor/comunicaciones/{destinoId}/leido",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "destinoId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalTutorController",
+    "Method": "GetHijos",
+    "RelativePath": "api/PortalTutor/hijos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.PortalTutorController",
+    "Method": "GetNotas",
+    "RelativePath": "api/PortalTutor/notas/{estudianteId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "estudianteId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "periodo",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.TutoresController",
+    "Method": "GetAll",
+    "RelativePath": "api/Tutores",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.TutoresController",
+    "Method": "Create",
+    "RelativePath": "api/Tutores",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "edutrack_academy_api.Controllers.TutoresController\u002BTutorRequestDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.TutoresController",
+    "Method": "Update",
+    "RelativePath": "api/Tutores/{id}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "dto",
+        "Type": "edutrack_academy_api.Controllers.TutoresController\u002BTutorRequestDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.TutoresController",
+    "Method": "Delete",
+    "RelativePath": "api/Tutores/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.TutoresController",
+    "Method": "ResetPassword",
+    "RelativePath": "api/Tutores/{id}/reset-password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
         "IsRequired": true
       }
     ],
