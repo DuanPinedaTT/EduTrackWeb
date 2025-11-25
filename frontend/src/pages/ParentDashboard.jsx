@@ -226,8 +226,31 @@ export default function ParentDashboard() {
       ) : (
         <>
           <Row className="mb-4">
+            <Col>
+              <div className="glass-card border-0 p-4 d-flex flex-wrap justify-content-between gap-3 align-items-center">
+                <div>
+                  <p className="text-muted mb-1">Portal de familias</p>
+                  <h3 className="mb-0">
+                    {selectedChild ? (selectedChild.Nombre || selectedChild.nombre) : "Selecciona un estudiante"}
+                  </h3>
+                </div>
+                <div className="d-flex gap-4">
+                  <div>
+                    <p className="text-muted mb-1">Periodo</p>
+                    <span className="chip">{selectedPeriod ? `Periodo ${selectedPeriod}` : "Todos"}</span>
+                  </div>
+                  <div>
+                    <p className="text-muted mb-1">Promedio</p>
+                    <h4 className="mb-0">{notas?.promedio ?? "-"}</h4>
+                  </div>
+                </div>
+              </div>
+            </Col>
+          </Row>
+
+          <Row className="mb-4">
             <Col md={4} className="mb-3">
-              <Card className="h-100 shadow-sm">
+              <Card className="h-100 glass-card border-0">
                 <Card.Body>
                   <Card.Title>Estudiantes a cargo</Card.Title>
                   <ListGroup className="mt-3">
@@ -259,7 +282,7 @@ export default function ParentDashboard() {
             </Col>
 
             <Col md={8} className="mb-3">
-              <Card className="h-100 shadow-sm">
+              <Card className="h-100 glass-card border-0">
                 <Card.Body>
                   <Card.Title>Resumen académico</Card.Title>
                   {selectedChild ? (

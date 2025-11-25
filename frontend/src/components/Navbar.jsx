@@ -10,19 +10,23 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 export default function Navbar({ onLoginClick }) {
   const { user } = useAuth();
 
-  // Si está logueado, no mostrar navbar
   if (user) return null;
 
   return (
-    <BsNavbar className="app-navbar shadow-sm py-3">
-      <Container>
+    <BsNavbar className="app-navbar" expand="md" sticky="top">
+      <Container className="d-flex justify-content-between align-items-center">
         <BsNavbar.Brand as={Link} to="/" className="brand">
-          <div className="logo-box">📚</div>
-          EduTrack Academy
+          <div className="logo-box">⚡️</div>
+          <div className="d-flex flex-column">
+            <span>EduTrack Academy</span>
+            <small className="text-muted" style={{ fontSize: "0.75rem", letterSpacing: "0.08em" }}>
+              Gestión académica inteligente
+            </small>
+          </div>
         </BsNavbar.Brand>
 
         <Button onClick={onLoginClick} className="btn-login">
-          Ingresar
+          Ingresar ahora
         </Button>
       </Container>
     </BsNavbar>

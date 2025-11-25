@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Row, Col, Button, Modal, Card, Carousel, Badge } from "react-bootstrap";
+import { Container, Row, Col, Button, Modal, Card, Badge } from "react-bootstrap";
 import Login from "./Login.jsx";
 
 export default function Home({ showLogin, onOpenLogin, onCloseLogin }) {
@@ -7,176 +7,159 @@ export default function Home({ showLogin, onOpenLogin, onCloseLogin }) {
     {
       label: "Administración",
       rol: "Administradores",
-      descripcion: "Configura grados, asignaturas y gestiona la operación completa.",
-      cta: "Ir al panel admin"
+      descripcion: "Orquesta grados, asignaturas y reportes en tiempo real.",
+      cta: "Panel administrativo",
+      emoji: "🧭"
     },
     {
       label: "Docentes",
       rol: "Profesores",
-      descripcion: "Carga notas, registra asistencias y envía comunicaciones.",
-      cta: "Entrar como docente"
+      descripcion: "Carga notas, asistencias y mensajes desde un mismo flujo.",
+      cta: "Entrar como docente",
+      emoji: "✏️"
     },
     {
       label: "Estudiantes",
       rol: "Alumnos",
-      descripcion: "Consulta promedios, seguimiento y mensajes desde cualquier dispositivo.",
-      cta: "Abrir portal estudiantil"
+      descripcion: "Consulta calificaciones, tareas y comunicaciones.",
+      cta: "Portal estudiantil",
+      emoji: "🎓"
     },
     {
       label: "Familias",
       rol: "Padres y tutores",
-      descripcion: "Monitorea en tiempo real el progreso de tus hijos.",
-      cta: "Portal de familias"
+      descripcion: "Supervisa el progreso de tus hijos con alertas proactivas.",
+      cta: "Portal familias",
+      emoji: "👨‍👩‍👧"
     }
+  ];
+
+  const highlights = [
+    { label: "Planillas configurables", detail: "Pesos dinámicos por periodo" },
+    { label: "Analytics en vivo", detail: "Comparativas por grupo" },
+    { label: "Comunicaciones", detail: "Multicanal y trazables" }
   ];
 
   return (
     <>
-      <div
-        style={{
-          background: "linear-gradient(to bottom, #f8f9ff, #ffffff)",
-          minHeight: "calc(100vh - 64px)"
-        }}
-      >
-        <Container className="pt-5 pb-5">
-          <Row className="align-items-center mb-5">
-            <Col md={6} className="mb-4">
-              <h1
-                className="mb-3"
-                style={{
-                  fontWeight: 700,
-                  fontSize: "2.8rem",
-                  color: "var(--primary-color)"
-                }}
-              >
-                Sistema de gestión académica
-              </h1>
-              <p className="text-muted mb-4" style={{ fontSize: "1.2rem", lineHeight: 1.6 }}>
-                Administra docentes, cursos, estudiantes y planillas de notas
-                desde una plataforma moderna y eficiente.
+      <div className="home-hero-wrapper">
+        <Container>
+          <div className="hero-grid mb-5">
+            <div className="hero-copy">
+              <span className="chip mb-3">Versión 2.0 • Nuevo diseño</span>
+              <h1>La experiencia académica que esperabas</h1>
+              <p>
+                Coordina toda la operación académica desde un ecosistema visual inspirado en dashboards modernos.
+                Control total para administración, docentes, estudiantes y familias.
               </p>
-              <Button
-                onClick={onOpenLogin}
-                size="lg"
-                className="px-5 py-3 shadow"
-                style={{
-                  background: "var(--primary-color)",
-                  border: "none",
-                  fontSize: "1.1rem"
-                }}
-              >
-                Acceder al sistema
-              </Button>
-            </Col>
-            <Col md={6} className="mb-4">
-              <Card className="border-0 shadow-sm h-100">
-                <Card.Body className="p-0">
-                  <Carousel fade indicators={false}>
-                    <Carousel.Item>
-                      <img
-                        className="d-block w-100"
-                        src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=5c7b0f1f1b2f8f4f1e3b0c9a9b3f2d3e"
-                        alt="Gestión académica"
-                        style={{ height: 360, objectFit: 'cover', borderRadius: '0.25rem' }}
-                      />
-                      <Carousel.Caption className="text-start" style={{ left: 20, right: 'auto' }}>
-                        <h3 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Organiza tus cursos</h3>
-                        <p style={{ color: 'white', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>Gestiona docentes, alumnos y notas desde una sola plataforma.</p>
-                      </Carousel.Caption>
-                    </Carousel.Item>
+              <div className="hero-actions">
+                <Button className="cta-primary" onClick={onOpenLogin}>
+                  Ingresar al sistema
+                </Button>
+                <Button className="cta-secondary" onClick={onOpenLogin}>
+                  Ver demostración
+                </Button>
+              </div>
+              <div className="d-flex flex-wrap gap-4 mt-4">
+                <div>
+                  <p className="text-muted mb-1">Instituciones activas</p>
+                  <h4 className="mb-0">+32</h4>
+                </div>
+                <div>
+                  <p className="text-muted mb-1">Usuarios diarios</p>
+                  <h4 className="mb-0">5.300</h4>
+                </div>
+              </div>
+            </div>
 
-                    <Carousel.Item>
-                      <img
-                        className="d-block w-100"
-                        src="https://images.unsplash.com/photo-1556514767-3a13e1f2b6d6?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=6a1f5c2a9e9b2f6c3d4e5f6a7b8c9d0e"
-                        alt="Planillas y estadísticas"
-                        style={{ height: 360, objectFit: 'cover', borderRadius: '0.25rem' }}
-                      />
-                      <Carousel.Caption className="text-start" style={{ left: 20, right: 'auto' }}>
-                        <h3 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Visualiza rendimiento</h3>
-                        <p style={{ color: 'white', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>Gráficas y distribución de notas por periodo y grado.</p>
-                      </Carousel.Caption>
-                    </Carousel.Item>
-
-                    <Carousel.Item>
-                      <img
-                        className="d-block w-100"
-                        src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1400&auto=format&fit=crop&ixlib=rb-4.0.3&s=8b2a1c3d4e5f6a7b8c9d0e1f2a3b4c5d"
-                        alt="Exportar y reportes"
-                        style={{ height: 360, objectFit: 'cover', borderRadius: '0.25rem' }}
-                      />
-                      <Carousel.Caption className="text-start" style={{ left: 20, right: 'auto' }}>
-                        <h3 style={{ color: 'white', textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Exporta reportes</h3>
-                        <p style={{ color: 'white', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>Genera XLSX y PDF listos para imprimir y compartir.</p>
-                      </Carousel.Caption>
-                    </Carousel.Item>
-                  </Carousel>
+            <div className="hero-visual">
+              <Card className="glass-card border-0 mb-3">
+                <Card.Body>
+                  <p className="text-muted mb-1">Promedio institucional</p>
+                  <h2 className="fw-bold">4.1</h2>
+                  <div className="stat-progress mt-3">
+                    <span style={{ width: "78%" }} />
+                  </div>
+                  <small className="text-muted">Periodo 2 en seguimiento</small>
                 </Card.Body>
               </Card>
-            </Col>
-          </Row>
 
-          <Row className="mt-5">
+              <div className="feature-grid mb-3">
+                {highlights.map((item) => (
+                  <div key={item.label} className="feature-card">
+                    <p className="text-muted mb-1">{item.label}</p>
+                    <strong>{item.detail}</strong>
+                  </div>
+                ))}
+              </div>
+
+              <Card className="glass-card border-0">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                      <p className="text-muted mb-0">Comunicación destacada</p>
+                      <h6 className="mb-0">Semana STEAM</h6>
+                    </div>
+                    <Badge bg="light" text="dark" className="text-uppercase">Nuevo</Badge>
+                  </div>
+                  <p className="text-muted mb-0">
+                    Agenda colaborativa, métricas y notificaciones listas para compartir.
+                  </p>
+                </Card.Body>
+              </Card>
+            </div>
+          </div>
+
+          <div className="mb-5 text-center">
+            <p className="chip d-inline-flex mb-2">Funciones clave</p>
+            <h3 className="section-title">Plataforma integral</h3>
+            <p className="section-subtitle">
+              Automatiza planillas, comunicaciones, reportes y seguimiento académico en un mismo flujo.
+            </p>
+          </div>
+
+          <div className="feature-grid mb-5">
+            <div className="feature-card">
+              <div style={{ fontSize: "2rem" }}>🧠</div>
+              <h5>Panel inteligente</h5>
+              <p className="text-muted mb-0">Resumen predictivo de métricas claves y alertas proactivas.</p>
+            </div>
+            <div className="feature-card">
+              <div style={{ fontSize: "2rem" }}>📈</div>
+              <h5>Analytics por rol</h5>
+              <p className="text-muted mb-0">Comparativas por periodo, grado, docente y estudiante.</p>
+            </div>
+            <div className="feature-card">
+              <div style={{ fontSize: "2rem" }}>🔐</div>
+              <h5>Portales dedicados</h5>
+              <p className="text-muted mb-0">Experiencias a medida para admins, docentes, estudiantes y familias.</p>
+            </div>
+            <div className="feature-card">
+              <div style={{ fontSize: "2rem" }}>⚡️</div>
+              <h5>Automatizaciones</h5>
+              <p className="text-muted mb-0">Recordatorios y reportes automáticos listos para exportar.</p>
+            </div>
+          </div>
+
+          <Row className="mt-4">
             <Col className="text-center mb-4">
-              <h3 className="mb-2">Funcionalidades principales</h3>
-              <p className="text-muted">
-                Todo lo que necesitas para gestionar tu institución
-              </p>
-            </Col>
-          </Row>
-          <Row>
-            <Col md={4} className="mb-3">
-              <Card className="border-0 shadow-sm h-100">
-                <Card.Body className="text-center p-4">
-                  <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>👨‍💼</div>
-                  <Card.Title>Panel administrativo</Card.Title>
-                  <Card.Text className="text-muted">
-                    Gestiona docentes, cursos y estudiantes desde un único panel de control.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={4} className="mb-3">
-              <Card className="border-0 shadow-sm h-100">
-                <Card.Body className="text-center p-4">
-                  <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📊</div>
-                  <Card.Title>Planillas flexibles</Card.Title>
-                  <Card.Text className="text-muted">
-                    Configura columnas de notas personalizadas con pesos y promedios automáticos.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col md={4} className="mb-3">
-              <Card className="border-0 shadow-sm h-100">
-                <Card.Body className="text-center p-4">
-                  <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>🔍</div>
-                  <Card.Title>Consulta pública</Card.Title>
-                  <Card.Text className="text-muted">
-                    Permite búsquedas de información de estudiantes sin necesidad de autenticación.
-                  </Card.Text>
-                </Card.Body>
-              </Card>
+              <h3 className="section-title">Accesos por rol</h3>
+              <p className="section-subtitle">Cada perfil recibe una experiencia curada.</p>
             </Col>
           </Row>
 
-          <Row className="mt-5">
-            <Col className="text-center mb-4">
-              <h3 className="mb-2">Accesos directos</h3>
-              <p className="text-muted">Cada rol cuenta con un portal optimizado</p>
-            </Col>
-          </Row>
-          <Row>
+          <Row className="g-4">
             {accesoRoles.map((rol) => (
-              <Col key={rol.label} md={3} sm={6} className="mb-3">
-                <Card className="role-card h-100 border-0 shadow-sm">
-                  <Card.Body className="d-flex flex-column">
-                    <Badge bg="light" text="dark" className="mb-2 align-self-start">
-                      {rol.label}
-                    </Badge>
-                    <Card.Title className="mb-1">{rol.rol}</Card.Title>
-                    <Card.Text className="text-muted flex-grow-1">{rol.descripcion}</Card.Text>
-                    <Button variant="outline-primary" onClick={onOpenLogin} className="mt-3">
+              <Col key={rol.label} md={3} sm={6}>
+                <Card className="role-card h-100 border-0">
+                  <Card.Body className="d-flex flex-column gap-2">
+                    <div className="d-flex align-items-center gap-2">
+                      <span style={{ fontSize: "1.5rem" }}>{rol.emoji}</span>
+                      <Badge bg="light" text="dark">{rol.label}</Badge>
+                    </div>
+                    <h5 className="mb-1">{rol.rol}</h5>
+                    <p className="text-muted flex-grow-1">{rol.descripcion}</p>
+                    <Button variant="light" className="btn-icon mt-auto" onClick={onOpenLogin}>
                       {rol.cta}
                     </Button>
                   </Card.Body>
@@ -187,7 +170,7 @@ export default function Home({ showLogin, onOpenLogin, onCloseLogin }) {
         </Container>
       </div>
 
-      <Modal show={showLogin} onHide={onCloseLogin} centered>
+      <Modal show={showLogin} onHide={onCloseLogin} centered backdrop="static" contentClassName="glass-card">
         <Modal.Header closeButton className="border-0">
           <Modal.Title>Ingreso al sistema</Modal.Title>
         </Modal.Header>

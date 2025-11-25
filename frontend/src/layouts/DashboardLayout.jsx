@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, ListGroup, Dropdown, Collapse } from "react-bootstrap";
+import { ListGroup, Dropdown, Collapse } from "react-bootstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import api from "../services/api.js";
@@ -208,45 +208,48 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="app-root">
-      <div className="dashboard-header border-bottom shadow-sm">
-        <Container fluid className="px-4 py-3">
-          <div className="d-flex justify-content-between align-items-center">
-            <h5 className="mb-0 header-title">EduTrack Academy</h5>
-            <div className="d-flex align-items-center">
-              <span className="me-3 header-user">
-                {user?.nombre} <small>({getRolLabel(user?.rol)})</small>
-              </span>
-              <Dropdown align="end">
-                <Dropdown.Toggle variant="light" size="sm" className="account-toggle">
-                  Mi cuenta
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item as={Link} to="/profile">
-                    Perfil
-                  </Dropdown.Item>
-                  <Dropdown.Divider />
-                  <Dropdown.Item onClick={handleLogout}>Cerrar sesión</Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-            </div>
-          </div>
-        </Container>
-      </div>
+    <div className="dashboard-shell">
+      <header className="shell-topbar">
+        <div>
+          <h5>EduTrack Academy</h5>
+          <small className="text-muted">{getRolLabel(user?.rol)} • Experiencia personalizada</small>
+        </div>
+        <div className="d-flex align-items-center gap-3">
+          <span className="fw-semibold text-muted mb-0">
+            {user?.nombre}
+          </span>
+          <Dropdown align="end">
+            <Dropdown.Toggle variant="light" size="sm" className="account-toggle">
+              Mi cuenta
+            </Dropdown.Toggle>
+            <Dropdown.Menu className="shadow-sm">
+              <Dropdown.Item as={Link} to="/profile">
+                Perfil
+              </Dropdown.Item>
+              <Dropdown.Divider />
+              <Dropdown.Item onClick={handleLogout}>Cerrar sesión</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </div>
+      </header>
 
-      <Container fluid>
-        <Row>
-          <Col xs={12} md={3} lg={2} className="sidebar-panel p-3">
-            <div>
-              <h6 className="mb-3 text-uppercase menu-heading">Menú</h6>
-              {renderSidebarMenu()}
+      <div className="shell-grid">
+        <aside className="shell-sidebar">
+          <div className="sidebar-card">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <p className="menu-heading mb-1">Navegación</p>
+                <small className="text-muted">{getRolLabel(user?.rol)} activo</small>
+              </div>
             </div>
-          </Col>
-          <Col xs={12} md={9} lg={10} className="p-4">
-            {children}
-          </Col>
-        </Row>
-      </Container>
+            {renderSidebarMenu()}
+          </div>
+        </aside>
+
+        <main className="shell-main">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
