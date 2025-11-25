@@ -56,8 +56,11 @@ export const Cursos = {
 
 export const PortalEstudiante = {
   resumen: () => api.get('/PortalEstudiante/resumen'),
-  notas: (periodo) => {
-    const config = periodo != null ? { params: { periodo } } : undefined;
+  notas: (periodo, cursoId) => {
+    const params = {};
+    if (periodo != null) params.periodo = periodo;
+    if (cursoId != null) params.cursoId = cursoId;
+    const config = Object.keys(params).length > 0 ? { params } : undefined;
     return api.get('/PortalEstudiante/notas', config);
   },
   asistencias: (params = {}) => api.get('/PortalEstudiante/asistencias', { params }),
@@ -67,8 +70,11 @@ export const PortalEstudiante = {
 
 export const PortalTutor = {
   hijos: () => api.get('/PortalTutor/hijos'),
-  notas: (estudianteId, periodo) => {
-    const config = periodo != null ? { params: { periodo } } : undefined;
+  notas: (estudianteId, periodo, cursoId) => {
+    const params = {};
+    if (periodo != null) params.periodo = periodo;
+    if (cursoId != null) params.cursoId = cursoId;
+    const config = Object.keys(params).length > 0 ? { params } : undefined;
     return api.get(`/PortalTutor/notas/${estudianteId}`, config);
   },
   asistencias: (estudianteId, params = {}) => api.get(`/PortalTutor/asistencias/${estudianteId}`, { params }),

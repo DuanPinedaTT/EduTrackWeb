@@ -158,6 +158,8 @@ namespace edutrack_academy_api.Controllers
             var remitenteId = GetUserId();
             var comunicaciones = await _context.Comunicaciones
                 .Where(c => c.RemitenteId == remitenteId)
+                .Include(c => c.Curso)
+                    .ThenInclude(curso => curso!.Grado)
                 .OrderByDescending(c => c.CreadaEn)
                 .Take(100)
                 .Select(c => new
@@ -166,7 +168,17 @@ namespace edutrack_academy_api.Controllers
                     c.Titulo,
                     c.Tipo,
                     c.CreadaEn,
-                    Destinatarios = c.Destinatarios.Count
+                    c.Mensaje,
+                    Curso = c.Curso != null ? new
+                    {
+                        c.Curso.Id,
+                        c.Curso.Nombre,
+                        c.Curso.Grupo,
+                        Grado = c.Curso.Grado != null ? c.Curso.Grado.Nombre : null
+                    } : null,
+                    Destinatarios = c.Destinatarios.Count,
+                    EstudiantesDestinatarios = c.Destinatarios.Count(d => d.EstudianteId != null),
+                    TutoresDestinatarios = c.Destinatarios.Count(d => d.TutorId != null)
                 })
                 .ToListAsync();
 

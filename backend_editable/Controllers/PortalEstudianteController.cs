@@ -144,7 +144,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("notas")]
-        public async Task<IActionResult> GetNotas([FromQuery] int? periodo)
+        public async Task<IActionResult> GetNotas([FromQuery] int? periodo, [FromQuery] int? cursoId)
         {
             var estudiante = await GetCurrentStudentAsync();
             if (estudiante == null)
@@ -152,18 +152,72 @@ namespace edutrack_academy_api.Controllers
                 return NotFound("No se encontró el estudiante asociado a este usuario");
             }
 
-            var inscripcion = await _context.Inscripciones
+            var cursoIds = await _context.Inscripciones
                 .Where(i => i.EstudianteId == estudiante.Id)
-                .OrderByDescending(i => i.Id)
-                .FirstOrDefaultAsync();
+                .Select(i => i.CursoId)
+                .Distinct()
+                .ToListAsync();
 
-            if (inscripcion == null)
+            if (cursoIds.Count == 0)
             {
-                return Ok(new { columnas = Array.Empty<object>(), promedio = (decimal?)null });
+                return Ok(new
+                {
+                    materias = Array.Empty<object>(),
+                    columnas = Array.Empty<object>(),
+                    promedio = (decimal?)null,
+                    cursoId = (int?)null
+                });
+            }
+
+            var materiasRaw = await _context.Cursos
+                .Where(c => cursoIds.Contains(c.Id))
+                .Include(c => c.Grado)
+                .Include(c => c.CursoAsignaturas)
+                    .ThenInclude(ca => ca.Asignatura)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Nombre,
+                    c.Grupo,
+                    Grado = c.Grado != null ? c.Grado.Nombre : null,
+                    Asignatura = c.CursoAsignaturas
+                        .Select(ca => ca.Asignatura != null ? ca.Asignatura.Nombre : null)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            var materias = materiasRaw
+                .Select(m => new
+                {
+                    Id = m.Id,
+                    Nombre = string.IsNullOrWhiteSpace(m.Asignatura) ? m.Nombre : m.Asignatura,
+                    Curso = m.Nombre,
+                    m.Grupo,
+                    m.Grado
+                })
+                .OrderBy(m => m.Nombre)
+                .ToList();
+
+            if (materias.Count == 0)
+            {
+                return Ok(new
+                {
+                    materias = Array.Empty<object>(),
+                    columnas = Array.Empty<object>(),
+                    promedio = (decimal?)null,
+                    cursoId = (int?)null
+                });
+            }
+
+            var cursoSeleccionadoId = cursoId.HasValue ? cursoId.Value : materias.First().Id;
+
+            if (!materias.Any(m => m.Id == cursoSeleccionadoId))
+            {
+                return BadRequest("No tienes notas asociadas a ese curso");
             }
 
             var configsQuery = _context.NotaConfigs
-                .Where(nc => nc.CursoId == inscripcion.CursoId);
+                .Where(nc => nc.CursoId == cursoSeleccionadoId);
 
             if (periodo.HasValue)
             {
@@ -177,7 +231,13 @@ namespace edutrack_academy_api.Controllers
 
             if (configs.Count == 0)
             {
-                return Ok(new { columnas = Array.Empty<object>(), promedio = (decimal?)null });
+                return Ok(new
+                {
+                    materias,
+                    cursoId = cursoSeleccionadoId,
+                    columnas = Array.Empty<object>(),
+                    promedio = (decimal?)null
+                });
             }
 
             var configIds = configs.Select(c => c.Id).ToList();
@@ -209,8 +269,9 @@ namespace edutrack_academy_api.Controllers
 
             return Ok(new
             {
-                cursoId = inscripcion.CursoId,
+                cursoId = cursoSeleccionadoId,
                 periodo = periodo,
+                materias,
                 columnas,
                 promedio
             });

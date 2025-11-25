@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Row, Col, Card, Form, Button, Alert, ListGroup, Badge, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Card, Form, Button, Alert, ListGroup, Badge, Spinner, Collapse } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import api, { Comunicaciones } from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
@@ -10,6 +10,13 @@ const MENSAJE_TIPOS = [
   { id: "convivencia", label: "Convivencia" },
   { id: "urgente", label: "Urgente" }
 ];
+
+const formatDateTime = (value, options = { dateStyle: "medium", timeStyle: "short" }) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, options);
+};
 
 export default function TeacherCommunications() {
   const { user } = useAuth();
@@ -34,6 +41,7 @@ export default function TeacherCommunications() {
 
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [expandedHistoryId, setExpandedHistoryId] = useState(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -102,6 +110,7 @@ export default function TeacherCommunications() {
         setHistoryLoading(true);
         const res = await Comunicaciones.emitidas();
         setHistory(Array.isArray(res.data) ? res.data : []);
+        setExpandedHistoryId(null);
       } catch (err) {
         console.error("No se pudo cargar el historial", err);
       } finally {
@@ -177,9 +186,14 @@ export default function TeacherCommunications() {
     try {
       const res = await Comunicaciones.emitidas();
       setHistory(Array.isArray(res.data) ? res.data : []);
+      setExpandedHistoryId(null);
     } catch (err) {
       console.error("Error recargando historial", err);
     }
+  };
+
+  const handleToggleHistory = (id) => {
+    setExpandedHistoryId((prev) => (prev === id ? null : id));
   };
 
   if (assignmentsLoading) return <LoadingSpinner message="Preparando tu bandeja de comunicaciones..." />;
@@ -398,21 +412,51 @@ export default function TeacherCommunications() {
                 </Alert>
               ) : (
                 <ListGroup variant="flush">
-                  {history.map((item) => (
-                    <ListGroup.Item key={item.id} className="px-0">
-                      <div className="d-flex justify-content-between flex-wrap align-items-center">
-                        <div>
-                          <strong>{item.titulo}</strong>
-                          <small className="d-block text-muted">
-                            {new Date(item.creadaEn).toLocaleString()} • {item.destinatarios} destinos
-                          </small>
+                  {history.map((item) => {
+                    const isExpanded = expandedHistoryId === item.id;
+                    const courseLabel = item.curso
+                      ? `${item.curso.nombre || "Curso"} • ${item.curso.grado || "-"}${item.curso.grupo ? ` (${item.curso.grupo})` : ""}`
+                      : "Sin curso asociado";
+                    return (
+                      <ListGroup.Item key={item.id} className="px-0">
+                        <div className="d-flex justify-content-between flex-wrap gap-3 align-items-start">
+                          <div>
+                            <div className="d-flex align-items-center gap-2">
+                              <strong>{item.titulo}</strong>
+                              <Badge bg="secondary" pill>
+                                {item.tipo}
+                              </Badge>
+                            </div>
+                            <small className="d-block text-muted">
+                              {formatDateTime(item.creadaEn)} • {item.destinatarios ?? 0} destinos
+                            </small>
+                            <small className="text-muted">{courseLabel}</small>
+                          </div>
+                          <div className="text-end">
+                            <Button
+                              size="sm"
+                              variant="outline-secondary"
+                              onClick={() => handleToggleHistory(item.id)}
+                            >
+                              {isExpanded ? "Ocultar detalles" : "Ver detalles"}
+                            </Button>
+                          </div>
                         </div>
-                        <Badge bg="secondary" pill>
-                          {item.tipo}
-                        </Badge>
-                      </div>
-                    </ListGroup.Item>
-                  ))}
+                        <Collapse in={isExpanded}>
+                          <div className="mt-3">
+                            <div className="bg-light rounded p-3">
+                              <p className="mb-2">{item.mensaje}</p>
+                              <div className="d-flex flex-wrap gap-3 small text-muted">
+                                <span>Hora local: {formatDateTime(item.creadaEn, { hour: "2-digit", minute: "2-digit" })}</span>
+                                <span>Estudiantes: {item.estudiantesDestinatarios ?? 0}</span>
+                                <span>Tutores: {item.tutoresDestinatarios ?? 0}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </Collapse>
+                      </ListGroup.Item>
+                    );
+                  })}
                 </ListGroup>
               )}
             </Card.Body>

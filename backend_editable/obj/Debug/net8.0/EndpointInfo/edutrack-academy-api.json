@@ -1092,6 +1092,14 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "cursoId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -1195,6 +1203,14 @@
           },
           {
             "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursoId",
             "in": "query",
             "schema": {
               "type": "integer",

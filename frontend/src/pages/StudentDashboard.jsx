@@ -42,6 +42,8 @@ export default function StudentDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [notas, setNotas] = useState({ columnas: [], promedio: null });
   const [loadingNotas, setLoadingNotas] = useState(false);
+  const [materias, setMaterias] = useState([]);
+  const [selectedMateria, setSelectedMateria] = useState(null);
 
   const [asistencias, setAsistencias] = useState([]);
   const [comunicaciones, setComunicaciones] = useState([]);
@@ -60,18 +62,43 @@ export default function StudentDashboard() {
     }
   };
 
-  const loadNotas = async (periodo) => {
+  const loadNotas = async (periodoValue = selectedPeriod, materiaId = selectedMateria) => {
     try {
       setLoadingNotas(true);
       setError(null);
-      const res = await PortalEstudiante.notas(periodo);
+      const res = await PortalEstudiante.notas(periodoValue, materiaId);
+      const materiasList = Array.isArray(res.data?.materias) ? res.data.materias : [];
+      setMaterias(materiasList);
+
+      const firstMateriaId = materiasList.length
+        ? pickProp(materiasList[0], "Id") ?? pickProp(materiasList[0], "id")
+        : null;
+      const resolvedMateriaRaw = res.data?.cursoId ?? materiaId ?? firstMateriaId ?? null;
+      const resolvedMateria =
+        resolvedMateriaRaw === null || resolvedMateriaRaw === undefined
+          ? null
+          : Number(resolvedMateriaRaw);
+
+      const normalizedMateria = Number.isNaN(resolvedMateria) ? null : resolvedMateria;
+
+      if (normalizedMateria !== selectedMateria) {
+        setSelectedMateria(normalizedMateria);
+      }
+
+      const normalizedPeriodo = periodoValue ?? null;
+      if (normalizedPeriodo !== selectedPeriod) {
+        setSelectedPeriod(normalizedPeriodo);
+      }
+
       setNotas({
         columnas: res.data?.columnas || [],
         promedio: res.data?.promedio ?? null,
-        cursoId: res.data?.cursoId ?? null
+        cursoId: normalizedMateria
       });
     } catch (err) {
       setError(err.response?.data || "No se pudo cargar las notas");
+      const fallbackMateria = materiaId == null ? null : Number(materiaId);
+      setNotas({ columnas: [], promedio: null, cursoId: Number.isNaN(fallbackMateria) ? null : fallbackMateria });
     } finally {
       setLoadingNotas(false);
     }
@@ -99,11 +126,8 @@ export default function StudentDashboard() {
     loadResumen();
     loadAsistencias();
     loadComunicaciones();
+    loadNotas(null, null);
   }, []);
-
-  useEffect(() => {
-    loadNotas(selectedPeriod);
-  }, [selectedPeriod]);
 
   useEffect(() => {
     if (!location.hash) return;
@@ -121,6 +145,19 @@ export default function StudentDashboard() {
   }, [notas.promedio]);
   const showingSinglePeriod = selectedPeriod !== null;
   const periodoResumenLabel = selectedPeriod ? `Periodo ${selectedPeriod}` : "Todos los periodos";
+  const selectedMateriaInfo = useMemo(() => {
+    if (!selectedMateria) return null;
+    return (
+      materias.find((m) => {
+        const idValue = pickProp(m, "Id") ?? pickProp(m, "id");
+        const numericId = idValue == null ? null : Number(idValue);
+        return numericId === selectedMateria;
+      }) || null
+    );
+  }, [materias, selectedMateria]);
+  const materiaDescripcion = selectedMateriaInfo
+    ? `${pickProp(selectedMateriaInfo, "Nombre") || pickProp(selectedMateriaInfo, "Curso") || "Materia"}${pickProp(selectedMateriaInfo, "Grado") ? ` • ${pickProp(selectedMateriaInfo, "Grado")}` : ""}${pickProp(selectedMateriaInfo, "Grupo") ? ` (${pickProp(selectedMateriaInfo, "Grupo")})` : ""}`
+    : "Selecciona una asignatura";
 
   const handleMarcarLeido = async (destinoId) => {
     try {
@@ -134,6 +171,19 @@ export default function StudentDashboard() {
     } finally {
       setMarkingId(null);
     }
+  };
+
+  const handleMateriaClick = (cursoId) => {
+    if (cursoId == null) return;
+    const normalizedId = Number(cursoId);
+    if (Number.isNaN(normalizedId)) return;
+    setSelectedMateria(normalizedId);
+    loadNotas(selectedPeriod, normalizedId);
+  };
+
+  const handlePeriodoClick = (periodoId) => {
+    setSelectedPeriod(periodoId);
+    loadNotas(periodoId, selectedMateria);
   };
 
   if (loadingResumen) return <LoadingSpinner message="Cargando portal estudiantil..." />;
@@ -256,7 +306,8 @@ export default function StudentDashboard() {
             <Card.Body>
               <div className="d-flex flex-wrap justify-content-between gap-3 mb-3 align-items-start">
                 <div>
-                  <Card.Title className="mb-0">Notas por periodo</Card.Title>
+                  <Card.Title className="mb-0">Notas por asignatura</Card.Title>
+                  <small className="text-muted d-block">{materiaDescripcion}</small>
                   <small className="text-muted">
                     {selectedPeriod ? `Mostrando resultados del ${periodoResumenLabel}.` : "Consulta tus calificaciones ponderadas."}
                   </small>
@@ -269,17 +320,43 @@ export default function StudentDashboard() {
                 </div>
               </div>
 
+              {materias.length > 0 && (
+                <div className="d-flex gap-2 flex-wrap mb-3">
+                  {materias.map((materia) => {
+                    const idValue = pickProp(materia, "Id") ?? pickProp(materia, "id");
+                    if (idValue == null) return null;
+                    const numericId = Number(idValue);
+                    const nombre = pickProp(materia, "Nombre") || pickProp(materia, "Curso") || "Materia";
+                    const grado = pickProp(materia, "Grado");
+                    const grupo = pickProp(materia, "Grupo");
+                    const isActive = numericId === selectedMateria;
+                    return (
+                      <Button
+                        key={`${nombre}-${numericId}`}
+                        size="sm"
+                        variant={isActive ? "secondary" : "outline-secondary"}
+                        onClick={() => handleMateriaClick(numericId)}
+                      >
+                        {nombre}
+                        {grado ? ` • ${grado}` : ""}
+                        {grupo ? ` (${grupo})` : ""}
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
+
               <div className="d-flex gap-2 flex-wrap mb-3">
-                {PERIODOS.map((p) => (
-                  <Button
-                    key={p.id ?? "all"}
-                    size="sm"
-                    variant={selectedPeriod === p.id ? "primary" : "outline-secondary"}
-                    onClick={() => setSelectedPeriod(p.id)}
-                  >
-                    {p.nombre}
-                  </Button>
-                ))}
+                  {PERIODOS.map((p) => (
+                    <Button
+                      key={p.id ?? "all"}
+                      size="sm"
+                      variant={selectedPeriod === p.id ? "primary" : "outline-secondary"}
+                      onClick={() => handlePeriodoClick(p.id)}
+                    >
+                      {p.nombre}
+                    </Button>
+                  ))}
               </div>
 
               {loadingNotas ? (

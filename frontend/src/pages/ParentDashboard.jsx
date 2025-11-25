@@ -19,6 +19,19 @@ const formatDate = (value) => {
   return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 };
 
+const pickProp = (obj, prop) => {
+  if (!obj || !prop) return undefined;
+  const lower = prop.charAt(0).toLowerCase() + prop.slice(1);
+  const upper = prop.charAt(0).toUpperCase() + prop.slice(1);
+  const candidates = [prop, lower, upper];
+  for (const key of candidates) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      return obj[key];
+    }
+  }
+  return undefined;
+};
+
 export default function ParentDashboard() {
   const [hijos, setHijos] = useState([]);
   const [loadingHijos, setLoadingHijos] = useState(true);
@@ -32,6 +45,8 @@ export default function ParentDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [notas, setNotas] = useState({ columnas: [], promedio: null });
   const [loadingNotas, setLoadingNotas] = useState(false);
+  const [materias, setMaterias] = useState([]);
+  const [selectedMateria, setSelectedMateria] = useState(null);
   const [asistencias, setAsistencias] = useState([]);
 
   const [comunicaciones, setComunicaciones] = useState([]);
@@ -54,18 +69,40 @@ export default function ParentDashboard() {
     }
   };
 
-  const loadNotas = async (studentId, periodo) => {
-    if (!studentId) return;
+  const loadNotas = async (studentIdParam = selectedChildId, periodoValue = selectedPeriod, materiaId = selectedMateria) => {
+    if (!studentIdParam) return;
     try {
       setLoadingNotas(true);
       setError(null);
-      const res = await PortalTutor.notas(studentId, periodo);
+      const res = await PortalTutor.notas(studentIdParam, periodoValue, materiaId);
+      const materiasList = Array.isArray(res.data?.materias) ? res.data.materias : [];
+      setMaterias(materiasList);
+
+      const firstMateriaId = materiasList.length
+        ? pickProp(materiasList[0], "Id") ?? pickProp(materiasList[0], "id")
+        : null;
+
+      const resolvedMateriaRaw = res.data?.cursoId ?? materiaId ?? firstMateriaId ?? null;
+      const resolvedMateria = resolvedMateriaRaw == null ? null : Number(resolvedMateriaRaw);
+      const normalizedMateria = Number.isNaN(resolvedMateria) ? null : resolvedMateria;
+
+      if (normalizedMateria !== selectedMateria) {
+        setSelectedMateria(normalizedMateria);
+      }
+
+      const normalizedPeriodo = periodoValue ?? null;
+      if (normalizedPeriodo !== selectedPeriod) {
+        setSelectedPeriod(normalizedPeriodo);
+      }
+
       setNotas({
         columnas: res.data?.columnas || [],
-        promedio: res.data?.promedio ?? null
+        promedio: res.data?.promedio ?? null,
+        cursoId: normalizedMateria
       });
     } catch (err) {
       setError(err.response?.data || "No se pudo cargar las notas del estudiante");
+      setNotas({ columnas: [], promedio: null, cursoId: null });
     } finally {
       setLoadingNotas(false);
     }
@@ -98,15 +135,12 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (!selectedChildId) return;
     setSelectedPeriod(null);
-    setNotas({ columnas: [], promedio: null });
+    setSelectedMateria(null);
+    setMaterias([]);
+    setNotas({ columnas: [], promedio: null, cursoId: null });
+    loadNotas(selectedChildId, null, null);
+    loadAsistencias(selectedChildId);
   }, [selectedChildId]);
-
-  useEffect(() => {
-    if (selectedChildId) {
-      loadNotas(selectedChildId, selectedPeriod);
-      loadAsistencias(selectedChildId);
-    }
-  }, [selectedChildId, selectedPeriod]);
 
   useEffect(() => {
     if (!location.hash) return;
@@ -122,6 +156,21 @@ export default function ParentDashboard() {
     if (notas.promedio >= 3) return { text: `${notas.promedio.toFixed(2)} Aceptable`, variant: "primary" };
     return { text: `${notas.promedio.toFixed(2)} En riesgo`, variant: "danger" };
   }, [notas.promedio]);
+  const showingSinglePeriod = selectedPeriod !== null;
+  const periodoResumenLabel = selectedPeriod ? `Periodo ${selectedPeriod}` : "Todos los periodos";
+  const selectedMateriaInfo = useMemo(() => {
+    if (!selectedMateria) return null;
+    return (
+      materias.find((m) => {
+        const idValue = pickProp(m, "Id") ?? pickProp(m, "id");
+        const numericId = idValue == null ? null : Number(idValue);
+        return numericId === selectedMateria;
+      }) || null
+    );
+  }, [materias, selectedMateria]);
+  const materiaDescripcion = selectedMateriaInfo
+    ? `${pickProp(selectedMateriaInfo, "Nombre") || pickProp(selectedMateriaInfo, "Curso") || "Materia"}${pickProp(selectedMateriaInfo, "Grado") ? ` • ${pickProp(selectedMateriaInfo, "Grado")}` : ""}${pickProp(selectedMateriaInfo, "Grupo") ? ` (${pickProp(selectedMateriaInfo, "Grupo")})` : ""}`
+    : "Selecciona una asignatura";
 
   const handleMarcarLeido = async (destinoId) => {
     try {
@@ -135,6 +184,20 @@ export default function ParentDashboard() {
     } finally {
       setMarkingId(null);
     }
+  };
+
+  const handleMateriaClick = (cursoId) => {
+    if (!selectedChildId || cursoId == null) return;
+    const normalizedId = Number(cursoId);
+    if (Number.isNaN(normalizedId)) return;
+    setSelectedMateria(normalizedId);
+    loadNotas(selectedChildId, selectedPeriod, normalizedId);
+  };
+
+  const handlePeriodoClick = (periodoId) => {
+    if (!selectedChildId) return;
+    setSelectedPeriod(periodoId);
+    loadNotas(selectedChildId, periodoId, selectedMateria);
   };
 
   if (loadingHijos) return <LoadingSpinner message="Cargando portal para tutores..." />;
@@ -212,7 +275,7 @@ export default function ParentDashboard() {
                           </Dropdown.Toggle>
                           <Dropdown.Menu>
                             {PERIODOS.map((p) => (
-                              <Dropdown.Item key={p.id ?? "all"} onClick={() => setSelectedPeriod(p.id)}>
+                              <Dropdown.Item key={p.id ?? "all"} onClick={() => handlePeriodoClick(p.id)}>
                                 {p.nombre}
                               </Dropdown.Item>
                             ))}
@@ -235,23 +298,59 @@ export default function ParentDashboard() {
                 <Col>
                   <Card className="shadow-sm">
                     <Card.Body>
-                      <div className="d-flex justify-content-between flex-wrap align-items-center mb-3">
+                      <div className="d-flex flex-wrap justify-content-between gap-3 mb-3 align-items-start">
                         <div>
-                          <Card.Title className="mb-0">Notas del estudiante</Card.Title>
-                          <small className="text-muted">Visualiza las calificaciones registradas.</small>
+                          <Card.Title className="mb-0">Notas por asignatura</Card.Title>
+                          <small className="text-muted d-block">{materiaDescripcion}</small>
+                          <small className="text-muted">
+                            {selectedPeriod ? `Mostrando resultados del ${periodoResumenLabel}.` : "Consulta las calificaciones ponderadas."}
+                          </small>
                         </div>
-                        <div className="d-flex gap-2 flex-wrap">
-                          {PERIODOS.map((p) => (
-                            <Button
-                              key={p.id ?? "all"}
-                              size="sm"
-                              variant={selectedPeriod === p.id ? "primary" : "outline-secondary"}
-                              onClick={() => setSelectedPeriod(p.id)}
-                            >
-                              {p.nombre}
-                            </Button>
-                          ))}
+                        <div className="text-end">
+                          <small className="text-muted d-block">Promedio {periodoResumenLabel}</small>
+                          <Badge bg={promedioLabel.variant} className="fs-6">
+                            {promedioLabel.text}
+                          </Badge>
                         </div>
+                      </div>
+
+                      {materias.length > 0 && (
+                        <div className="d-flex gap-2 flex-wrap mb-3">
+                          {materias.map((materia) => {
+                            const idValue = pickProp(materia, "Id") ?? pickProp(materia, "id");
+                            if (idValue == null) return null;
+                            const numericId = Number(idValue);
+                            const nombre = pickProp(materia, "Nombre") || pickProp(materia, "Curso") || "Materia";
+                            const grado = pickProp(materia, "Grado");
+                            const grupo = pickProp(materia, "Grupo");
+                            const isActive = numericId === selectedMateria;
+                            return (
+                              <Button
+                                key={`${nombre}-${numericId}`}
+                                size="sm"
+                                variant={isActive ? "secondary" : "outline-secondary"}
+                                onClick={() => handleMateriaClick(numericId)}
+                              >
+                                {nombre}
+                                {grado ? ` • ${grado}` : ""}
+                                {grupo ? ` (${grupo})` : ""}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <div className="d-flex gap-2 flex-wrap mb-3">
+                        {PERIODOS.map((p) => (
+                          <Button
+                            key={p.id ?? "all"}
+                            size="sm"
+                            variant={selectedPeriod === p.id ? "primary" : "outline-secondary"}
+                            onClick={() => handlePeriodoClick(p.id)}
+                          >
+                            {p.nombre}
+                          </Button>
+                        ))}
                       </div>
 
                       {loadingNotas ? (
@@ -266,22 +365,23 @@ export default function ParentDashboard() {
                             <thead>
                               <tr>
                                 <th>Actividad</th>
-                                <th>Periodo</th>
+                                {!showingSinglePeriod && <th>Periodo</th>}
                                 <th>Peso</th>
                                 <th>Nota</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {notas.columnas.map((col) => {
-                                const nombre = col.Nombre || col.nombre;
-                                const periodo = col.Periodo || col.periodo;
-                                const peso = col.Peso ?? col.peso;
-                                const valor = col.Valor ?? col.valor;
+                              {notas.columnas.map((col, idx) => {
+                                const nombre = pickProp(col, "Nombre") || "-";
+                                const periodo = pickProp(col, "Periodo") ?? "-";
+                                const peso = pickProp(col, "Peso") ?? 0;
+                                const valor = pickProp(col, "Valor");
+                                const id = pickProp(col, "Id") ?? `${nombre}-${idx}`;
                                 return (
-                                  <tr key={col.Id || col.id}>
+                                  <tr key={id}>
                                     <td>{nombre}</td>
-                                    <td>{periodo}</td>
-                                    <td>{peso}%</td>
+                                    {!showingSinglePeriod && <td>{periodo}</td>}
+                                    <td>{peso ? `${peso}%` : "-"}</td>
                                     <td>
                                       {valor != null ? (
                                         <Badge bg={valor >= 3 ? "success" : "danger"}>{Number(valor).toFixed(2)}</Badge>
