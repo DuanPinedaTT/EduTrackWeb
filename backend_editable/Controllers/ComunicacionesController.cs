@@ -38,7 +38,7 @@ namespace edutrack_academy_api.Controllers
             public string Tipo { get; set; } = "general";
             public int? CursoId { get; set; }
             public List<int> EstudianteIds { get; set; } = new();
-            public bool IncluirTutores { get; set; } = true;
+            public bool IncluirTutores { get; set; } = false;
         }
 
         [HttpPost]
@@ -71,7 +71,24 @@ namespace edutrack_academy_api.Controllers
 
             var estudiantesDestino = new HashSet<int>();
 
-            if (dto.CursoId.HasValue)
+            if (dto.EstudianteIds.Count > 0)
+            {
+                var estudiantesValidos = await _context.Estudiantes
+                    .Where(e => dto.EstudianteIds.Contains(e.Id))
+                    .Select(e => e.Id)
+                    .ToListAsync();
+
+                if (estudiantesValidos.Count != dto.EstudianteIds.Count)
+                {
+                    return BadRequest("Uno o más estudiantes seleccionados no existen");
+                }
+
+                foreach (var id in estudiantesValidos)
+                {
+                    estudiantesDestino.Add(id);
+                }
+            }
+            else if (dto.CursoId.HasValue)
             {
                 var inscritos = await _context.Inscripciones
                     .Where(i => i.CursoId == dto.CursoId.Value)
@@ -81,11 +98,6 @@ namespace edutrack_academy_api.Controllers
                 {
                     estudiantesDestino.Add(id);
                 }
-            }
-
-            foreach (var id in dto.EstudianteIds)
-            {
-                estudiantesDestino.Add(id);
             }
 
             if (estudiantesDestino.Count == 0)

@@ -25,7 +25,7 @@ export default function TeacherCommunications() {
     titulo: "",
     mensaje: "",
     tipo: "general",
-    incluirTutores: true,
+    incluirTutores: false,
     alcance: "curso"
   });
   const [selectedStudents, setSelectedStudents] = useState(new Set());
@@ -277,7 +277,7 @@ export default function TeacherCommunications() {
                 <Form.Group className="mt-3">
                   <Form.Check
                     type="switch"
-                    label="Incluir tutores en el envío"
+                    label="Enviar también al tutor"
                     checked={form.incluirTutores}
                     onChange={(e) => setForm((prev) => ({ ...prev, incluirTutores: e.target.checked }))}
                   />

@@ -119,6 +119,8 @@ export default function StudentDashboard() {
     if (notas.promedio >= 3) return { text: `${notas.promedio.toFixed(2)} Aceptable`, variant: "primary" };
     return { text: `${notas.promedio.toFixed(2)} En riesgo`, variant: "danger" };
   }, [notas.promedio]);
+  const showingSinglePeriod = selectedPeriod !== null;
+  const periodoResumenLabel = selectedPeriod ? `Periodo ${selectedPeriod}` : "Todos los periodos";
 
   const handleMarcarLeido = async (destinoId) => {
     try {
@@ -252,23 +254,32 @@ export default function StudentDashboard() {
         <Col>
           <Card className="shadow-sm">
             <Card.Body>
-              <div className="d-flex justify-content-between flex-wrap align-items-center mb-3">
+              <div className="d-flex flex-wrap justify-content-between gap-3 mb-3 align-items-start">
                 <div>
                   <Card.Title className="mb-0">Notas por periodo</Card.Title>
-                  <small className="text-muted">Consulta tus calificaciones ponderadas.</small>
+                  <small className="text-muted">
+                    {selectedPeriod ? `Mostrando resultados del ${periodoResumenLabel}.` : "Consulta tus calificaciones ponderadas."}
+                  </small>
                 </div>
-                <div className="d-flex gap-2 flex-wrap">
-                  {PERIODOS.map((p) => (
-                    <Button
-                      key={p.id ?? "all"}
-                      size="sm"
-                      variant={selectedPeriod === p.id ? "primary" : "outline-secondary"}
-                      onClick={() => setSelectedPeriod(p.id)}
-                    >
-                      {p.nombre}
-                    </Button>
-                  ))}
+                <div className="text-end">
+                  <small className="text-muted d-block">Promedio {periodoResumenLabel}</small>
+                  <Badge bg={promedioLabel.variant} className="fs-6">
+                    {promedioLabel.text}
+                  </Badge>
                 </div>
+              </div>
+
+              <div className="d-flex gap-2 flex-wrap mb-3">
+                {PERIODOS.map((p) => (
+                  <Button
+                    key={p.id ?? "all"}
+                    size="sm"
+                    variant={selectedPeriod === p.id ? "primary" : "outline-secondary"}
+                    onClick={() => setSelectedPeriod(p.id)}
+                  >
+                    {p.nombre}
+                  </Button>
+                ))}
               </div>
 
               {loadingNotas ? (
@@ -283,7 +294,7 @@ export default function StudentDashboard() {
                     <thead>
                       <tr>
                         <th>Actividad</th>
-                        <th>Periodo</th>
+                        {!showingSinglePeriod && <th>Periodo</th>}
                         <th>Peso</th>
                         <th>Nota</th>
                       </tr>
@@ -298,8 +309,8 @@ export default function StudentDashboard() {
                         return (
                           <tr key={id}>
                             <td>{nombre}</td>
-                            <td>{periodo}</td>
-                            <td>{peso}%</td>
+                            {!showingSinglePeriod && <td>{periodo}</td>}
+                            <td>{peso ? `${peso}%` : "-"}</td>
                             <td>
                               {valor != null ? (
                                 <Badge bg={valor >= 3 ? "success" : "danger"}>{Number(valor).toFixed(2)}</Badge>
