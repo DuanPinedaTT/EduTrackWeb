@@ -19,6 +19,19 @@ const formatDate = (value) => {
   return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 };
 
+const pickProp = (obj, prop) => {
+  if (!obj || !prop) return undefined;
+  const lower = prop.charAt(0).toLowerCase() + prop.slice(1);
+  const upper = prop.charAt(0).toUpperCase() + prop.slice(1);
+  const candidates = [prop, lower, upper];
+  for (const key of candidates) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      return obj[key];
+    }
+  }
+  return undefined;
+};
+
 export default function StudentDashboard() {
   const [resumen, setResumen] = useState(null);
   const [loadingResumen, setLoadingResumen] = useState(true);
@@ -149,18 +162,29 @@ export default function StudentDashboard() {
               <Card.Body>
                 <Card.Title>Perfil</Card.Title>
                 <ListGroup variant="flush" className="mt-3">
-                  <ListGroup.Item className="px-0">
-                    <strong>Nombre:</strong> {resumen.estudiante?.nombre || resumen.estudiante?.Nombre}
-                  </ListGroup.Item>
-                  <ListGroup.Item className="px-0">
-                    <strong>Documento:</strong> {resumen.estudiante?.documento || resumen.estudiante?.Documento}
-                  </ListGroup.Item>
-                  <ListGroup.Item className="px-0">
-                    <strong>Grado:</strong> {resumen.estudiante?.Grado || "-"}
-                  </ListGroup.Item>
-                  <ListGroup.Item className="px-0">
-                    <strong>Grupo:</strong> {resumen.estudiante?.Grupo || "-"}
-                  </ListGroup.Item>
+                  {(() => {
+                    const estudiante = resumen.estudiante || {};
+                    const estudianteNombre = pickProp(estudiante, "Nombre");
+                    const estudianteDocumento = pickProp(estudiante, "Documento");
+                    const estudianteGrado = pickProp(estudiante, "Grado");
+                    const estudianteGrupo = pickProp(estudiante, "Grupo");
+                    return (
+                      <>
+                        <ListGroup.Item className="px-0">
+                          <strong>Nombre:</strong> {estudianteNombre || "-"}
+                        </ListGroup.Item>
+                        <ListGroup.Item className="px-0">
+                          <strong>Documento:</strong> {estudianteDocumento || "-"}
+                        </ListGroup.Item>
+                        <ListGroup.Item className="px-0">
+                          <strong>Grado:</strong> {estudianteGrado || "-"}
+                        </ListGroup.Item>
+                        <ListGroup.Item className="px-0">
+                          <strong>Grupo:</strong> {estudianteGrupo || "-"}
+                        </ListGroup.Item>
+                      </>
+                    );
+                  })()}
                 </ListGroup>
               </Card.Body>
             </Card>
@@ -169,15 +193,24 @@ export default function StudentDashboard() {
             <Card className="h-100 shadow-sm">
               <Card.Body>
                 <Card.Title>Curso actual</Card.Title>
-                {resumen.curso ? (
-                  <>
-                    <p className="mb-1 mt-3">{resumen.curso.Nombre}</p>
-                    <p className="text-muted mb-2">{resumen.curso.Grado} • Grupo {resumen.curso.Grupo}</p>
-                    <Badge bg={promedioLabel.variant}>{promedioLabel.text}</Badge>
-                  </>
-                ) : (
-                  <p className="text-muted mt-3">Aún no tienes curso asignado.</p>
-                )}
+                {(() => {
+                  const curso = resumen.curso;
+                  if (!curso) {
+                    return <p className="text-muted mt-3">Aún no tienes curso asignado.</p>;
+                  }
+                  const nombre = pickProp(curso, "Nombre") || "Curso";
+                  const grado = pickProp(curso, "Grado") || "-";
+                  const grupo = pickProp(curso, "Grupo") || "-";
+                  return (
+                    <>
+                      <p className="mb-1 mt-3">{nombre}</p>
+                      <p className="text-muted mb-2">
+                        {grado} • Grupo {grupo}
+                      </p>
+                      <Badge bg={promedioLabel.variant}>{promedioLabel.text}</Badge>
+                    </>
+                  );
+                })()}
               </Card.Body>
             </Card>
           </Col>
@@ -189,19 +222,24 @@ export default function StudentDashboard() {
                   <p className="text-muted mt-3">Sin registros recientes.</p>
                 ) : (
                   <ListGroup variant="flush" className="mt-3">
-                    {asistencias.slice(0, 3).map((a) => (
-                      <ListGroup.Item key={a.Id || a.id} className="px-0">
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <strong>{formatDate(a.Fecha)}</strong>
-                            <small className="d-block text-muted">{a.Curso}</small>
+                    {asistencias.slice(0, 3).map((a, idx) => {
+                      const id = pickProp(a, "Id") ?? idx;
+                      const fecha = pickProp(a, "Fecha");
+                      const curso = pickProp(a, "Curso") || "-";
+                      const estado = pickProp(a, "Estado") || "Sin estado";
+                      const estadoVariant = estado === "Presente" ? "success" : estado === "Tarde" ? "warning" : "danger";
+                      return (
+                        <ListGroup.Item key={id} className="px-0">
+                          <div className="d-flex justify-content-between align-items-center">
+                            <div>
+                              <strong>{formatDate(fecha)}</strong>
+                              <small className="d-block text-muted">{curso}</small>
+                            </div>
+                            <Badge bg={estadoVariant}>{estado}</Badge>
                           </div>
-                          <Badge bg={a.Estado === "Presente" ? "success" : a.Estado === "Tarde" ? "warning" : "danger"}>
-                            {a.Estado}
-                          </Badge>
-                        </div>
-                      </ListGroup.Item>
-                    ))}
+                        </ListGroup.Item>
+                      );
+                    })}
                   </ListGroup>
                 )}
               </Card.Body>
@@ -251,20 +289,27 @@ export default function StudentDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {notas.columnas.map((col) => (
-                        <tr key={col.Id || col.id}>
-                          <td>{col.Nombre}</td>
-                          <td>{col.Periodo}</td>
-                          <td>{col.Peso}%</td>
-                          <td>
-                            {col.Valor != null ? (
-                              <Badge bg={col.Valor >= 3 ? "success" : "danger"}>{col.Valor.toFixed(2)}</Badge>
-                            ) : (
-                              <Badge bg="secondary">Pendiente</Badge>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {notas.columnas.map((col, idx) => {
+                        const id = pickProp(col, "Id") ?? `${pickProp(col, "Nombre") ?? "col"}-${idx}`;
+                        const nombre = pickProp(col, "Nombre") || "-";
+                        const periodo = pickProp(col, "Periodo") ?? "-";
+                        const peso = pickProp(col, "Peso") ?? 0;
+                        const valor = pickProp(col, "Valor");
+                        return (
+                          <tr key={id}>
+                            <td>{nombre}</td>
+                            <td>{periodo}</td>
+                            <td>{peso}%</td>
+                            <td>
+                              {valor != null ? (
+                                <Badge bg={valor >= 3 ? "success" : "danger"}>{Number(valor).toFixed(2)}</Badge>
+                              ) : (
+                                <Badge bg="secondary">Pendiente</Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </Table>
                 </div>
@@ -297,17 +342,26 @@ export default function StudentDashboard() {
                       </tr>
                     </thead>
                     <tbody>
-                      {asistencias.map((a) => (
-                        <tr key={a.Id || a.id}>
-                          <td>{formatDate(a.Fecha)}</td>
-                          <td>{a.Curso}</td>
-                          <td>{a.Periodo}</td>
-                          <td>
-                            <Badge bg={a.Estado === "Presente" ? "success" : a.Estado === "Tarde" ? "warning" : "danger"}>{a.Estado}</Badge>
-                          </td>
-                          <td>{a.Observacion || "-"}</td>
-                        </tr>
-                      ))}
+                      {asistencias.map((a, idx) => {
+                        const id = pickProp(a, "Id") ?? idx;
+                        const fecha = pickProp(a, "Fecha");
+                        const curso = pickProp(a, "Curso") || "-";
+                        const periodo = pickProp(a, "Periodo") ?? "-";
+                        const estado = pickProp(a, "Estado") || "Sin estado";
+                        const observacion = pickProp(a, "Observacion") || "-";
+                        const estadoVariant = estado === "Presente" ? "success" : estado === "Tarde" ? "warning" : "danger";
+                        return (
+                          <tr key={id}>
+                            <td>{formatDate(fecha)}</td>
+                            <td>{curso}</td>
+                            <td>{periodo}</td>
+                            <td>
+                              <Badge bg={estadoVariant}>{estado}</Badge>
+                            </td>
+                            <td>{observacion}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </Table>
                 </div>

@@ -2206,6 +2206,10 @@
           "usuarioPortal": {
             "type": "string",
             "nullable": true
+          },
+          "passwordPortal": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false

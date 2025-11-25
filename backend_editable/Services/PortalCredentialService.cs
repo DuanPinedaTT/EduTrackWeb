@@ -11,7 +11,7 @@ namespace edutrack_academy_api.Services
 
     public interface IPortalCredentialService
     {
-        Task<PortalCredentialResult> EnsureStudentAccountAsync(Estudiante estudiante, bool forcePasswordReset = false);
+        Task<PortalCredentialResult> EnsureStudentAccountAsync(Estudiante estudiante, bool forcePasswordReset = false, string? preferredUsername = null, string? plainPassword = null);
         Task<PortalCredentialResult> CreateTutorAccountAsync(Usuario usuario, string? plainPassword = null);
         Task<string> ResetPasswordAsync(int usuarioId);
         Task DeleteAccountAsync(int usuarioId);
@@ -26,7 +26,7 @@ namespace edutrack_academy_api.Services
             _context = context;
         }
 
-        public async Task<PortalCredentialResult> EnsureStudentAccountAsync(Estudiante estudiante, bool forcePasswordReset = false)
+        public async Task<PortalCredentialResult> EnsureStudentAccountAsync(Estudiante estudiante, bool forcePasswordReset = false, string? preferredUsername = null, string? plainPassword = null)
         {
             if (estudiante == null)
             {
@@ -49,7 +49,10 @@ namespace edutrack_academy_api.Services
                 baseToken,
                 estudiante.Nombre,
                 "estudiante",
-                forcePasswordReset);
+                forcePasswordReset,
+                null,
+                plainPassword,
+                preferredUsername);
 
             if (!estudiante.UsuarioId.HasValue || estudiante.UsuarioId.Value != result.UsuarioId)
             {
@@ -72,7 +75,8 @@ namespace edutrack_academy_api.Services
                 "tutor",
                 true,
                 usuario,
-                plainPassword);
+                plainPassword,
+                usuario.User);
 
             return result;
         }
@@ -108,12 +112,14 @@ namespace edutrack_academy_api.Services
             string rol,
             bool forcePasswordReset,
             Usuario? providedUsuario = null,
-            string? providedPassword = null)
+            string? providedPassword = null,
+            string? preferredUsername = null)
         {
             Usuario usuario;
             bool created = false;
             bool passwordUpdated = false;
             string? tempPassword = null;
+                var normalizedPreferredUser = NormalizeToken(preferredUsername);
 
             if (existing == null)
             {
@@ -123,7 +129,9 @@ namespace edutrack_academy_api.Services
                 }
                 else
                 {
-                    var username = await BuildUniqueUsernameAsync(prefix, baseToken);
+                        var username = !string.IsNullOrWhiteSpace(normalizedPreferredUser)
+                            ? await BuildUniqueUsernameFromSeedAsync(normalizedPreferredUser)
+                            : await BuildUniqueUsernameAsync(prefix, baseToken);
                     var (nombre, apellido) = SplitNombre(displayName);
                     usuario = new Usuario
                     {
@@ -154,6 +162,15 @@ namespace edutrack_academy_api.Services
             {
                 usuario = existing;
                 if (forcePasswordReset)
+                                if (!string.IsNullOrWhiteSpace(normalizedPreferredUser))
+                                {
+                                    var requested = await BuildUniqueUsernameFromSeedAsync(normalizedPreferredUser, usuario.Id);
+                                    if (!string.Equals(usuario.User, requested, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        usuario.User = requested;
+                                        await _context.SaveChangesAsync();
+                                    }
+                                }
                 {
                     tempPassword = string.IsNullOrWhiteSpace(providedPassword)
                         ? GeneratePassword()
@@ -167,8 +184,14 @@ namespace edutrack_academy_api.Services
 
             if (string.IsNullOrWhiteSpace(usuario.User) || await UsernameAlreadyExistsAsync(usuario.User, usuario.Id))
             {
-                usuario.User = await BuildUniqueUsernameAsync(prefix, baseToken);
-                await _context.SaveChangesAsync();
+                var fallback = !string.IsNullOrWhiteSpace(normalizedPreferredUser)
+                    ? await BuildUniqueUsernameFromSeedAsync(normalizedPreferredUser, usuario.Id)
+                    : await BuildUniqueUsernameAsync(prefix, baseToken);
+                if (!string.Equals(usuario.User, fallback, StringComparison.OrdinalIgnoreCase))
+                {
+                    usuario.User = fallback;
+                    await _context.SaveChangesAsync();
+                }
             }
 
             return new PortalCredentialResult(usuario.Id, usuario.User, tempPassword, created, passwordUpdated);
@@ -187,19 +210,26 @@ namespace edutrack_academy_api.Services
                 normalizedBase = Guid.NewGuid().ToString("N").Substring(0, 6);
             }
 
-            var candidate = string.IsNullOrWhiteSpace(prefix)
+            var seed = string.IsNullOrWhiteSpace(prefix)
                 ? normalizedBase
                 : $"{prefix}-{normalizedBase}";
-            var finalUser = candidate;
+            return await BuildUniqueUsernameFromSeedAsync(seed);
+        }
+
+        private async Task<string> BuildUniqueUsernameFromSeedAsync(string seed, int currentId = 0)
+        {
+            var candidate = string.IsNullOrWhiteSpace(seed)
+                ? Guid.NewGuid().ToString("N").Substring(0, 6)
+                : seed;
             var suffix = 1;
 
-            while (await _context.Usuarios.AnyAsync(u => u.User == finalUser))
+            while (await _context.Usuarios.AnyAsync(u => u.User == candidate && u.Id != currentId))
             {
-                finalUser = $"{candidate}{suffix}";
+                candidate = $"{seed}{suffix}";
                 suffix++;
             }
 
-            return finalUser;
+            return candidate;
         }
 
         private static (string nombre, string apellido) SplitNombre(string? raw)

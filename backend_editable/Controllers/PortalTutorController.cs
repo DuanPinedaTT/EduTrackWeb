@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using edutrack_academy_api.Data;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +7,6 @@ namespace edutrack_academy_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "tutor")]
     public class PortalTutorController : ControllerBase
     {
         private readonly AppDbContext _context;

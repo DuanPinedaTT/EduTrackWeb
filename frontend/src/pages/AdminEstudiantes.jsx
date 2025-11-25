@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Container,
   Row,
@@ -12,7 +12,8 @@ import {
   ButtonGroup,
   Modal,
   Tabs,
-  Tab
+  Tab,
+  ListGroup
 } from "react-bootstrap";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
@@ -37,12 +38,16 @@ export default function AdminEstudiantes() {
   const [selectedCursoFilter, setSelectedCursoFilter] = useState("");
   const [selectedGradoFilter, setSelectedGradoFilter] = useState("");
 
-  const [form, setForm] = useState({
+  const initialStudentForm = {
     nombre: "",
     documento: "",
     gradoId: "",
-    grupo: ""
-  });
+    grupo: "",
+    usuarioPortal: "",
+    passwordPortal: ""
+  };
+  const [form, setForm] = useState({ ...initialStudentForm });
+  const [studentUserDirty, setStudentUserDirty] = useState(false);
 
   const [tutores, setTutores] = useState([]);
   const [loadingTutores, setLoadingTutores] = useState(false);
@@ -56,6 +61,20 @@ export default function AdminEstudiantes() {
     hijos: []
   };
   const [tutorForm, setTutorForm] = useState({ ...initialTutorState });
+  const [tutorStudentQuery, setTutorStudentQuery] = useState("");
+  const tutorSearchMatches = useMemo(() => {
+    const query = tutorStudentQuery.trim().toLowerCase();
+    if (!query) return [];
+
+    return estudiantes
+      .filter((s) => {
+        const documento = String(s.documento || "").toLowerCase();
+        const nombre = String(s.nombre || "").toLowerCase();
+        return documento.includes(query) || nombre.includes(query);
+      })
+      .filter((s) => !tutorForm.hijos.some((h) => h.estudianteId === s.id))
+      .slice(0, 5);
+  }, [tutorStudentQuery, estudiantes, tutorForm.hijos]);
 
   const loadEstudiantes = async () => {
     try {
@@ -199,6 +218,21 @@ export default function AdminEstudiantes() {
       return;
     }
 
+     if (name === "documento") {
+       setForm((prev) => {
+         const next = { ...prev, documento: value };
+         if (!studentUserDirty && !editingId) {
+           next.usuarioPortal = buildStudentUserSuggestion(value);
+         }
+         return next;
+       });
+       return;
+     }
+
+     if (name === "usuarioPortal") {
+       setStudentUserDirty(true);
+     }
+
     setForm((prev) => ({
       ...prev,
       [name]: value
@@ -207,12 +241,8 @@ export default function AdminEstudiantes() {
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({
-      nombre: "",
-      documento: "",
-      gradoId: "",
-      grupo: ""
-    });
+    setStudentUserDirty(false);
+    setForm({ ...initialStudentForm });
   };
 
   const handleSubmit = async (e) => {
@@ -227,17 +257,41 @@ export default function AdminEstudiantes() {
         return;
       }
 
+      const usernameValue = (form.usuarioPortal || "").trim();
+      const passwordValue = (form.passwordPortal || "").trim();
+
+      if (!usernameValue) {
+        setError("Define el usuario del portal del estudiante");
+        return;
+      }
+
+      if (!editingId && !passwordValue) {
+        setError("Define una contraseña inicial para el portal");
+        return;
+      }
+
       const body = {
         nombre: form.nombre,
         documento: form.documento,
         gradoId: gradoIdNumber,
-        grupo: grupoValue
+        grupo: grupoValue,
+        usuarioPortal: usernameValue
       };
+
+      if (passwordValue) {
+        body.passwordPortal = passwordValue;
+      }
 
       if (editingId) {
         await api.put(`/Estudiantes/${editingId}`, body);
       } else {
-        await api.post("/Estudiantes", body);
+        const res = await api.post("/Estudiantes", body);
+        const cred = res.data?.credenciales;
+        if (cred?.passwordTemporal) {
+          alert(`Estudiante creado. Usuario: ${cred.usuario}, Contraseña: ${cred.passwordTemporal}`);
+        } else {
+          alert("Estudiante creado y habilitado para el portal.");
+        }
       }
 
       resetForm();
@@ -249,11 +303,14 @@ export default function AdminEstudiantes() {
 
   const handleEdit = (est) => {
     setEditingId(est.id);
+    setStudentUserDirty(true);
     setForm({
       nombre: est.nombre,
       documento: est.documento,
       gradoId: est.gradoId ? String(est.gradoId) : "",
-      grupo: est.grupo || ""
+      grupo: est.grupo || "",
+      usuarioPortal: est.usuarioPortal || buildStudentUserSuggestion(est.documento),
+      passwordPortal: ""
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -280,6 +337,29 @@ export default function AdminEstudiantes() {
     if (!cursoId) return "";
     const curso = cursos.find((c) => c.id === cursoId);
     return curso?.gradoNombre || curso?.grado || "";
+  };
+
+  const normalizePortalUser = (value) =>
+    String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 20);
+
+  const buildStudentUserSuggestion = (documento) => {
+    const normalizedDoc = normalizePortalUser(documento);
+    if (!normalizedDoc) return "";
+    return `est-${normalizedDoc}`;
+  };
+
+  const handleSuggestStudentUser = () => {
+    const suggestion = buildStudentUserSuggestion(form.documento);
+    if (!suggestion) {
+      alert("Ingresa un documento válido para generar un usuario");
+      return;
+    }
+    setForm((prev) => ({ ...prev, usuarioPortal: suggestion }));
+    setStudentUserDirty(true);
   };
 
   const gruposDisponibles = () => {
@@ -309,6 +389,7 @@ export default function AdminEstudiantes() {
           ? `Portal reiniciado. Usuario: ${cred.usuario}, Contraseña: ${cred.passwordTemporal}`
           : "Portal actualizado."
       );
+      await loadEstudiantes();
     } catch (err) {
       setError(err.response?.data || "Error reiniciando acceso");
     }
@@ -348,6 +429,11 @@ export default function AdminEstudiantes() {
     });
   };
 
+  const handleTutorMatchSelect = (estudianteId) => {
+    handleAddTutorStudent(estudianteId);
+    setTutorStudentQuery("");
+  };
+
   const handleUpdateHijoField = (estudianteId, field, value) => {
     setTutorForm((prev) => ({
       ...prev,
@@ -360,6 +446,7 @@ export default function AdminEstudiantes() {
   const resetTutorForm = () => {
     setEditingTutorId(null);
     setTutorForm({ ...initialTutorState });
+    setTutorStudentQuery("");
   };
 
   const handleEditTutor = (tutor) => {
@@ -509,6 +596,38 @@ export default function AdminEstudiantes() {
                           <option key={gr} value={gr}>{gr}</option>
                         ))}
                       </Form.Select>
+                    </Form.Group>
+                    <Form.Group className="mb-2">
+                      <Form.Label>Usuario portal</Form.Label>
+                      <div className="d-flex gap-2">
+                        <Form.Control
+                          name="usuarioPortal"
+                          value={form.usuarioPortal}
+                          onChange={handleChange}
+                          placeholder="Ej: est-juan"
+                          required
+                        />
+                        <Button type="button" variant="outline-secondary" onClick={handleSuggestStudentUser}>
+                          Sugerir
+                        </Button>
+                      </div>
+                      <Form.Text className="text-muted">
+                        Se usará para que el estudiante inicie sesión.
+                      </Form.Text>
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                      <Form.Label>
+                        Contraseña portal
+                        {editingId && <small className="text-muted"> (vacío = mantener)</small>}
+                      </Form.Label>
+                      <Form.Control
+                        type="password"
+                        name="passwordPortal"
+                        value={form.passwordPortal}
+                        onChange={handleChange}
+                        placeholder={editingId ? "••••••" : ""}
+                        required={!editingId}
+                      />
                     </Form.Group>
                     <div className="d-flex justify-content-between">
                       <Button type="submit" className="primary-btn">
@@ -736,23 +855,36 @@ export default function AdminEstudiantes() {
                       <Card.Body>
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <strong>Hijos vinculados</strong>
-                          <Form.Select size="sm" style={{ width: 200 }} onChange={(e) => {
-                            const value = Number(e.target.value);
-                            if (value) {
-                              handleAddTutorStudent(value);
-                              e.target.value = "";
-                            }
-                          }}>
-                            <option value="">Seleccionar estudiante</option>
-                            {estudiantes
-                              .filter((s) => !tutorForm.hijos.some((h) => h.estudianteId === s.id))
-                              .map((s) => (
-                                <option key={s.id} value={s.id}>
-                                  {s.nombre} ({s.documento})
-                                </option>
-                              ))}
-                          </Form.Select>
                         </div>
+                        <Form.Group className="mb-2">
+                          <Form.Label>Agregar estudiante por documento</Form.Label>
+                          <Form.Control
+                            placeholder="Ej: 000123456"
+                            value={tutorStudentQuery}
+                            onChange={(e) => setTutorStudentQuery(e.target.value)}
+                          />
+                        </Form.Group>
+                        {tutorStudentQuery && (
+                          <div className="mb-3">
+                            {tutorSearchMatches.length === 0 ? (
+                              <small className="text-muted">Sin coincidencias para ese documento.</small>
+                            ) : (
+                              <ListGroup>
+                                {tutorSearchMatches.map((s) => (
+                                  <ListGroup.Item key={s.id} className="d-flex justify-content-between align-items-center">
+                                    <span>
+                                      <strong>{s.nombre}</strong>{" "}
+                                      <small className="text-muted">({s.documento})</small>
+                                    </span>
+                                    <Button type="button" size="sm" onClick={() => handleTutorMatchSelect(s.id)}>
+                                      Vincular
+                                    </Button>
+                                  </ListGroup.Item>
+                                ))}
+                              </ListGroup>
+                            )}
+                          </div>
+                        )}
                         {tutorForm.hijos.length === 0 ? (
                           <p className="text-muted mb-0">No hay estudiantes vinculados.</p>
                         ) : (

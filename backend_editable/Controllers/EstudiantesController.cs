@@ -18,6 +18,7 @@ namespace edutrack_academy_api.Controllers
         public string? GradoNombre { get; set; }
         public string? Grupo { get; set; }
         public string? UsuarioPortal { get; set; }
+        public string? PasswordPortal { get; set; }
     }
 
     [ApiController]
@@ -85,6 +86,13 @@ namespace edutrack_academy_api.Controllers
             var (grado, grupoNormalizado, validationError) = await ValidateGradoYGrupo(dto.GradoId, dto.Grupo);
             if (validationError != null) return BadRequest(validationError);
 
+            var desiredUser = string.IsNullOrWhiteSpace(dto.UsuarioPortal)
+                ? null
+                : dto.UsuarioPortal.Trim();
+            var desiredPassword = string.IsNullOrWhiteSpace(dto.PasswordPortal)
+                ? null
+                : dto.PasswordPortal.Trim();
+
             var estudiante = new Estudiante
             {
                 Nombre = dto.Nombre,
@@ -96,8 +104,13 @@ namespace edutrack_academy_api.Controllers
             await _context.SaveChangesAsync();
             await EnsureGrupoInscripcionAsync(estudiante, grupoNormalizado);
 
-            var credenciales = await _portalCredentialService.EnsureStudentAccountAsync(estudiante, forcePasswordReset: true);
+            var credenciales = await _portalCredentialService.EnsureStudentAccountAsync(
+                estudiante,
+                forcePasswordReset: true,
+                preferredUsername: desiredUser,
+                plainPassword: desiredPassword);
             dto.UsuarioPortal = credenciales.Usuario;
+            dto.PasswordPortal = null;
 
             dto.Id = estudiante.Id;
             dto.GradoNombre = grado?.Nombre;
@@ -133,7 +146,33 @@ namespace edutrack_academy_api.Controllers
             dto.GradoNombre = grado?.Nombre;
             dto.Grupo = grupoNormalizado;
             await _context.Entry(estudiante).Reference(e => e.Usuario).LoadAsync();
-            dto.UsuarioPortal = estudiante.Usuario?.User;
+            var desiredUser = string.IsNullOrWhiteSpace(dto.UsuarioPortal)
+                ? null
+                : dto.UsuarioPortal.Trim();
+            var desiredPassword = string.IsNullOrWhiteSpace(dto.PasswordPortal)
+                ? null
+                : dto.PasswordPortal.Trim();
+
+            var needsAccount = estudiante.UsuarioId == null;
+            var wantsUserChange = !string.IsNullOrWhiteSpace(desiredUser)
+                && !string.Equals(desiredUser, estudiante.Usuario?.User, StringComparison.OrdinalIgnoreCase);
+            var wantsPasswordChange = !string.IsNullOrWhiteSpace(desiredPassword);
+
+            if (needsAccount || wantsUserChange || wantsPasswordChange)
+            {
+                var credenciales = await _portalCredentialService.EnsureStudentAccountAsync(
+                    estudiante,
+                    forcePasswordReset: wantsPasswordChange || needsAccount,
+                    preferredUsername: desiredUser,
+                    plainPassword: desiredPassword);
+                dto.UsuarioPortal = credenciales.Usuario;
+            }
+            else
+            {
+                dto.UsuarioPortal = estudiante.Usuario?.User;
+            }
+
+            dto.PasswordPortal = null;
             return Ok(dto);
         }
 

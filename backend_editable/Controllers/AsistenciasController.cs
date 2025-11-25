@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using edutrack_academy_api.Data;
 using edutrack_academy_api.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +9,6 @@ namespace edutrack_academy_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "admin,docente")]
     public class AsistenciasController : ControllerBase
     {
         private readonly AppDbContext _context;

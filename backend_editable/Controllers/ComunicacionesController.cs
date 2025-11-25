@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using edutrack_academy_api.Data;
 using edutrack_academy_api.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,7 +42,6 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "admin,docente")]
         public async Task<IActionResult> Crear([FromBody] CrearComunicacionDTO dto)
         {
             if (!ModelState.IsValid)
@@ -143,7 +141,6 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("emitidas")]
-        [Authorize(Roles = "admin,docente")]
         public async Task<IActionResult> GetEmitidas()
         {
             var remitenteId = GetUserId();
