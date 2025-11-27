@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Container, Row, Col, Card, Alert, Table, Badge, Button, ListGroup, Toast, ToastContainer } from "react-bootstrap";
+import { Container, Row, Col, Card, Alert, Table, Badge, Button, ListGroup, Toast, ToastContainer, Spinner } from "react-bootstrap";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { PortalEstudiante } from "../services/api.js";
 import { useNotifications } from "../contexts/NotificationContext.jsx";
@@ -43,6 +43,7 @@ const pickProp = (obj, prop) => {
 export default function StudentDashboard() {
   const [resumen, setResumen] = useState(null);
   const [loadingResumen, setLoadingResumen] = useState(true);
+  const [refreshingResumen, setRefreshingResumen] = useState(false);
   const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
 
@@ -60,16 +61,25 @@ export default function StudentDashboard() {
   const [comunicaciones, setComunicaciones] = useState([]);
   const [markingId, setMarkingId] = useState(null);
 
-  const loadResumen = async () => {
+  const loadResumen = async (options = {}) => {
+    const silent = options.silent ?? false;
     try {
-      setLoadingResumen(true);
+      if (silent) {
+        setRefreshingResumen(true);
+      } else {
+        setLoadingResumen(true);
+      }
       setError(null);
       const res = await PortalEstudiante.resumen();
       setResumen(res.data);
     } catch (err) {
       setError(err.response?.data || "No se pudo cargar el resumen");
     } finally {
-      setLoadingResumen(false);
+      if (silent) {
+        setRefreshingResumen(false);
+      } else {
+        setLoadingResumen(false);
+      }
     }
   };
 
@@ -187,7 +197,7 @@ export default function StudentDashboard() {
       });
 
       const { loadResumen: loadResumenFn, loadNotas: loadNotasFn, selectedPeriod: currentPeriod, selectedMateria: currentMateria } = notificationRefs.current;
-      loadResumenFn?.();
+      loadResumenFn?.({ silent: true });
       if (typeof loadNotasFn === "function") {
         loadNotasFn(currentPeriod, currentMateria);
       }
@@ -309,7 +319,15 @@ export default function StudentDashboard() {
       <Container fluid>
       <Row className="mb-4">
         <Col>
-          <h3 className="mb-1">Portal del Estudiante</h3>
+          <div className="d-flex flex-wrap align-items-center gap-3 mb-1">
+            <h3 className="mb-0">Portal del Estudiante</h3>
+            {refreshingResumen && (
+              <span className="d-inline-flex align-items-center gap-2 text-primary small">
+                <Spinner animation="border" size="sm" />
+                <span>Sincronizando cambios...</span>
+              </span>
+            )}
+          </div>
           <p className="text-muted mb-0">Consulta tus promedios, asistencias y comunicaciones recientes.</p>
         </Col>
       </Row>

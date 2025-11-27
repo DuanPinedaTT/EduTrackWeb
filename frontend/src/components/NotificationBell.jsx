@@ -36,6 +36,7 @@ const formatRelativeTime = (value) => {
 export default function NotificationBell() {
   const { inbox, markAsRead } = useNotifications();
   const { user } = useAuth();
+  const isTeacher = user?.rol === "docente";
   const [loadingKey, setLoadingKey] = useState(null);
 
   const ordered = useMemo(
@@ -97,6 +98,11 @@ export default function NotificationBell() {
             const cursoNombre = pickProp(data, "CursoNombre") ?? pickProp(data, "cursoNombre");
             const displayAsignatura = asignaturaNombre || cursoNombre;
             const remitenteNombre = pickProp(data, "RemitenteNombre") ?? pickProp(data, "remitenteNombre");
+            const estudianteNombre = pickProp(data, "EstudianteNombre") ?? pickProp(data, "estudianteNombre");
+            const tutorNombre = pickProp(data, "TutorNombre") ?? pickProp(data, "tutorNombre");
+            const destinatarioNombre = estudianteNombre || tutorNombre;
+            const showDocenteLine = !isTeacher && remitenteNombre;
+            const showDestinatarioLine = isTeacher && destinatarioNombre;
             return (
               <div key={item.key} className="px-3 py-2 border-bottom notification-entry small">
                 <div className="d-flex justify-content-between align-items-start">
@@ -108,8 +114,11 @@ export default function NotificationBell() {
                 {displayAsignatura && (
                   <div className="mt-1 text-muted">Asignatura: {displayAsignatura}</div>
                 )}
-                {remitenteNombre && (
+                {showDocenteLine && (
                   <div className="text-muted">Docente: {remitenteNombre}</div>
+                )}
+                {showDestinatarioLine && (
+                  <div className="text-muted">Estudiante: {destinatarioNombre}</div>
                 )}
                 <div className="d-flex justify-content-between align-items-center mt-2">
                   <small className="text-muted">{formatRelativeTime(item.timestamp)}</small>

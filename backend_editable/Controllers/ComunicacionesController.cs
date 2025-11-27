@@ -192,11 +192,49 @@ namespace edutrack_academy_api.Controllers
 
             var timestamp = comunicacion.CreadaEn;
 
+            var estudianteIds = destinos
+                .Where(d => d.EstudianteId.HasValue)
+                .Select(d => d.EstudianteId!.Value)
+                .Distinct()
+                .ToList();
+
+            var estudiantesMap = estudianteIds.Count == 0
+                ? new Dictionary<int, string>()
+                : await _context.Estudiantes
+                    .Where(e => estudianteIds.Contains(e.Id))
+                    .Select(e => new { e.Id, e.Nombre })
+                    .ToDictionaryAsync(e => e.Id, e => e.Nombre);
+
+            var tutorIds = destinos
+                .Where(d => d.TutorId.HasValue)
+                .Select(d => d.TutorId!.Value)
+                .Distinct()
+                .ToList();
+
+            var tutoresMap = tutorIds.Count == 0
+                ? new Dictionary<int, string>()
+                : await _context.Usuarios
+                    .Where(u => tutorIds.Contains(u.Id))
+                    .Select(u => new { u.Id, u.Nombre })
+                    .ToDictionaryAsync(u => u.Id, u => u.Nombre);
+
             foreach (var destino in destinos)
             {
                 var preview = comunicacion.Mensaje.Length > 140
                     ? string.Concat(comunicacion.Mensaje.AsSpan(0, 140), "...")
                     : comunicacion.Mensaje;
+
+                string? estudianteNombre = null;
+                if (destino.EstudianteId.HasValue && estudiantesMap.TryGetValue(destino.EstudianteId.Value, out var estNombre))
+                {
+                    estudianteNombre = estNombre;
+                }
+
+                string? tutorNombre = null;
+                if (destino.TutorId.HasValue && tutoresMap.TryGetValue(destino.TutorId.Value, out var tutNombre))
+                {
+                    tutorNombre = tutNombre;
+                }
 
                 var payload = new NotificationPayload(
                     Type: "comunicacion",
@@ -208,6 +246,8 @@ namespace edutrack_academy_api.Controllers
                         destinoId = destino.Id,
                         estudianteId = destino.EstudianteId,
                         tutorId = destino.TutorId,
+                        estudianteNombre,
+                        tutorNombre,
                         titulo = comunicacion.Titulo,
                         mensaje = comunicacion.Mensaje,
                         tipo = comunicacion.Tipo,
