@@ -66,7 +66,7 @@ export default function NotificationBell() {
       }
     }
 
-    markAsRead(item.key);
+    markAsRead(item.key, { destinoId });
   };
 
   return (
@@ -93,7 +93,9 @@ export default function NotificationBell() {
         ) : (
           ordered.map((item) => {
             const data = item.data || {};
+            const asignaturaNombre = pickProp(data, "AsignaturaNombre") ?? pickProp(data, "asignaturaNombre");
             const cursoNombre = pickProp(data, "CursoNombre") ?? pickProp(data, "cursoNombre");
+            const displayAsignatura = asignaturaNombre || cursoNombre;
             const remitenteNombre = pickProp(data, "RemitenteNombre") ?? pickProp(data, "remitenteNombre");
             return (
               <div key={item.key} className="px-3 py-2 border-bottom notification-entry small">
@@ -103,8 +105,8 @@ export default function NotificationBell() {
                     <div className="text-muted">{item.payload?.message || "Tienes un mensaje nuevo."}</div>
                   </div>
                 </div>
-                {cursoNombre && (
-                  <div className="mt-1 text-muted">Asignatura: {cursoNombre}</div>
+                {displayAsignatura && (
+                  <div className="mt-1 text-muted">Asignatura: {displayAsignatura}</div>
                 )}
                 {remitenteNombre && (
                   <div className="text-muted">Docente: {remitenteNombre}</div>

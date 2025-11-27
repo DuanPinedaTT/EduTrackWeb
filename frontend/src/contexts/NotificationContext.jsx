@@ -74,10 +74,7 @@ export function NotificationProvider({ children }) {
     });
   }, []);
 
-  const dispatch = useCallback((payload) => {
-    setLastNotification(payload);
-    const typeValue = pickProp(payload, "type");
-    const normalizedType = typeof typeValue === "string" ? typeValue.toLowerCase() : "";
+  const deliverToListeners = useCallback((normalizedType, payload) => {
     listenersRef.current.forEach((listener) => {
       if (!listener?.handler) {
         return;
@@ -90,8 +87,30 @@ export function NotificationProvider({ children }) {
         }
       }
     });
+  }, []);
+
+  const dispatch = useCallback((payload) => {
+    setLastNotification(payload);
+    const typeValue = pickProp(payload, "type");
+    const normalizedType = typeof typeValue === "string" ? typeValue.toLowerCase() : "";
+    deliverToListeners(normalizedType, payload);
     enqueueInboxItem(payload, normalizedType);
-  }, [enqueueInboxItem]);
+  }, [enqueueInboxItem, deliverToListeners]);
+
+  const emitLocalEvent = useCallback((type, data = {}) => {
+    if (!type) return;
+    const normalizedType = type.toLowerCase();
+    const timestamp = new Date().toISOString();
+    const payload = {
+      type: normalizedType,
+      Type: normalizedType,
+      data,
+      Data: data,
+      timestamp,
+      Timestamp: timestamp
+    };
+    deliverToListeners(normalizedType, payload);
+  }, [deliverToListeners]);
 
   useEffect(() => {
     listenersRef.current = listenersRef.current.filter((listener) => typeof listener?.handler === "function");
@@ -186,10 +205,26 @@ export function NotificationProvider({ children }) {
     };
   }, []);
 
-  const markAsRead = useCallback((key) => {
+  const markAsRead = useCallback((key, options = {}) => {
     if (!key) return;
-    setInbox((prev) => prev.filter((item) => item.key !== key));
-  }, []);
+    let emitPayload = null;
+    setInbox((prev) => {
+      const target = prev.find((item) => item.key === key);
+      const remaining = prev.filter((item) => item.key !== key);
+      if (target && target.type === "comunicacion") {
+        const destinoId = options.destinoId
+          ?? pickProp(target.data, "DestinoId")
+          ?? pickProp(target.data, "destinoId");
+        if (destinoId) {
+          emitPayload = { destinoId };
+        }
+      }
+      return remaining;
+    });
+    if (emitPayload) {
+      emitLocalEvent("comunicacion-leida", emitPayload);
+    }
+  }, [emitLocalEvent]);
 
   const dismissByDestino = useCallback((destinoId) => {
     if (destinoId == null) return;

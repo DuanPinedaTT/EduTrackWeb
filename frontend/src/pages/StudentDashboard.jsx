@@ -196,6 +196,55 @@ export default function StudentDashboard() {
     return unsubscribe;
   }, [subscribe]);
 
+  useEffect(() => {
+    if (typeof subscribe !== "function") return undefined;
+
+    const unsubscribe = subscribe("comunicacion", (payload) => {
+      const data = pickProp(payload, "Data") ?? pickProp(payload, "data") ?? {};
+      const destinoId = pickProp(data, "DestinoId") ?? pickProp(data, "destinoId") ?? `${Date.now()}-${Math.random()}`;
+      const timestampValue =
+        pickProp(payload, "Timestamp") ?? pickProp(payload, "timestamp") ?? pickProp(data, "timestamp") ?? new Date().toISOString();
+      const remitente = pickProp(data, "RemitenteNombre") ?? pickProp(data, "remitenteNombre") ?? "Docente";
+      const message = pickProp(data, "Mensaje") ?? pickProp(data, "mensaje") ?? payload?.Message ?? "Tienes una nueva comunicación.";
+      const title = pickProp(payload, "Title") ?? pickProp(data, "Titulo") ?? pickProp(data, "titulo") ?? "Nueva comunicación";
+
+      const nuevo = {
+        Id: destinoId,
+        Leido: false,
+        Remitente: remitente,
+        Titulo: title,
+        Mensaje: message,
+        CreadaEn: timestampValue
+      };
+
+      setComunicaciones((prev) => {
+        const filtered = prev.filter((c) => (c.Id ?? c.id) !== destinoId);
+        return [nuevo, ...filtered];
+      });
+    });
+
+    return unsubscribe;
+  }, [subscribe]);
+
+  useEffect(() => {
+    if (typeof subscribe !== "function") return undefined;
+
+    const unsubscribe = subscribe("comunicacion-leida", (payload) => {
+      const data = pickProp(payload, "Data") ?? pickProp(payload, "data") ?? {};
+      const destinoId = pickProp(data, "DestinoId") ?? pickProp(data, "destinoId");
+      if (!destinoId) return;
+      setComunicaciones((prev) =>
+        prev.map((c) =>
+          c.Id === destinoId || c.id === destinoId
+            ? { ...c, Leido: true, leido: true, LeidoEn: new Date().toISOString(), leidoEn: new Date().toISOString() }
+            : c
+        )
+      );
+    });
+
+    return unsubscribe;
+  }, [subscribe]);
+
   const promedioLabel = useMemo(() => {
     if (notas.promedio == null) return { text: "Sin cálculo", variant: "secondary" };
     if (notas.promedio >= 4) return { text: `${notas.promedio.toFixed(2)} Excelente`, variant: "success" };
@@ -222,8 +271,11 @@ export default function StudentDashboard() {
     try {
       setMarkingId(destinoId);
       await PortalEstudiante.marcarComunicacionLeida(destinoId);
+      const timestamp = new Date().toISOString();
       setComunicaciones((prev) =>
-        prev.map((c) => (c.Id === destinoId || c.id === destinoId ? { ...c, Leido: true, LeidoEn: new Date().toISOString() } : c))
+        prev.map((c) =>
+          c.Id === destinoId || c.id === destinoId ? { ...c, Leido: true, leido: true, LeidoEn: timestamp, leidoEn: timestamp } : c
+        )
       );
       dismissByDestino(destinoId);
     } catch (err) {
@@ -598,7 +650,11 @@ export default function StudentDashboard() {
       </Row>
       </Container>
 
-      <ToastContainer position="bottom-end" className="p-3">
+      <ToastContainer
+        position="bottom-end"
+        className="position-fixed bottom-0 end-0 p-3"
+        style={{ zIndex: 1080 }}
+      >
         {toasts.map((toast) => {
           const valorNumber = Number(toast.valor);
           const valorLabel = Number.isFinite(valorNumber) ? valorNumber.toFixed(2) : toast.valor;

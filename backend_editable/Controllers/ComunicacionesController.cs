@@ -165,12 +165,29 @@ namespace edutrack_academy_api.Controllers
                 .FirstOrDefaultAsync();
 
             string? cursoNombre = null;
+            string? asignaturaNombre = null;
             if (comunicacion.CursoId.HasValue)
             {
-                cursoNombre = await _context.Cursos
+                var cursoInfo = await _context.Cursos
                     .Where(c => c.Id == comunicacion.CursoId.Value)
-                    .Select(c => c.Nombre)
+                    .Select(c => new
+                    {
+                        c.Nombre,
+                        DocenteAsignatura = c.CursoAsignaturas
+                            .Where(ca => ca.DocenteId == remitenteId && ca.Asignatura != null)
+                            .OrderBy(ca => ca.Id)
+                            .Select(ca => ca.Asignatura!.Nombre)
+                            .FirstOrDefault(),
+                        AnyAsignatura = c.CursoAsignaturas
+                            .Where(ca => ca.Asignatura != null)
+                            .OrderBy(ca => ca.Id)
+                            .Select(ca => ca.Asignatura!.Nombre)
+                            .FirstOrDefault()
+                    })
                     .FirstOrDefaultAsync();
+
+                cursoNombre = cursoInfo?.Nombre;
+                asignaturaNombre = cursoInfo?.DocenteAsignatura ?? cursoInfo?.AnyAsignatura;
             }
 
             var timestamp = comunicacion.CreadaEn;
@@ -196,6 +213,7 @@ namespace edutrack_academy_api.Controllers
                         tipo = comunicacion.Tipo,
                         cursoId = comunicacion.CursoId,
                         cursoNombre,
+                        asignaturaNombre,
                         remitenteId = remitente?.Id ?? remitenteId,
                         remitenteNombre = remitente?.Nombre
                     },
