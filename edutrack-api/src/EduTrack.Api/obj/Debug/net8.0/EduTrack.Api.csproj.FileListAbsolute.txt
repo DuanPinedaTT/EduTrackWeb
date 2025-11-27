@@ -169,3 +169,4 @@ C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Api\bin\Deb
 C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Api\bin\Debug\net8.0\RBush.dll
 C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Api\bin\Debug\net8.0\SixLabors.Fonts.dll
 C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Api\bin\Debug\net8.0\System.IO.Packaging.dll
+C:\Users\ASUS\Documents\GitHub\EduTrackWeb\edutrack-api\src\EduTrack.Api\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
