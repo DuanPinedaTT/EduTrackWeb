@@ -164,6 +164,8 @@ export default function StudentDashboard() {
       const data = pickProp(payload, "Data") ?? pickProp(payload, "data") ?? {};
       const periodoValue = pickProp(data, "Periodo") ?? pickProp(data, "periodo") ?? null;
       const cursoIdValue = pickProp(data, "CursoId") ?? pickProp(data, "cursoId") ?? null;
+      const cursoNombreValue =
+        pickProp(data, "CursoNombre") ?? pickProp(data, "cursoNombre") ?? pickProp(data, "Curso") ?? pickProp(data, "curso") ?? null;
       const valorValue = pickProp(data, "Valor") ?? pickProp(data, "valor");
       const timestampValue =
         pickProp(payload, "Timestamp") ?? pickProp(payload, "timestamp") ?? pickProp(data, "timestamp") ?? new Date().toISOString();
@@ -175,6 +177,7 @@ export default function StudentDashboard() {
         valor: valorValue,
         periodo: periodoValue,
         cursoId: cursoIdValue,
+        cursoNombre: cursoNombreValue,
         timestamp: timestampValue
       };
 
@@ -596,7 +599,9 @@ export default function StudentDashboard() {
 
       <ToastContainer position="bottom-end" className="p-3">
         {toasts.map((toast) => {
-          const valorLabel = Number.isFinite(Number(toast.valor)) ? Number(toast.valor).toFixed(2) : toast.valor;
+          const valorNumber = Number(toast.valor);
+          const valorLabel = Number.isFinite(valorNumber) ? valorNumber.toFixed(2) : toast.valor;
+          const cursoLabel = toast.cursoNombre || (toast.cursoId ? `Curso #${toast.cursoId}` : null);
           return (
             <Toast key={toast.id} onClose={() => dismissToast(toast.id)} delay={6000} autohide bg="light">
               <Toast.Header closeButton>
@@ -605,7 +610,7 @@ export default function StudentDashboard() {
               </Toast.Header>
               <Toast.Body>
                 <div>{toast.message}</div>
-                {(toast.valor != null || toast.periodo || toast.cursoId) && (
+                {(toast.valor != null || toast.periodo || cursoLabel) && (
                   <div className="small text-muted mt-2">
                     {toast.valor != null && (
                       <span>
@@ -617,9 +622,9 @@ export default function StudentDashboard() {
                         {toast.valor != null ? " • " : ""}Periodo {toast.periodo}
                       </span>
                     )}
-                    {toast.cursoId && (
+                    {cursoLabel && (
                       <span>
-                        {(toast.valor != null || toast.periodo) ? " • " : ""}Curso #{toast.cursoId}
+                        {(toast.valor != null || toast.periodo) ? " • " : ""}Asignatura: {cursoLabel}
                       </span>
                     )}
                   </div>

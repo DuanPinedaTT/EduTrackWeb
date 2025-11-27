@@ -295,6 +295,7 @@ namespace edutrack_academy_api.Controllers
                     estudianteNombre = estudiante.Nombre,
                     cursoId = notaConfig.CursoId,
                     curso = notaConfig.Curso?.Nombre,
+                    cursoNombre = notaConfig.Curso?.Nombre,
                     notaConfigId = notaConfig.Id,
                     columna = notaConfig.Nombre,
                     periodo = notaConfig.Periodo,
@@ -328,6 +329,7 @@ namespace edutrack_academy_api.Controllers
                     Data: new
                     {
                         cursoId = notaConfig.CursoId,
+                        cursoNombre = notaConfig.Curso?.Nombre,
                         notaConfigId = notaConfig.Id,
                         periodo = notaConfig.Periodo,
                         estudianteId = estudiante.Id,

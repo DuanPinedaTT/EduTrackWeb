@@ -179,6 +179,8 @@ export default function ParentDashboard() {
       const estudianteId = pickProp(data, "EstudianteId") ?? pickProp(data, "estudianteId");
       const estudianteNombre = pickProp(data, "EstudianteNombre") ?? pickProp(data, "estudianteNombre") ?? "Estudiante";
       const cursoIdValue = pickProp(data, "CursoId") ?? pickProp(data, "cursoId") ?? null;
+      const cursoNombreValue =
+        pickProp(data, "CursoNombre") ?? pickProp(data, "cursoNombre") ?? pickProp(data, "Curso") ?? pickProp(data, "curso") ?? null;
       const periodoValue = pickProp(data, "Periodo") ?? pickProp(data, "periodo") ?? null;
       const valorValue = pickProp(data, "Valor") ?? pickProp(data, "valor");
       const timestampValue =
@@ -191,6 +193,7 @@ export default function ParentDashboard() {
         estudianteId,
         estudianteNombre,
         cursoId: cursoIdValue,
+        cursoNombre: cursoNombreValue,
         periodo: periodoValue,
         valor: valorValue,
         timestamp: timestampValue
@@ -598,7 +601,9 @@ export default function ParentDashboard() {
 
       <ToastContainer position="bottom-end" className="p-3">
         {toasts.map((toast) => {
-          const valorLabel = Number.isFinite(Number(toast.valor)) ? Number(toast.valor).toFixed(2) : toast.valor;
+          const valorNumber = Number(toast.valor);
+          const valorLabel = Number.isFinite(valorNumber) ? valorNumber.toFixed(2) : toast.valor;
+          const cursoLabel = toast.cursoNombre || (toast.cursoId ? `Curso #${toast.cursoId}` : null);
           return (
             <Toast key={toast.id} onClose={() => dismissToast(toast.id)} delay={6000} autohide bg="light">
               <Toast.Header closeButton>
@@ -609,7 +614,7 @@ export default function ParentDashboard() {
                 <div>{toast.message}</div>
                 <div className="small text-muted mt-2">
                   <div>{toast.estudianteNombre}</div>
-                  {(toast.valor != null || toast.periodo || toast.cursoId) && (
+                  {(toast.valor != null || toast.periodo || cursoLabel) && (
                     <div>
                       {toast.valor != null && (
                         <span>
@@ -621,9 +626,9 @@ export default function ParentDashboard() {
                           {toast.valor != null ? " • " : ""}Periodo {toast.periodo}
                         </span>
                       )}
-                      {toast.cursoId && (
+                      {cursoLabel && (
                         <span>
-                          {(toast.valor != null || toast.periodo) ? " • " : ""}Curso #{toast.cursoId}
+                          {(toast.valor != null || toast.periodo) ? " • " : ""}Asignatura: {cursoLabel}
                         </span>
                       )}
                     </div>
