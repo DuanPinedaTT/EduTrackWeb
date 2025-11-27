@@ -5,7 +5,10 @@ import { useAuth } from "./AuthContext.jsx";
 const NotificationContext = createContext({
   status: "disconnected",
   lastNotification: null,
-  subscribe: () => () => {}
+  subscribe: () => () => {},
+  inbox: [],
+  markAsRead: () => {},
+  dismissByDestino: () => {}
 });
 
 const resolveHubUrl = () => {
@@ -41,8 +44,35 @@ export function NotificationProvider({ children }) {
   const { token } = useAuth();
   const [status, setStatus] = useState("disconnected");
   const [lastNotification, setLastNotification] = useState(null);
+  const [inbox, setInbox] = useState([]);
   const listenersRef = useRef([]);
   const connectionRef = useRef(null);
+
+  const enqueueInboxItem = useCallback((payload, normalizedType) => {
+    if (normalizedType !== "comunicacion") {
+      return;
+    }
+
+    const data = pickProp(payload, "Data") ?? pickProp(payload, "data") ?? {};
+    const destinoId = pickProp(data, "DestinoId") ?? pickProp(data, "destinoId");
+    const timestampValue =
+      pickProp(payload, "Timestamp") ?? pickProp(payload, "timestamp") ?? pickProp(data, "timestamp") ?? new Date().toISOString();
+    const key = destinoId ?? `${normalizedType}-${timestampValue}`;
+
+    setInbox((prev) => {
+      const filtered = prev.filter((item) => item.key !== key);
+      const entry = {
+        key,
+        clientId: createListenerId(),
+        type: normalizedType,
+        payload,
+        data,
+        timestamp: timestampValue,
+        read: false
+      };
+      return [entry, ...filtered].slice(0, 20);
+    });
+  }, []);
 
   const dispatch = useCallback((payload) => {
     setLastNotification(payload);
@@ -60,7 +90,8 @@ export function NotificationProvider({ children }) {
         }
       }
     });
-  }, []);
+    enqueueInboxItem(payload, normalizedType);
+  }, [enqueueInboxItem]);
 
   useEffect(() => {
     listenersRef.current = listenersRef.current.filter((listener) => typeof listener?.handler === "function");
@@ -155,13 +186,32 @@ export function NotificationProvider({ children }) {
     };
   }, []);
 
+  const markAsRead = useCallback((key) => {
+    if (!key) return;
+    setInbox((prev) => prev.filter((item) => item.key !== key));
+  }, []);
+
+  const dismissByDestino = useCallback((destinoId) => {
+    if (destinoId == null) return;
+    setInbox((prev) =>
+      prev.filter((item) => {
+        const itemDestino = pickProp(item.data, "DestinoId") ?? pickProp(item.data, "destinoId");
+        if (itemDestino == null) return true;
+        return itemDestino !== destinoId;
+      })
+    );
+  }, []);
+
   const value = useMemo(
     () => ({
       status,
       lastNotification,
-      subscribe
+      subscribe,
+      inbox,
+      markAsRead,
+      dismissByDestino
     }),
-    [lastNotification, status, subscribe]
+    [inbox, lastNotification, status, subscribe, markAsRead, dismissByDestino]
   );
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;

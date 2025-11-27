@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Container, Row, Col, Alert, Card, Form, Badge, Button, ListGroup, Spinner, Table } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +19,17 @@ import api from "../services/api.js";
 import StatsCard from "../components/StatsCard.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
+import { useNotifications } from "../contexts/NotificationContext.jsx";
+
+const pickProp = (obj, prop) => {
+  if (!obj) return undefined;
+  const lower = prop.charAt(0).toLowerCase() + prop.slice(1);
+  const upper = prop.charAt(0).toUpperCase() + prop.slice(1);
+  if (Object.prototype.hasOwnProperty.call(obj, prop)) return obj[prop];
+  if (Object.prototype.hasOwnProperty.call(obj, lower)) return obj[lower];
+  if (Object.prototype.hasOwnProperty.call(obj, upper)) return obj[upper];
+  return undefined;
+};
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
@@ -42,6 +53,11 @@ export default function TeacherDashboard() {
     gradeDistribution: [],
     groupComparison: []
   });
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
+  const [detailRefreshKey, setDetailRefreshKey] = useState(0);
+  const assignmentsRef = useRef([]);
+  const selectedCourseIdRef = useRef(null);
+  const { subscribe } = useNotifications();
 
   const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];
 
@@ -108,7 +124,7 @@ export default function TeacherDashboard() {
     return () => {
       cancel = true;
     };
-  }, [selectedCourseId]);
+  }, [selectedCourseId, detailRefreshKey]);
 
   const subjectList = useMemo(() => Object.keys(subjectGroups).sort((a, b) => a.localeCompare(b)), [subjectGroups]);
   const selectedCourses = selectedAsignatura ? subjectGroups[selectedAsignatura] || [] : [];
@@ -387,7 +403,35 @@ export default function TeacherDashboard() {
     };
 
     computeStats();
-  }, [selectedAsignatura, selectedPeriod, courseAssignments]);
+  }, [selectedAsignatura, selectedPeriod, courseAssignments, statsRefreshKey]);
+
+  useEffect(() => {
+    assignmentsRef.current = courseAssignments;
+  }, [courseAssignments]);
+
+  useEffect(() => {
+    selectedCourseIdRef.current = selectedCourseId;
+  }, [selectedCourseId]);
+
+  useEffect(() => {
+    if (typeof subscribe !== "function") return undefined;
+
+    const unsubscribe = subscribe("nota-curso", (payload) => {
+      const data = pickProp(payload, "Data") ?? pickProp(payload, "data") ?? {};
+      const cursoIdValue = pickProp(data, "CursoId") ?? pickProp(data, "cursoId");
+      if (cursoIdValue == null) return;
+      const cursoId = Number(cursoIdValue);
+      if (Number.isNaN(cursoId)) return;
+      const assignedIds = assignmentsRef.current.map((assignment) => assignment.cursoId);
+      if (!assignedIds.includes(cursoId)) return;
+      setStatsRefreshKey((prev) => prev + 1);
+      if (selectedCourseIdRef.current === cursoId) {
+        setDetailRefreshKey((prev) => prev + 1);
+      }
+    });
+
+    return unsubscribe;
+  }, [subscribe]);
 
   const handleOpenCourse = (cursoId, periodoId) => {
     const query = periodoId ? `?period=${periodoId}` : "";

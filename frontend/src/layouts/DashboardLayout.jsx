@@ -3,6 +3,7 @@ import { ListGroup, Dropdown, Collapse } from "react-bootstrap";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import api from "../services/api.js";
+import NotificationBell from "../components/NotificationBell.jsx";
 
 export default function DashboardLayout({ children }) {
   const { user, logout } = useAuth();
@@ -223,6 +224,7 @@ export default function DashboardLayout({ children }) {
           <small className="text-muted">{getRolLabel(user?.rol)} • Experiencia personalizada</small>
         </div>
         <div className="d-flex align-items-center gap-3">
+          <NotificationBell />
           <span className="fw-semibold text-muted mb-0">
             {user?.nombre}
           </span>

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using edutrack_academy_api.Data;
 using edutrack_academy_api.Models;
+using edutrack_academy_api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,10 +13,12 @@ namespace edutrack_academy_api.Controllers
     public class ComunicacionesController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly INotificationDispatcher _notificationDispatcher;
 
-        public ComunicacionesController(AppDbContext context)
+        public ComunicacionesController(AppDbContext context, INotificationDispatcher notificationDispatcher)
         {
             _context = context;
+            _notificationDispatcher = notificationDispatcher;
         }
 
         private int GetUserId()
@@ -145,11 +148,69 @@ namespace edutrack_academy_api.Controllers
             _context.ComunicacionDestinos.AddRange(destinos);
             await _context.SaveChangesAsync();
 
+            await NotifyDestinatariosAsync(comunicacion, destinos, remitenteId);
+
             return Ok(new
             {
                 comunicacion.Id,
                 destinatarios = destinos.Count
             });
+        }
+
+        private async Task NotifyDestinatariosAsync(Comunicacion comunicacion, IEnumerable<ComunicacionDestino> destinos, int remitenteId)
+        {
+            var remitente = await _context.Usuarios
+                .Where(u => u.Id == remitenteId)
+                .Select(u => new { u.Id, u.Nombre })
+                .FirstOrDefaultAsync();
+
+            string? cursoNombre = null;
+            if (comunicacion.CursoId.HasValue)
+            {
+                cursoNombre = await _context.Cursos
+                    .Where(c => c.Id == comunicacion.CursoId.Value)
+                    .Select(c => c.Nombre)
+                    .FirstOrDefaultAsync();
+            }
+
+            var timestamp = comunicacion.CreadaEn;
+
+            foreach (var destino in destinos)
+            {
+                var preview = comunicacion.Mensaje.Length > 140
+                    ? string.Concat(comunicacion.Mensaje.AsSpan(0, 140), "...")
+                    : comunicacion.Mensaje;
+
+                var payload = new NotificationPayload(
+                    Type: "comunicacion",
+                    Title: comunicacion.Titulo,
+                    Message: preview,
+                    Data: new
+                    {
+                        comunicacionId = comunicacion.Id,
+                        destinoId = destino.Id,
+                        estudianteId = destino.EstudianteId,
+                        tutorId = destino.TutorId,
+                        titulo = comunicacion.Titulo,
+                        mensaje = comunicacion.Mensaje,
+                        tipo = comunicacion.Tipo,
+                        cursoId = comunicacion.CursoId,
+                        cursoNombre,
+                        remitenteId = remitente?.Id ?? remitenteId,
+                        remitenteNombre = remitente?.Nombre
+                    },
+                    Timestamp: timestamp
+                );
+
+                if (destino.EstudianteId.HasValue)
+                {
+                    await _notificationDispatcher.SendToStudentsAsync(new[] { destino.EstudianteId.Value }, payload);
+                }
+                else if (destino.TutorId.HasValue)
+                {
+                    await _notificationDispatcher.SendToTutorsAsync(new[] { destino.TutorId.Value }, payload);
+                }
+            }
         }
 
         [HttpGet("emitidas")]

@@ -47,7 +47,7 @@ export default function StudentDashboard() {
   const [toasts, setToasts] = useState([]);
 
   const location = useLocation();
-  const { subscribe } = useNotifications();
+  const { subscribe, dismissByDestino } = useNotifications();
   const notificationRefs = useRef({});
 
   const [selectedPeriod, setSelectedPeriod] = useState(null);
@@ -225,6 +225,7 @@ export default function StudentDashboard() {
       setComunicaciones((prev) =>
         prev.map((c) => (c.Id === destinoId || c.id === destinoId ? { ...c, Leido: true, LeidoEn: new Date().toISOString() } : c))
       );
+      dismissByDestino(destinoId);
     } catch (err) {
       setError(err.response?.data || "No se pudo marcar como leído");
     } finally {
