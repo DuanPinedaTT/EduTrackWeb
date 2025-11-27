@@ -13,7 +13,9 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  ReferenceLine,
+  LabelList
 } from "recharts";
 import api from "../services/api.js";
 import StatsCard from "../components/StatsCard.jsx";
@@ -29,6 +31,23 @@ const pickProp = (obj, prop) => {
   if (Object.prototype.hasOwnProperty.call(obj, lower)) return obj[lower];
   if (Object.prototype.hasOwnProperty.call(obj, upper)) return obj[upper];
   return undefined;
+};
+
+const PASSING_SCORE = 3.5;
+
+const formatCourseLabel = (grado, grupo) =>
+  [grado || "Sin grado", grupo ? `Grupo ${grupo}` : null].filter(Boolean).join(" · ");
+
+const GroupComparisonTooltip = ({ active, payload }) => {
+  if (!active || !payload || payload.length === 0) return null;
+  const data = payload[0].payload;
+  return (
+    <div className="p-2 rounded border bg-white shadow-sm small">
+      <strong className="d-block mb-1">{data.grado}</strong>
+      <div>Promedio: <span className="fw-semibold">{data.promedio?.toFixed ? data.promedio.toFixed(2) : data.promedio}</span></div>
+      <div>Estudiantes evaluados: {data.estudiantes}</div>
+    </div>
+  );
 };
 
 export default function TeacherDashboard() {
@@ -51,7 +70,9 @@ export default function TeacherDashboard() {
   
   const [statsData, setStatsData] = useState({
     gradeDistribution: [],
-    groupComparison: []
+    groupComparison: [],
+    destacados: [],
+    enRiesgo: []
   });
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [detailRefreshKey, setDetailRefreshKey] = useState(0);
@@ -307,7 +328,7 @@ export default function TeacherDashboard() {
   useEffect(() => {
     const computeStats = async () => {
       if (!selectedAsignatura) {
-        setStatsData({ gradeDistribution: [], groupComparison: [] });
+        setStatsData({ gradeDistribution: [], groupComparison: [], destacados: [], enRiesgo: [] });
         return;
       }
 
@@ -319,6 +340,7 @@ export default function TeacherDashboard() {
         );
         const groupStats = [];
         let allGrades = [];
+        const highlightedStudents = [];
 
         for (const curso of cursosDelMismoNombre) {
           try {
@@ -330,46 +352,61 @@ export default function TeacherDashboard() {
 
             if (notasData.length === 0) continue;
 
-            const configsPeriodo = configsData.filter(cfg => cfg.periodo === selectedPeriod);
+            const configsPeriodo = configsData.filter((cfg) => Number(cfg.periodo) === Number(selectedPeriod));
+            if (configsPeriodo.length === 0) continue;
 
-            const promediosPeriodo = notasData.map(estudiante => {
-              const notasPeriodo = (estudiante.notas || []).filter(n =>
-                configsPeriodo.some(cfg => cfg.id === n.notaConfigId)
-              );
+            const cfgMap = new Map(configsPeriodo.map((cfg) => [cfg.id, cfg]));
+            const cursoLabel = formatCourseLabel(curso.gradoNombre, curso.grupo);
 
-              if (!notasPeriodo || notasPeriodo.length === 0) return null;
+            const studentAverages = notasData
+              .map((estudiante) => {
+                const notasConValor = (estudiante.notas || []).filter(
+                  (nota) => cfgMap.has(nota.notaConfigId) && nota.valor != null
+                );
 
-              const notasConValor = notasPeriodo.filter(n => n.valor != null);
-              if (notasConValor.length === 0) return null;
+                if (notasConValor.length === 0) return null;
 
-              const sumaProductos = notasConValor.reduce((sum, n) => {
-                const cfg = configsPeriodo.find(c => c.id === n.notaConfigId);
-                return sum + (n.valor * (cfg?.peso || 0));
-              }, 0);
+                const sumaProductos = notasConValor.reduce((sum, nota) => {
+                  const cfg = cfgMap.get(nota.notaConfigId);
+                  return cfg?.peso ? sum + nota.valor * cfg.peso : sum;
+                }, 0);
 
-              const sumaPesos = notasConValor.reduce((sum, n) => {
-                const cfg = configsPeriodo.find(c => c.id === n.notaConfigId);
-                return sum + (cfg?.peso || 0);
-              }, 0);
+                const sumaPesos = notasConValor.reduce((sum, nota) => {
+                  const cfg = cfgMap.get(nota.notaConfigId);
+                  return cfg?.peso ? sum + cfg.peso : sum;
+                }, 0);
 
-              return sumaPesos > 0 ? sumaProductos / sumaPesos : null;
-            }).filter(p => p != null);
+                if (sumaPesos <= 0) return null;
+
+                return {
+                  estudianteId: estudiante.id,
+                  estudiante: estudiante.nombre,
+                  documento: estudiante.documento,
+                  promedio: Number((sumaProductos / sumaPesos).toFixed(2)),
+                  cursoId: curso.cursoId,
+                  grado: curso.gradoNombre,
+                  grupo: curso.grupo,
+                  cursoEtiqueta: cursoLabel
+                };
+              })
+              .filter(Boolean);
+
+            if (studentAverages.length === 0) continue;
+
+            const promediosPeriodo = studentAverages.map((item) => item.promedio);
 
             const promedioCurso = promediosPeriodo.length > 0
-              ? (promediosPeriodo.reduce((a, b) => a + b, 0) / promediosPeriodo.length)
+              ? Number((promediosPeriodo.reduce((a, b) => a + b, 0) / promediosPeriodo.length).toFixed(2))
               : 0;
 
-            const gradoLabel = [curso.gradoNombre || "Sin grado", curso.grupo || null]
-              .filter(Boolean)
-              .join(" - ");
-
             groupStats.push({
-              grado: gradoLabel,
-              promedio: Number(promedioCurso.toFixed(2)),
-              estudiantes: notasData.length
+              grado: cursoLabel,
+              promedio: promedioCurso,
+              estudiantes: studentAverages.length
             });
 
             allGrades.push(...promediosPeriodo);
+            highlightedStudents.push(...studentAverages);
           } catch (err) {
             console.error("Error cargando estadísticas del curso:", err);
           }
@@ -391,9 +428,30 @@ export default function TeacherDashboard() {
           else distribution[4].cantidad++;
         });
 
+        const totalGrades = allGrades.length;
+        const distributionWithPercent = distribution
+          .map((item) => ({
+            ...item,
+            porcentaje: totalGrades > 0 ? Number(((item.cantidad / totalGrades) * 100).toFixed(1)) : 0
+          }))
+          .filter((item) => item.cantidad > 0);
+
+        const orderedByScore = [...highlightedStudents].sort((a, b) => b.promedio - a.promedio);
+        let destacados = orderedByScore.filter((student) => student.promedio >= 4.5).slice(0, 5);
+        if (destacados.length === 0) destacados = orderedByScore.slice(0, 5);
+        destacados = destacados.map((student) => ({ ...student, estado: "Sobresaliente" }));
+
+        const enRiesgo = highlightedStudents
+          .filter((student) => student.promedio < PASSING_SCORE)
+          .sort((a, b) => a.promedio - b.promedio)
+          .slice(0, 5)
+          .map((student) => ({ ...student, estado: "Plan de mejoramiento" }));
+
         setStatsData({
-          gradeDistribution: distribution.filter(d => d.cantidad > 0),
-          groupComparison: groupStats
+          gradeDistribution: distributionWithPercent,
+          groupComparison: groupStats,
+          destacados,
+          enRiesgo
         });
       } catch (err) {
         console.error("Error procesando estadísticas:", err);
@@ -447,6 +505,52 @@ export default function TeacherDashboard() {
     { label: "Asignaturas activas", value: subjectList.length },
     { label: "Total estudiantes", value: totalStudents }
   ];
+  const destacados = statsData.destacados ?? [];
+  const enRiesgo = statsData.enRiesgo ?? [];
+
+  const renderHighlightList = (students, emptyMessage, badgeVariant = "primary") => {
+    if (statsLoading) {
+      return (
+        <div className="text-center py-4 text-muted">
+          <Spinner animation="border" size="sm" />
+          <p className="mt-2 mb-0">Procesando promedios...</p>
+        </div>
+      );
+    }
+
+    if (!students.length) {
+      return (
+        <Alert variant="light" className="mb-0">
+          {emptyMessage}
+        </Alert>
+      );
+    }
+
+    return (
+      <ListGroup variant="flush" className="list-quiet">
+        {students.map((student) => (
+          <ListGroup.Item
+            key={`${student.estudianteId}-${student.cursoId}`}
+            className="d-flex justify-content-between align-items-start gap-3"
+          >
+            <div>
+              <strong className="d-block">{student.estudiante}</strong>
+              <div className="text-muted small">{formatCourseLabel(student.grado, student.grupo)}</div>
+              {student.documento && (
+                <div className="text-muted small">Doc. {student.documento}</div>
+              )}
+            </div>
+            <div className="text-end">
+              <Badge bg={badgeVariant} pill>
+                {student.promedio?.toFixed ? student.promedio.toFixed(2) : student.promedio}
+              </Badge>
+              <div className="text-muted small mt-1">{student.estado}</div>
+            </div>
+          </ListGroup.Item>
+        ))}
+      </ListGroup>
+    );
+  };
 
   return (
     <Container fluid className="pb-5">
@@ -736,75 +840,135 @@ export default function TeacherDashboard() {
         </Col>
       </Row>
 
-      {/* Gráficos */}
+      {/* Gráficos y alertas */}
       {selectedAsignatura && (
-        <Row className="mb-4">
-          <Col lg={7}>
-            <Card className="glass-card border-0 h-100">
-              <Card.Body>
-                <Card.Title className="mb-3">
-                  Comparación por grado - {selectedAsignatura}
-                </Card.Title>
-                {statsLoading ? (
-                  <div className="text-center py-5 text-muted">
-                    <Spinner animation="border" />
-                    <p className="mt-2 mb-0">Calculando estadísticas...</p>
-                  </div>
-                ) : statsData.groupComparison.length === 0 ? (
-                  <Alert variant="info">
-                    No hay datos de notas para el periodo seleccionado.
-                  </Alert>
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={statsData.groupComparison}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="grado" />
-                      <YAxis domain={[0, 5]} />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="promedio" fill="#667eea" name="Promedio del Periodo" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
+        <>
+          <Row className="mb-4">
+            <Col lg={7}>
+              <Card className="glass-card border-0 h-100">
+                <Card.Body>
+                  <Card.Title className="mb-3">
+                    Comparación por grado - {selectedAsignatura}
+                  </Card.Title>
+                  {statsLoading ? (
+                    <div className="text-center py-5 text-muted">
+                      <Spinner animation="border" />
+                      <p className="mt-2 mb-0">Calculando estadísticas...</p>
+                    </div>
+                  ) : statsData.groupComparison.length === 0 ? (
+                    <Alert variant="info">
+                      No hay datos de notas para el periodo seleccionado.
+                    </Alert>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={320}>
+                      <BarChart data={statsData.groupComparison} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="barPromedioGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#6366f1" stopOpacity={0.95} />
+                            <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.8} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis dataKey="grado" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+                        <YAxis domain={[0, 5]} tickLine={false} axisLine={false} />
+                        <Tooltip content={<GroupComparisonTooltip />} />
+                        <Legend />
+                        <ReferenceLine
+                          y={PASSING_SCORE}
+                          stroke="#f97316"
+                          strokeDasharray="5 4"
+                          label={{ value: `Meta ${PASSING_SCORE.toFixed(1)}`, position: "insideTopRight", fill: "#f97316" }}
+                        />
+                        <Bar dataKey="promedio" fill="url(#barPromedioGradient)" name="Promedio del periodo" radius={[6, 6, 0, 0]}>
+                          <LabelList dataKey="promedio" position="top" formatter={(value) => value?.toFixed ? value.toFixed(2) : value} />
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
 
-          <Col lg={5}>
-            <Card className="glass-card border-0 h-100">
-              <Card.Body>
-                <Card.Title className="mb-3">Distribución de rendimiento</Card.Title>
-                {statsLoading ? (
-                  <div className="text-center py-5 text-muted">
-                    <Spinner animation="border" />
-                    <p className="mt-2 mb-0">Calculando estadísticas...</p>
+            <Col lg={5}>
+              <Card className="glass-card border-0 h-100">
+                <Card.Body>
+                  <Card.Title className="mb-3">Distribución de rendimiento</Card.Title>
+                  {statsLoading ? (
+                    <div className="text-center py-5 text-muted">
+                      <Spinner animation="border" />
+                      <p className="mt-2 mb-0">Calculando estadísticas...</p>
+                    </div>
+                  ) : statsData.gradeDistribution.length === 0 ? (
+                    <Alert variant="info">Sin datos disponibles.</Alert>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={statsData.gradeDistribution}
+                          dataKey="cantidad"
+                          nameKey="rango"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={100}
+                          labelLine={false}
+                          label={({ percent }) => `${Number((percent * 100).toFixed(0))}%`}
+                        >
+                          {statsData.gradeDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          formatter={(value, _, payload) => {
+                            const porcentaje = payload?.payload?.porcentaje ?? 0;
+                            return [`${value} estudiantes (${porcentaje}%)`, payload?.payload?.rango || "Rango"];
+                          }}
+                        />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+
+          <Row className="mb-4">
+            <Col lg={6} className="mb-3 mb-lg-0">
+              <Card className="glass-card border-0 h-100">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                      <h6 className="mb-0">Estudiantes destacados</h6>
+                      <small className="text-muted">Promedios sobresalientes del periodo {selectedPeriod}</small>
+                    </div>
+                    <span className="chip">{destacados.length}</span>
                   </div>
-                ) : statsData.gradeDistribution.length === 0 ? (
-                  <Alert variant="info">Sin datos disponibles.</Alert>
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={statsData.gradeDistribution}
-                        dataKey="cantidad"
-                        nameKey="rango"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={90}
-                        label
-                      >
-                        {statsData.gradeDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+                  {renderHighlightList(destacados, "Aún no hay estudiantes destacados en este periodo.", "success")}
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col lg={6}>
+              <Card className="glass-card border-0 h-100">
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                      <h6 className="mb-0">Planes de mejoramiento</h6>
+                      <small className="text-muted">Promedios por debajo de {PASSING_SCORE.toFixed(1)}</small>
+                    </div>
+                    <span className="chip">{enRiesgo.length}</span>
+                  </div>
+                  {renderHighlightList(
+                    enRiesgo,
+                    "No hay estudiantes en riesgo en este periodo.",
+                    "danger"
+                  )}
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </>
       )}
 
       {/* Estadísticas generales */}
