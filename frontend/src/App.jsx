@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext.jsx";
+import { NotificationProvider } from "./contexts/NotificationContext.jsx";
 
 import Home from "./pages/Home.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
@@ -38,9 +39,10 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Navbar onLoginClick={openLoginModal} />
-        <Routes>
+      <NotificationProvider>
+        <BrowserRouter>
+          <Navbar onLoginClick={openLoginModal} />
+          <Routes>
           <Route
             path="/"
             element={
@@ -224,7 +226,8 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

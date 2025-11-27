@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Container, Row, Col, Card, Alert, Table, Badge, Button, ListGroup, Dropdown } from "react-bootstrap";
+import { Container, Row, Col, Card, Alert, Table, Badge, Button, ListGroup, Dropdown, Toast, ToastContainer } from "react-bootstrap";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { PortalTutor } from "../services/api.js";
+import { useNotifications } from "../contexts/NotificationContext.jsx";
 
 const PERIODOS = [
   { id: null, nombre: "Todos" },
@@ -17,6 +18,13 @@ const formatDate = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+};
+
+const formatTime = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 };
 
 const pickProp = (obj, prop) => {
@@ -36,8 +44,11 @@ export default function ParentDashboard() {
   const [hijos, setHijos] = useState([]);
   const [loadingHijos, setLoadingHijos] = useState(true);
   const [error, setError] = useState(null);
+  const [toasts, setToasts] = useState([]);
 
   const location = useLocation();
+  const { subscribe } = useNotifications();
+  const notificationRefs = useRef({});
 
   const [selectedChildId, setSelectedChildId] = useState(null);
   const selectedChild = useMemo(() => hijos.find((h) => h.EstudianteId === selectedChildId || h.estudianteId === selectedChildId), [hijos, selectedChildId]);
@@ -128,6 +139,16 @@ export default function ParentDashboard() {
   };
 
   useEffect(() => {
+    notificationRefs.current = {
+      loadNotas,
+      loadAsistencias,
+      selectedChildId,
+      selectedPeriod,
+      selectedMateria
+    };
+  });
+
+  useEffect(() => {
     loadHijos();
     loadComunicaciones();
   }, []);
@@ -149,6 +170,53 @@ export default function ParentDashboard() {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [location.hash]);
+
+  useEffect(() => {
+    if (typeof subscribe !== "function") return undefined;
+
+    const unsubscribe = subscribe("nota", (payload) => {
+      const data = pickProp(payload, "Data") ?? pickProp(payload, "data") ?? {};
+      const estudianteId = pickProp(data, "EstudianteId") ?? pickProp(data, "estudianteId");
+      const estudianteNombre = pickProp(data, "EstudianteNombre") ?? pickProp(data, "estudianteNombre") ?? "Estudiante";
+      const cursoIdValue = pickProp(data, "CursoId") ?? pickProp(data, "cursoId") ?? null;
+      const periodoValue = pickProp(data, "Periodo") ?? pickProp(data, "periodo") ?? null;
+      const valorValue = pickProp(data, "Valor") ?? pickProp(data, "valor");
+      const timestampValue =
+        pickProp(payload, "Timestamp") ?? pickProp(payload, "timestamp") ?? pickProp(data, "timestamp") ?? new Date().toISOString();
+
+      const toastEntry = {
+        id: `${Date.now()}-${Math.random()}`,
+        title: pickProp(payload, "Title") || "Actualización de nota",
+        message: `${estudianteNombre} tiene una nueva calificación.`,
+        estudianteId,
+        estudianteNombre,
+        cursoId: cursoIdValue,
+        periodo: periodoValue,
+        valor: valorValue,
+        timestamp: timestampValue
+      };
+
+      setToasts((prev) => {
+        const next = [...prev, toastEntry];
+        return next.slice(-3);
+      });
+
+      const {
+        loadNotas: loadNotasFn,
+        loadAsistencias: loadAsistenciasFn,
+        selectedChildId: activeChild,
+        selectedPeriod: periodFilter,
+        selectedMateria: materiaFilter
+      } = notificationRefs.current;
+
+      if (estudianteId && estudianteId === activeChild) {
+        loadNotasFn?.(estudianteId, periodFilter, materiaFilter);
+        loadAsistenciasFn?.(estudianteId);
+      }
+    });
+
+    return unsubscribe;
+  }, [subscribe]);
 
   const promedioLabel = useMemo(() => {
     if (notas.promedio == null) return { text: "Sin cálculo", variant: "secondary" };
@@ -200,10 +268,15 @@ export default function ParentDashboard() {
     loadNotas(selectedChildId, periodoId, selectedMateria);
   };
 
+  const dismissToast = (toastId) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== toastId));
+  };
+
   if (loadingHijos) return <LoadingSpinner message="Cargando portal para tutores..." />;
 
   return (
-    <Container fluid>
+    <>
+      <Container fluid>
       <Row className="mb-4">
         <Col>
           <h3 className="mb-1">Portal de Familias</h3>
@@ -521,6 +594,46 @@ export default function ParentDashboard() {
           </Row>
         </>
       )}
-    </Container>
+      </Container>
+
+      <ToastContainer position="bottom-end" className="p-3">
+        {toasts.map((toast) => {
+          const valorLabel = Number.isFinite(Number(toast.valor)) ? Number(toast.valor).toFixed(2) : toast.valor;
+          return (
+            <Toast key={toast.id} onClose={() => dismissToast(toast.id)} delay={6000} autohide bg="light">
+              <Toast.Header closeButton>
+                <strong className="me-auto">{toast.title}</strong>
+                <small>{formatTime(toast.timestamp)}</small>
+              </Toast.Header>
+              <Toast.Body>
+                <div>{toast.message}</div>
+                <div className="small text-muted mt-2">
+                  <div>{toast.estudianteNombre}</div>
+                  {(toast.valor != null || toast.periodo || toast.cursoId) && (
+                    <div>
+                      {toast.valor != null && (
+                        <span>
+                          Nota: <strong>{valorLabel}</strong>
+                        </span>
+                      )}
+                      {toast.periodo && (
+                        <span>
+                          {toast.valor != null ? " • " : ""}Periodo {toast.periodo}
+                        </span>
+                      )}
+                      {toast.cursoId && (
+                        <span>
+                          {(toast.valor != null || toast.periodo) ? " • " : ""}Curso #{toast.cursoId}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </Toast.Body>
+            </Toast>
+          );
+        })}
+      </ToastContainer>
+    </>
   );
 }

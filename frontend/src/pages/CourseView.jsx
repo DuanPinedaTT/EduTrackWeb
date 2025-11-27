@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Container,
   Row,
@@ -49,6 +49,11 @@ export default function CourseView() {
   const [editingConfig, setEditingConfig] = useState(null);
   const [activePeriod, setActivePeriod] = useState(() => resolvePeriodFromSearch(location.search));
 
+  const originalGradesRef = useRef(new Map());
+  const dirtyGradesRef = useRef(new Map());
+
+  const makeGradeKey = (estudianteId, notaConfigId) => `${estudianteId}-${notaConfigId}`;
+
   const [newColumn, setNewColumn] = useState({
     nombre: "",
     peso: "",
@@ -79,7 +84,17 @@ export default function CourseView() {
       const c = coursesRes.data.find((x) => x.id === Number(id));
       setCourse(c || null);
       setConfigs(configsRes.data || []);
-      setStudents(studentsRes.data || []);
+      const studentsData = studentsRes.data || [];
+      setStudents(studentsData);
+
+      const snapshot = new Map();
+      studentsData.forEach((est) => {
+        (est.notas || []).forEach((nota) => {
+          snapshot.set(makeGradeKey(est.id, nota.notaConfigId), nota.valor ?? null);
+        });
+      });
+      originalGradesRef.current = snapshot;
+      dirtyGradesRef.current = new Map();
     } catch (err) {
       setError(err.response?.data || "Error cargando datos");
     } finally {
@@ -152,6 +167,8 @@ export default function CourseView() {
   };
 
   const handleGradeChange = (estudianteId, notaConfigId, valor) => {
+    const normalized = valor === "" || valor === null ? null : Number(valor);
+
     setStudents((prev) =>
       prev.map((est) => {
         if (est.id === estudianteId) {
@@ -159,7 +176,7 @@ export default function CourseView() {
             ...est,
             notas: est.notas.map((n) =>
               n.notaConfigId === notaConfigId
-                ? { ...n, valor: valor === "" ? null : Number(valor) }
+                ? { ...n, valor: normalized }
                 : n
             )
           };
@@ -167,24 +184,39 @@ export default function CourseView() {
         return est;
       })
     );
+
+    const key = makeGradeKey(estudianteId, notaConfigId);
+    const original = originalGradesRef.current.get(key) ?? null;
+    if ((normalized == null && original == null) || normalized === original) {
+      dirtyGradesRef.current.delete(key);
+    } else {
+      dirtyGradesRef.current.set(key, normalized);
+    }
   };
 
   const handleSaveAll = async () => {
+    const dirtyEntries = Array.from(dirtyGradesRef.current.entries());
+    if (dirtyEntries.length === 0) {
+      alert("No hay cambios por guardar");
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
 
-      for (const est of students) {
-        for (const nota of est.notas) {
-          await api.put("/Notas", {
-            estudianteId: est.id,
-            notaConfigId: nota.notaConfigId,
-            valor: nota.valor
+      await Promise.all(
+        dirtyEntries.map(([key, valor]) => {
+          const [estudianteId, notaConfigId] = key.split("-").map(Number);
+          return api.put("/Notas", {
+            estudianteId,
+            notaConfigId,
+            valor
           });
-        }
-      }
+        })
+      );
 
-      alert("Notas guardadas exitosamente");
+      alert("Cambios guardados exitosamente");
       await loadAll();
     } catch (err) {
       setError(err.response?.data || "Error guardando notas");

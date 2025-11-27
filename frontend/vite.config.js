@@ -8,10 +8,16 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
-        // backennd
+        // backend
         target: "https://localhost:7180",
         changeOrigin: true,
         secure: false
+      },
+      "/hubs": {
+        target: "https://localhost:7180",
+        changeOrigin: true,
+        secure: false,
+        ws: true
       }
     }
   }
