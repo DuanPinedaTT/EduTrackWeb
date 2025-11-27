@@ -181,6 +181,7 @@ export default function ParentDashboard() {
       const cursoIdValue = pickProp(data, "CursoId") ?? pickProp(data, "cursoId") ?? null;
       const cursoNombreValue =
         pickProp(data, "CursoNombre") ?? pickProp(data, "cursoNombre") ?? pickProp(data, "Curso") ?? pickProp(data, "curso") ?? null;
+      const asignaturaNombreValue = pickProp(data, "AsignaturaNombre") ?? pickProp(data, "asignaturaNombre") ?? cursoNombreValue;
       const periodoValue = pickProp(data, "Periodo") ?? pickProp(data, "periodo") ?? null;
       const valorValue = pickProp(data, "Valor") ?? pickProp(data, "valor");
       const timestampValue =
@@ -194,6 +195,7 @@ export default function ParentDashboard() {
         estudianteNombre,
         cursoId: cursoIdValue,
         cursoNombre: cursoNombreValue,
+        asignaturaNombre: asignaturaNombreValue,
         periodo: periodoValue,
         valor: valorValue,
         timestamp: timestampValue
@@ -660,7 +662,7 @@ export default function ParentDashboard() {
         {toasts.map((toast) => {
           const valorNumber = Number(toast.valor);
           const valorLabel = Number.isFinite(valorNumber) ? valorNumber.toFixed(2) : toast.valor;
-          const cursoLabel = toast.cursoNombre || (toast.cursoId ? `Curso #${toast.cursoId}` : null);
+          const cursoLabel = toast.asignaturaNombre || toast.cursoNombre || (toast.cursoId ? `Curso #${toast.cursoId}` : null);
           return (
             <Toast key={toast.id} onClose={() => dismissToast(toast.id)} delay={6000} autohide bg="light">
               <Toast.Header closeButton>

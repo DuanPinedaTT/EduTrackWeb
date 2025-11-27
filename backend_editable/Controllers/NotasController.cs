@@ -210,6 +210,8 @@ namespace edutrack_academy_api.Controllers
         {
             var notaConfig = await _context.NotaConfigs
                 .Include(nc => nc.Curso)
+                    .ThenInclude(c => c.CursoAsignaturas)
+                        .ThenInclude(ca => ca.Asignatura)
                 .FirstOrDefaultAsync(nc => nc.Id == dto.NotaConfigId);
 
             if (notaConfig == null)
@@ -251,6 +253,12 @@ namespace edutrack_academy_api.Controllers
                 .Distinct()
                 .ToListAsync();
 
+            var notifiedUserIds = new HashSet<int>();
+            if (estudiante.UsuarioId.HasValue)
+            {
+                notifiedUserIds.Add(estudiante.UsuarioId.Value);
+            }
+
             decimal? promedio = null;
             if (notaConfig.CursoId != 0)
             {
@@ -285,6 +293,11 @@ namespace edutrack_academy_api.Controllers
                 }
             }
 
+            var asignaturaNombre = notaConfig.Curso?.CursoAsignaturas?
+                .Select(ca => ca.Asignatura?.Nombre)
+                .FirstOrDefault(nombre => !string.IsNullOrWhiteSpace(nombre))
+                ?? notaConfig.Curso?.Nombre;
+
             var studentPayload = new NotificationPayload(
                 Type: "nota",
                 Title: $"{notaConfig.Nombre} actualizada",
@@ -296,6 +309,7 @@ namespace edutrack_academy_api.Controllers
                     cursoId = notaConfig.CursoId,
                     curso = notaConfig.Curso?.Nombre,
                     cursoNombre = notaConfig.Curso?.Nombre,
+                    asignaturaNombre,
                     notaConfigId = notaConfig.Id,
                     columna = notaConfig.Nombre,
                     periodo = notaConfig.Periodo,
@@ -309,15 +323,27 @@ namespace edutrack_academy_api.Controllers
 
             if (tutorIds.Count > 0)
             {
-                var tutorPayload = new NotificationPayload(
-                    Type: studentPayload.Type,
-                    Title: studentPayload.Title,
-                    Message: $"{estudiante.Nombre} tiene una nueva nota en {notaConfig.Nombre}.",
-                    Data: studentPayload.Data,
-                    Timestamp: studentPayload.Timestamp
-                );
+                var filteredTutorIds = tutorIds
+                    .Where(id => !notifiedUserIds.Contains(id))
+                    .ToList();
 
-                await _notificationDispatcher.SendToTutorsAsync(tutorIds, tutorPayload);
+                foreach (var tutorId in filteredTutorIds)
+                {
+                    notifiedUserIds.Add(tutorId);
+                }
+
+                if (filteredTutorIds.Count > 0)
+                {
+                    var tutorPayload = new NotificationPayload(
+                        Type: studentPayload.Type,
+                        Title: studentPayload.Title,
+                        Message: $"{estudiante.Nombre} tiene una nueva nota en {notaConfig.Nombre}.",
+                        Data: studentPayload.Data,
+                        Timestamp: studentPayload.Timestamp
+                    );
+
+                    await _notificationDispatcher.SendToTutorsAsync(filteredTutorIds, tutorPayload);
+                }
             }
 
             if (notaConfig.CursoId != 0)
@@ -330,6 +356,7 @@ namespace edutrack_academy_api.Controllers
                     {
                         cursoId = notaConfig.CursoId,
                         cursoNombre = notaConfig.Curso?.Nombre,
+                        asignaturaNombre,
                         notaConfigId = notaConfig.Id,
                         periodo = notaConfig.Periodo,
                         estudianteId = estudiante.Id,

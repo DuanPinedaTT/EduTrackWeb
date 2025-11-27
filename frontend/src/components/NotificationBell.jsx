@@ -97,7 +97,12 @@ export default function NotificationBell() {
             const asignaturaNombre = pickProp(data, "AsignaturaNombre") ?? pickProp(data, "asignaturaNombre");
             const cursoNombre = pickProp(data, "CursoNombre") ?? pickProp(data, "cursoNombre");
             const displayAsignatura = asignaturaNombre || cursoNombre;
-            const remitenteNombre = pickProp(data, "RemitenteNombre") ?? pickProp(data, "remitenteNombre");
+            const docenteNombre = pickProp(data, "DocenteNombre") ?? pickProp(data, "docenteNombre");
+            const remitenteNombre = docenteNombre
+              ?? pickProp(data, "RemitenteNombre")
+              ?? pickProp(data, "remitenteNombre")
+              ?? pickProp(data, "Remitente")
+              ?? pickProp(data, "remitente");
             const estudianteNombre = pickProp(data, "EstudianteNombre") ?? pickProp(data, "estudianteNombre");
             const tutorNombre = pickProp(data, "TutorNombre") ?? pickProp(data, "tutorNombre");
             const destinatarioNombre = estudianteNombre || tutorNombre;

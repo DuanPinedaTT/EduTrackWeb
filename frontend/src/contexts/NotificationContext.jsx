@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useAuth } from "./AuthContext.jsx";
+import { PortalEstudiante, PortalTutor } from "../services/api.js";
 
 const NotificationContext = createContext({
   status: "disconnected",
@@ -41,12 +42,13 @@ const createListenerId = () => {
 };
 
 export function NotificationProvider({ children }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [status, setStatus] = useState("disconnected");
   const [lastNotification, setLastNotification] = useState(null);
   const [inbox, setInbox] = useState([]);
   const listenersRef = useRef([]);
   const connectionRef = useRef(null);
+  const seededInboxRef = useRef(false);
 
   const enqueueInboxItem = useCallback((payload, normalizedType) => {
     if (normalizedType !== "comunicacion") {
@@ -236,6 +238,86 @@ export function NotificationProvider({ children }) {
       })
     );
   }, []);
+
+  const seedInboxFromApi = useCallback(async () => {
+    if (seededInboxRef.current) return;
+    if (!token) return;
+    const rol = user?.rol;
+    const isStudent = rol === "estudiante";
+    const isTutor = rol === "tutor";
+    if (!isStudent && !isTutor) return;
+
+    try {
+      const res = isStudent ? await PortalEstudiante.comunicaciones() : await PortalTutor.comunicaciones();
+      const data = Array.isArray(res.data) ? res.data : [];
+      const unread = data.filter((item) => !(item.Leido ?? item.leido));
+      if (unread.length === 0) {
+        seededInboxRef.current = true;
+        return;
+      }
+
+      setInbox((prev) => {
+        const existingKeys = new Set(prev.map((item) => item.key));
+        const hydrated = [...prev];
+
+        unread.forEach((com) => {
+          const destinoId = com.Id ?? com.id;
+          if (!destinoId || existingKeys.has(String(destinoId))) {
+            return;
+          }
+
+          const timestampValue = com.CreadaEn ?? com.creadaEn ?? new Date().toISOString();
+          const docenteNombre = com.DocenteNombre ?? com.docenteNombre ?? com.Remitente ?? com.remitente;
+          const payloadData = {
+            DestinoId: destinoId,
+            destinoId,
+            RemitenteNombre: docenteNombre,
+            remitenteNombre: docenteNombre,
+            DocenteNombre: docenteNombre,
+            docenteNombre,
+            titulo: com.Titulo ?? com.titulo,
+            mensaje: com.Mensaje ?? com.mensaje,
+            tipo: com.Tipo ?? com.tipo,
+            estudianteId: isStudent ? (com.EstudianteId ?? null) : null,
+            tutorId: isTutor ? (com.TutorId ?? null) : null
+          };
+
+          const payload = {
+            type: "comunicacion",
+            Title: com.Titulo ?? com.titulo ?? "Nueva comunicación",
+            Message: com.Mensaje ?? com.mensaje ?? "Tienes una nueva comunicación.",
+            Data: payloadData,
+            Timestamp: timestampValue
+          };
+
+          hydrated.push({
+            key: String(destinoId),
+            clientId: createListenerId(),
+            type: "comunicacion",
+            payload,
+            data: payloadData,
+            timestamp: timestampValue,
+            read: false
+          });
+        });
+
+        return hydrated.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      });
+
+      seededInboxRef.current = true;
+    } catch (err) {
+      console.debug("No se pudo precargar el inbox", err);
+    }
+  }, [token, user?.rol]);
+
+  useEffect(() => {
+    if (!token) {
+      seededInboxRef.current = false;
+      setInbox([]);
+      return;
+    }
+    seedInboxFromApi();
+  }, [token, seedInboxFromApi]);
 
   const value = useMemo(
     () => ({
