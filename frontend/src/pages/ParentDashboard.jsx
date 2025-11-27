@@ -231,7 +231,14 @@ export default function ParentDashboard() {
       const destinoId = pickProp(data, "DestinoId") ?? pickProp(data, "destinoId") ?? `${Date.now()}-${Math.random()}`;
       const timestampValue =
         pickProp(payload, "Timestamp") ?? pickProp(payload, "timestamp") ?? pickProp(data, "timestamp") ?? new Date().toISOString();
-      const remitente = pickProp(data, "RemitenteNombre") ?? pickProp(data, "remitenteNombre") ?? "Docente";
+      const remitente =
+        pickProp(data, "DocenteNombre")
+        ?? pickProp(data, "docenteNombre")
+        ?? pickProp(data, "RemitenteNombre")
+        ?? pickProp(data, "remitenteNombre")
+        ?? pickProp(data, "Remitente")
+        ?? pickProp(data, "remitente")
+        ?? "Docente";
       const message = pickProp(data, "Mensaje") ?? pickProp(data, "mensaje") ?? payload?.Message ?? "Tienes una nueva comunicación.";
       const title = pickProp(payload, "Title") ?? pickProp(data, "Titulo") ?? pickProp(data, "titulo") ?? "Nueva comunicación";
 
@@ -239,6 +246,8 @@ export default function ParentDashboard() {
         Id: destinoId,
         Leido: false,
         Remitente: remitente,
+        RemitenteNombre: remitente,
+        DocenteNombre: remitente,
         Titulo: title,
         Mensaje: message,
         CreadaEn: timestampValue
@@ -617,6 +626,14 @@ export default function ParentDashboard() {
                       {comunicaciones.map((com) => {
                         const id = com.Id ?? com.id;
                         const leido = com.Leido ?? com.leido;
+                        const remitenteNombre =
+                          pickProp(com, "DocenteNombre")
+                          ?? pickProp(com, "docenteNombre")
+                          ?? pickProp(com, "RemitenteNombre")
+                          ?? pickProp(com, "remitenteNombre")
+                          ?? pickProp(com, "Remitente")
+                          ?? pickProp(com, "remitente")
+                          ?? "Docente";
                         return (
                           <ListGroup.Item key={id} className="px-0">
                             <div className="d-flex justify-content-between flex-wrap align-items-start">
@@ -626,7 +643,7 @@ export default function ParentDashboard() {
                                   {!leido && <Badge bg="warning" text="dark">Nuevo</Badge>}
                                 </div>
                                 <small className="text-muted d-block">
-                                  {com.Remitente || com.remitente} • {formatDate(com.CreadaEn || com.creadaEn)}
+                                  {remitenteNombre} • {formatDate(com.CreadaEn || com.creadaEn)}
                                 </small>
                                 <p className="mb-1 mt-2">{com.Mensaje || com.mensaje}</p>
                               </div>

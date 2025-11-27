@@ -112,6 +112,8 @@ namespace edutrack_academy_api.Controllers
                     cd.Comunicacion.Tipo,
                     cd.Comunicacion.CreadaEn,
                     Remitente = cd.Comunicacion.Remitente.Nombre,
+                    RemitenteNombre = cd.Comunicacion.Remitente.Nombre,
+                    DocenteNombre = cd.Comunicacion.Remitente.Nombre,
                     Curso = cd.Comunicacion.Curso != null ? new
                     {
                         cd.Comunicacion.Curso.Id,
@@ -338,7 +340,9 @@ namespace edutrack_academy_api.Controllers
                     cd.Comunicacion.Mensaje,
                     cd.Comunicacion.Tipo,
                     cd.Comunicacion.CreadaEn,
-                    Remitente = cd.Comunicacion.Remitente.Nombre
+                    Remitente = cd.Comunicacion.Remitente.Nombre,
+                    RemitenteNombre = cd.Comunicacion.Remitente.Nombre,
+                    DocenteNombre = cd.Comunicacion.Remitente.Nombre
                 })
                 .ToListAsync();
 

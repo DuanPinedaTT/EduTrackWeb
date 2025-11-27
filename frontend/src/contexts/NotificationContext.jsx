@@ -268,6 +268,8 @@ export function NotificationProvider({ children }) {
 
           const timestampValue = com.CreadaEn ?? com.creadaEn ?? new Date().toISOString();
           const docenteNombre = com.DocenteNombre ?? com.docenteNombre ?? com.Remitente ?? com.remitente;
+          const titleValue = com.Titulo ?? com.titulo ?? "Nueva comunicación";
+          const messageValue = com.Mensaje ?? com.mensaje ?? "Tienes una nueva comunicación.";
           const payloadData = {
             DestinoId: destinoId,
             destinoId,
@@ -284,8 +286,10 @@ export function NotificationProvider({ children }) {
 
           const payload = {
             type: "comunicacion",
-            Title: com.Titulo ?? com.titulo ?? "Nueva comunicación",
-            Message: com.Mensaje ?? com.mensaje ?? "Tienes una nueva comunicación.",
+            title: titleValue,
+            Title: titleValue,
+            message: messageValue,
+            Message: messageValue,
             Data: payloadData,
             Timestamp: timestampValue
           };

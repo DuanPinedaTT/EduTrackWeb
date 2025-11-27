@@ -94,26 +94,41 @@ export default function NotificationBell() {
         ) : (
           ordered.map((item) => {
             const data = item.data || {};
+            const payload = item.payload || {};
             const asignaturaNombre = pickProp(data, "AsignaturaNombre") ?? pickProp(data, "asignaturaNombre");
             const cursoNombre = pickProp(data, "CursoNombre") ?? pickProp(data, "cursoNombre");
             const displayAsignatura = asignaturaNombre || cursoNombre;
-            const docenteNombre = pickProp(data, "DocenteNombre") ?? pickProp(data, "docenteNombre");
+            const payloadRemitente = pickProp(payload, "DocenteNombre")
+              ?? pickProp(payload, "RemitenteNombre")
+              ?? pickProp(payload, "Remitente");
+            const docenteNombre = pickProp(data, "DocenteNombre")
+              ?? pickProp(data, "docenteNombre")
+              ?? payloadRemitente;
             const remitenteNombre = docenteNombre
               ?? pickProp(data, "RemitenteNombre")
               ?? pickProp(data, "remitenteNombre")
               ?? pickProp(data, "Remitente")
-              ?? pickProp(data, "remitente");
+              ?? pickProp(data, "remitente")
+              ?? payloadRemitente;
             const estudianteNombre = pickProp(data, "EstudianteNombre") ?? pickProp(data, "estudianteNombre");
             const tutorNombre = pickProp(data, "TutorNombre") ?? pickProp(data, "tutorNombre");
             const destinatarioNombre = estudianteNombre || tutorNombre;
             const showDocenteLine = !isTeacher && remitenteNombre;
             const showDestinatarioLine = isTeacher && destinatarioNombre;
+            const payloadTitle = pickProp(payload, "title")
+              ?? pickProp(data, "Titulo")
+              ?? pickProp(data, "titulo")
+              ?? "Nueva notificación";
+            const payloadMessage = pickProp(payload, "message")
+              ?? pickProp(data, "Mensaje")
+              ?? pickProp(data, "mensaje")
+              ?? "Tienes un mensaje nuevo.";
             return (
               <div key={item.key} className="px-3 py-2 border-bottom notification-entry small">
                 <div className="d-flex justify-content-between align-items-start">
                   <div>
-                    <div className="fw-semibold">{item.payload?.title || "Nueva notificación"}</div>
-                    <div className="text-muted">{item.payload?.message || "Tienes un mensaje nuevo."}</div>
+                    <div className="fw-semibold">{payloadTitle}</div>
+                    <div className="text-muted">{payloadMessage}</div>
                   </div>
                 </div>
                 {displayAsignatura && (
