@@ -219,13 +219,16 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="dashboard-shell">
       <header className="shell-topbar">
-        <div>
-          <h5 className="brand-title mb-1">
-            <span className="brand-title-primary">Edu</span>
-            <span className="brand-title-highlight">Track</span>
-            <span className="brand-title-primary"> Academy</span>
-          </h5>
-          <small className="text-muted">{getRolLabel(user?.rol)} • Experiencia personalizada</small>
+        <div className="d-flex align-items-center gap-3">
+          <img src="/logo-relleno-azul.png" alt="EduTrack" className="logo-compact" />
+          <div>
+            <h5 className="brand-title mb-1">
+              <span className="brand-title-primary">Edu</span>
+              <span className="brand-title-highlight">Track</span>
+              <span className="brand-title-primary"> Academy</span>
+            </h5>
+            <small className="text-muted">{getRolLabel(user?.rol)} • Experiencia personalizada</small>
+          </div>
         </div>
         <div className="d-flex align-items-center gap-3">
           <NotificationBell />
