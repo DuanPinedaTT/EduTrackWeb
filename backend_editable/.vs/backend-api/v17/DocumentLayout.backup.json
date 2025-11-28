@@ -3,6 +3,18 @@
   "WorkspaceRootPath": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\pc\\onedrive\\documentos\\github\\edutrackweb\\backend_editable\\controllers\\asistenciascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:controllers\\asistenciascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\pc\\onedrive\\documentos\\github\\edutrackweb\\backend_editable\\models\\cursoasignatura.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:models\\cursoasignatura.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\pc\\onedrive\\documentos\\github\\edutrackweb\\backend_editable\\controllers\\estadisticascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:controllers\\estadisticascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\pc\\onedrive\\documentos\\github\\edutrackweb\\backend_editable\\models\\estudiante.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:models\\estudiante.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -23,6 +35,43 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "AsistenciasController.cs",
+              "DocumentMoniker": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\AsistenciasController.cs",
+              "RelativeDocumentMoniker": "Controllers\\AsistenciasController.cs",
+              "ToolTip": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\AsistenciasController.cs",
+              "RelativeToolTip": "Controllers\\AsistenciasController.cs",
+              "ViewState": "AgIAACMAAAAAAAAAAAAIwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T04:01:11.41Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "CursoAsignatura.cs",
+              "DocumentMoniker": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\Models\\CursoAsignatura.cs",
+              "RelativeDocumentMoniker": "Models\\CursoAsignatura.cs",
+              "ToolTip": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\Models\\CursoAsignatura.cs",
+              "RelativeToolTip": "Models\\CursoAsignatura.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T04:01:03.075Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "EstadisticasController.cs",
+              "DocumentMoniker": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\EstadisticasController.cs",
+              "RelativeDocumentMoniker": "Controllers\\EstadisticasController.cs",
+              "ToolTip": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\EstadisticasController.cs",
+              "RelativeToolTip": "Controllers\\EstadisticasController.cs",
+              "ViewState": "AgIAALEAAAAAAAAAAAAowAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-28T04:00:49.081Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
               "Title": "Estudiante.cs",
               "DocumentMoniker": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\Models\\Estudiante.cs",
               "RelativeDocumentMoniker": "Models\\Estudiante.cs",
@@ -30,12 +79,11 @@
               "RelativeToolTip": "Models\\Estudiante.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-25T02:15:42.206Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-25T02:15:42.206Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
               "Title": "Program.cs",
               "DocumentMoniker": "C:\\Users\\pc\\OneDrive\\Documentos\\GitHub\\EduTrackWeb\\backend_editable\\Program.cs",
               "RelativeDocumentMoniker": "Program.cs",

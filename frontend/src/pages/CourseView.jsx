@@ -16,8 +16,8 @@ import {
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
+import ExportButtons from "../components/ExportButtons.jsx";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
-import { useAuth } from "../contexts/AuthContext.jsx";
 
 const PERIODOS = [
   { id: 1, nombre: "Periodo 1" },
@@ -38,7 +38,6 @@ export default function CourseView() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [configs, setConfigs] = useState([]);
   const [students, setStudents] = useState([]);
@@ -227,17 +226,6 @@ export default function CourseView() {
     }
   };
 
-  const handleExport = () => {
-    const candidate = [user?.nombre, user?.apellido]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-    const fallback = user?.user || user?.username || "";
-    const docentLabel = candidate || fallback;
-    const query = docentLabel ? `?docente=${encodeURIComponent(docentLabel)}` : "";
-    window.open(`/api/Exports/course/${id}/xlsx${query}`, "_blank");
-  };
-
   const getGradeColor = (grade) => {
     if (grade == null) return "";
     if (grade >= 4.5) return "var(--grade-excellent)";
@@ -314,9 +302,7 @@ export default function CourseView() {
           )}
         </Col>
         <Col xs="auto">
-          <Button className="primary-btn" size="sm" onClick={handleExport}>
-            Exportar Excel
-          </Button>
+          <ExportButtons courseId={id} />
         </Col>
       </Row>
 
@@ -402,10 +388,9 @@ export default function CourseView() {
                     <th style={{ minWidth: "120px" }}>Documento</th>
                     {configsForSelectedPeriod.map((cfg) => (
                       <th key={cfg.id} style={{ minWidth: "120px" }}>
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <span>
-                            {cfg.nombre}
-                            <br />
+                        <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
+                          <span className="text-truncate" title={`${cfg.nombre} (${cfg.peso}%)`}>
+                            <div className="fw-semibold">{cfg.nombre}</div>
                             <small className="text-muted">({cfg.peso}%)</small>
                           </span>
                           <ButtonGroup size="sm">

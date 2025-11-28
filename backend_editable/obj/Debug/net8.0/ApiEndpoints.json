@@ -432,6 +432,27 @@
   },
   {
     "ContainingType": "edutrack_academy_api.Controllers.ExportsController",
+    "Method": "ExportCoursePdf",
+    "RelativePath": "api/Exports/course/{courseId}/pdf",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "courseId",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "docente",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.ExportsController",
     "Method": "ExportCourseExcel",
     "RelativePath": "api/Exports/course/{courseId}/xlsx",
     "HttpMethod": "GET",

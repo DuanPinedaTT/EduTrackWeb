@@ -724,6 +724,36 @@
         }
       }
     },
+    "/api/Exports/course/{courseId}/pdf": {
+      "get": {
+        "tags": [
+          "Exports"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "docente",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Grados": {
       "get": {
         "tags": [
