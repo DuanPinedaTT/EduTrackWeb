@@ -5,10 +5,14 @@ using edutrack_academy_api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Linq;
 using System.Text;
 
+var seedOnlyFlag = "--seed-demo";
+var seedOnly = args.Any(a => a.Equals(seedOnlyFlag, StringComparison.OrdinalIgnoreCase));
+var filteredArgs = args.Where(a => !a.Equals(seedOnlyFlag, StringComparison.OrdinalIgnoreCase)).ToArray();
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(filteredArgs);
 
 // Add services to the container.
 
@@ -20,6 +24,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IGrupoSyncService, GrupoSyncService>();
 builder.Services.AddScoped<IPortalCredentialService, PortalCredentialService>();
+builder.Services.AddScoped<DemoDataSeeder>();
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddSingleton<INotificationDispatcher, NotificationDispatcher>();
 
@@ -82,6 +87,13 @@ app.MapHub<NotificationHub>("/hubs/notifications");
 
 using (var scope = app.Services.CreateScope())
 {
+    if (seedOnly)
+    {
+        var seeder = scope.ServiceProvider.GetRequiredService<DemoDataSeeder>();
+        seeder.SeedAsync(force: true).GetAwaiter().GetResult();
+        return;
+    }
+
     var syncService = scope.ServiceProvider.GetRequiredService<IGrupoSyncService>();
     syncService.EnsureCursosForAllGradosAsync().GetAwaiter().GetResult();
 }
