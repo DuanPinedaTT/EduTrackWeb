@@ -169,12 +169,26 @@ export default function DashboardLayout({ children }) {
                   : assignment.asignaturaNombre || assignment.cursoNombre || "Asignatura";
                 const gradeLabel = assignment.gradoNombre || "Sin grado";
                 const groupLabel = assignment.grupo ? `Grupo ${assignment.grupo}` : null;
-                const coursePath = `/teacher/course/${assignment.cursoId}`;
-                const isActive = location.pathname === coursePath;
+                const assignmentId =
+                  assignment.id ??
+                  assignment.Id ??
+                  assignment.cursoAsignaturaId ??
+                  assignment.CursoAsignaturaId ??
+                  null;
+                const baseCoursePath = `/teacher/course/${assignment.cursoId}`;
+                const coursePath = assignmentId != null
+                  ? `${baseCoursePath}?cursoAsignaturaId=${assignmentId}`
+                  : baseCoursePath;
+                const currentParams = new URLSearchParams(location.search);
+                const currentAssignment = currentParams.get("cursoAsignaturaId");
+                const matchesAssignment = assignmentId != null
+                  ? currentAssignment === String(assignmentId)
+                  : !currentAssignment;
+                const isActive = location.pathname === baseCoursePath && matchesAssignment;
 
                 return (
                   <ListGroup.Item
-                    key={`${assignment.id}-${assignment.cursoId}`}
+                    key={`${assignmentId ?? assignment.id ?? assignment.cursoId}-${assignment.cursoId}`}
                     as={Link}
                     to={coursePath}
                     className={`menu-item ps-3 mb-1 ${isActive ? "active" : ""}`}

@@ -206,6 +206,22 @@
   },
   {
     "ContainingType": "edutrack_academy_api.Controllers.CursoAsignaturasController",
+    "Method": "GetById",
+    "RelativePath": "api/CursoAsignaturas/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "edutrack_academy_api.Controllers.CursoAsignaturasController",
     "Method": "Delete",
     "RelativePath": "api/CursoAsignaturas/{id}",
     "HttpMethod": "DELETE",
@@ -444,6 +460,11 @@
         "IsRequired": true
       },
       {
+        "Name": "cursoAsignaturaId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
         "Name": "docente",
         "Type": "System.String",
         "IsRequired": false
@@ -463,6 +484,11 @@
         "Name": "courseId",
         "Type": "System.Int32",
         "IsRequired": true
+      },
+      {
+        "Name": "cursoAsignaturaId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
       },
       {
         "Name": "docente",
@@ -653,6 +679,11 @@
         "Name": "cursoId",
         "Type": "System.Int32",
         "IsRequired": true
+      },
+      {
+        "Name": "cursoAsignaturaId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -669,6 +700,11 @@
         "Name": "cursoId",
         "Type": "System.Int32",
         "IsRequired": true
+      },
+      {
+        "Name": "cursoAsignaturaId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -685,6 +721,11 @@
         "Name": "cursoId",
         "Type": "System.Int32",
         "IsRequired": true
+      },
+      {
+        "Name": "cursoAsignaturaId",
+        "Type": "System.Int32",
+        "IsRequired": false
       },
       {
         "Name": "dto",
@@ -756,6 +797,11 @@
       },
       {
         "Name": "cursoId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "cursoAsignaturaId",
         "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": false
       }
@@ -854,6 +900,11 @@
       },
       {
         "Name": "cursoId",
+        "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "cursoAsignaturaId",
         "Type": "System.Nullable\u00601[[System.Int32, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": false
       }

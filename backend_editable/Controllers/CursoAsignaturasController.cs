@@ -16,6 +16,37 @@ namespace edutrack_academy_api.Controllers
             _context = context;
         }
 
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var assignment = await _context.CursoAsignaturas
+                .Include(ca => ca.Curso)
+                    .ThenInclude(c => c.Grado)
+                .Include(ca => ca.Docente)
+                .Include(ca => ca.Asignatura)
+                .FirstOrDefaultAsync(ca => ca.Id == id);
+
+            if (assignment == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new
+            {
+                assignment.Id,
+                assignment.CursoId,
+                CursoNombre = assignment.Curso?.Nombre,
+                assignment.Curso?.Grupo,
+                GradoId = assignment.Curso?.GradoId,
+                GradoNombre = assignment.Curso?.Grado?.Nombre,
+                assignment.AsignaturaId,
+                AsignaturaNombre = assignment.Asignatura?.Nombre,
+                AsignaturaCodigo = assignment.Asignatura?.Codigo,
+                assignment.DocenteId,
+                DocenteNombre = assignment.Docente != null ? $"{assignment.Docente.Nombre} {assignment.Docente.Apellido}".Trim() : null
+            });
+        }
+
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] int? cursoId)
         {

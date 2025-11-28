@@ -32,19 +32,19 @@ namespace edutrack_academy_api.Controllers
 
         // GET /api/Exports/course/{courseId}/xlsx
         [HttpGet("course/{courseId}/xlsx")]
-        public async Task<IActionResult> ExportCourseExcel(int courseId, [FromQuery] string? docente)
+        public async Task<IActionResult> ExportCourseExcel(int courseId, [FromQuery] int? cursoAsignaturaId, [FromQuery] string? docente)
         {
-            var snapshot = await BuildCourseSnapshotAsync(courseId);
+            var snapshot = await BuildCourseSnapshotAsync(courseId, cursoAsignaturaId);
             if (snapshot == null)
             {
                 return NotFound("Curso no encontrado");
             }
 
             var salonLabel = BuildSalonLabel(snapshot.Curso);
-            var asignaturaLabel = BuildAsignaturaLabel(snapshot.Curso);
-            var docenteLabel = await ResolveDocenteLabelAsync(docente, snapshot.Curso);
+            var asignaturaLabel = BuildAsignaturaLabel(snapshot.Curso, snapshot.TargetAsignacion);
+            var docenteLabel = await ResolveDocenteLabelAsync(docente, snapshot.Curso, snapshot.TargetAsignacion);
             var generatedAt = DateTime.Now;
-            var asignaturaCode = ResolveAsignaturaCode(snapshot.Curso);
+            var asignaturaCode = ResolveAsignaturaCode(snapshot.Curso, snapshot.TargetAsignacion);
             var exportLabel = BuildExportLabel(salonLabel, asignaturaLabel, asignaturaCode, snapshot.Curso.Id);
 
             using var workbook = new XLWorkbook();
@@ -78,19 +78,19 @@ namespace edutrack_academy_api.Controllers
 
         // GET /api/Exports/course/{courseId}/pdf
         [HttpGet("course/{courseId}/pdf")]
-        public async Task<IActionResult> ExportCoursePdf(int courseId, [FromQuery] string? docente)
+        public async Task<IActionResult> ExportCoursePdf(int courseId, [FromQuery] int? cursoAsignaturaId, [FromQuery] string? docente)
         {
-            var snapshot = await BuildCourseSnapshotAsync(courseId);
+            var snapshot = await BuildCourseSnapshotAsync(courseId, cursoAsignaturaId);
             if (snapshot == null)
             {
                 return NotFound("Curso no encontrado");
             }
 
             var salonLabel = BuildSalonLabel(snapshot.Curso);
-            var asignaturaLabel = BuildAsignaturaLabel(snapshot.Curso);
-            var docenteLabel = await ResolveDocenteLabelAsync(docente, snapshot.Curso);
+            var asignaturaLabel = BuildAsignaturaLabel(snapshot.Curso, snapshot.TargetAsignacion);
+            var docenteLabel = await ResolveDocenteLabelAsync(docente, snapshot.Curso, snapshot.TargetAsignacion);
             var generatedAt = DateTime.Now;
-            var asignaturaCode = ResolveAsignaturaCode(snapshot.Curso);
+            var asignaturaCode = ResolveAsignaturaCode(snapshot.Curso, snapshot.TargetAsignacion);
             var exportLabel = BuildExportLabel(salonLabel, asignaturaLabel, asignaturaCode, snapshot.Curso.Id);
 
                 using var document = new PdfDocument();
@@ -477,12 +477,17 @@ namespace edutrack_academy_api.Controllers
             range.Style.Border.OutsideBorder = XLBorderStyleValues.Dotted;
         }
 
-        private async Task<string> ResolveDocenteLabelAsync(string? docenteOverride, Curso curso)
+        private async Task<string> ResolveDocenteLabelAsync(string? docenteOverride, Curso curso, CursoAsignatura? targetAsignacion)
         {
             if (!string.IsNullOrWhiteSpace(docenteOverride))
             {
                 return docenteOverride.Trim();
             }
+
+             if (targetAsignacion?.Docente != null)
+             {
+                 return FormatDocente(targetAsignacion.Docente);
+             }
 
             var userIdClaim = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (int.TryParse(userIdClaim, out var userId))
@@ -494,7 +499,7 @@ namespace edutrack_academy_api.Controllers
                 }
             }
 
-            return BuildDocenteLabel(curso);
+            return BuildDocenteLabel(curso, targetAsignacion);
         }
 
         private class CourseSnapshot
@@ -503,9 +508,10 @@ namespace edutrack_academy_api.Controllers
             public required List<Estudiante> Estudiantes { get; init; }
             public required List<NotaConfig> Configs { get; init; }
             public required Dictionary<(int EstudianteId, int NotaConfigId), decimal?> Notas { get; init; }
+            public CursoAsignatura? TargetAsignacion { get; init; }
         }
 
-        private async Task<CourseSnapshot?> BuildCourseSnapshotAsync(int courseId)
+        private async Task<CourseSnapshot?> BuildCourseSnapshotAsync(int courseId, int? cursoAsignaturaId)
         {
             var curso = await _context.Cursos
                 .Include(c => c.Grado)
@@ -521,6 +527,18 @@ namespace edutrack_academy_api.Controllers
                 return null;
             }
 
+            CursoAsignatura? targetAsignacion = null;
+            if (cursoAsignaturaId.HasValue)
+            {
+                targetAsignacion = curso.CursoAsignaturas?
+                    .FirstOrDefault(ca => ca.Id == cursoAsignaturaId.Value);
+
+                if (targetAsignacion == null)
+                {
+                    return null;
+                }
+            }
+
             var estudiantes = await _context.Inscripciones
                 .Where(i => i.CursoId == courseId)
                 .Include(i => i.Estudiante)
@@ -528,15 +546,29 @@ namespace edutrack_academy_api.Controllers
                 .OrderBy(e => e.Nombre)
                 .ToListAsync();
 
-            var configs = await _context.NotaConfigs
-                .Where(nc => nc.CursoId == courseId)
+            var configsQuery = _context.NotaConfigs
+                .Where(nc => nc.CursoId == courseId);
+
+            if (cursoAsignaturaId.HasValue)
+            {
+                configsQuery = configsQuery.Where(nc => nc.CursoAsignaturaId == cursoAsignaturaId.Value);
+            }
+
+            var configs = await configsQuery
                 .OrderBy(nc => nc.Periodo)
                 .ThenBy(nc => nc.Orden)
                 .ToListAsync();
 
             var estudianteIds = estudiantes.Select(e => e.Id).ToList();
-            var notas = await _context.Notas
-                .Where(n => estudianteIds.Contains(n.EstudianteId))
+            var notasQuery = _context.Notas
+                .Where(n => estudianteIds.Contains(n.EstudianteId));
+
+            if (cursoAsignaturaId.HasValue)
+            {
+                notasQuery = notasQuery.Where(n => n.CursoAsignaturaId == cursoAsignaturaId.Value);
+            }
+
+            var notas = await notasQuery
                 .ToListAsync();
 
             var notaLookup = notas
@@ -551,7 +583,8 @@ namespace edutrack_academy_api.Controllers
                 Curso = curso,
                 Estudiantes = estudiantes,
                 Configs = configs,
-                Notas = notaLookup
+                Notas = notaLookup,
+                TargetAsignacion = targetAsignacion
             };
         }
 
@@ -569,8 +602,13 @@ namespace edutrack_academy_api.Controllers
             return string.IsNullOrWhiteSpace(baseLabel) ? $"Curso #{curso.Id}" : baseLabel;
         }
 
-        private static string BuildAsignaturaLabel(Curso curso)
+        private static string BuildAsignaturaLabel(Curso curso, CursoAsignatura? targetAsignacion)
         {
+            if (targetAsignacion?.Asignatura != null)
+            {
+                return targetAsignacion.Asignatura.Nombre;
+            }
+
             var asignaturas = curso.CursoAsignaturas?
                 .Select(ca => ca.Asignatura?.Nombre)
                 .Where(nombre => !string.IsNullOrWhiteSpace(nombre))
@@ -607,16 +645,26 @@ namespace edutrack_academy_api.Controllers
             return detalle == null ? baseLabel : $"{baseLabel} {detalle}";
         }
 
-        private static string? ResolveAsignaturaCode(Curso curso)
+        private static string? ResolveAsignaturaCode(Curso curso, CursoAsignatura? targetAsignacion)
         {
+            if (!string.IsNullOrWhiteSpace(targetAsignacion?.Asignatura?.Codigo))
+            {
+                return targetAsignacion.Asignatura!.Codigo!.Trim();
+            }
+
             return curso.CursoAsignaturas?
                 .Select(ca => ca.Asignatura?.Codigo)
                 .FirstOrDefault(codigo => !string.IsNullOrWhiteSpace(codigo))?
                 .Trim();
         }
 
-        private static string BuildDocenteLabel(Curso curso)
+        private static string BuildDocenteLabel(Curso curso, CursoAsignatura? targetAsignacion)
         {
+            if (targetAsignacion?.Docente != null)
+            {
+                return FormatDocente(targetAsignacion.Docente);
+            }
+
             if (curso.Docente != null)
             {
                 return FormatDocente(curso.Docente);

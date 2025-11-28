@@ -221,6 +221,12 @@ namespace edutrack_academy_api.Data
                 .HasForeignKey(nc => nc.CursoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<NotaConfig>()
+                .HasOne(nc => nc.CursoAsignatura)
+                .WithMany()
+                .HasForeignKey(nc => nc.CursoAsignaturaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // NotaConfig - Configurar decimal Peso
             modelBuilder.Entity<NotaConfig>()
                 .Property(nc => nc.Peso)
@@ -239,6 +245,12 @@ namespace edutrack_academy_api.Data
                 .WithMany()
                 .HasForeignKey(n => n.NotaConfigId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Nota>()
+                .HasOne(n => n.CursoAsignatura)
+                .WithMany()
+                .HasForeignKey(n => n.CursoAsignaturaId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Nota - Configurar decimal Valor
             modelBuilder.Entity<Nota>()

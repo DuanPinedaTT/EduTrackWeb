@@ -47,7 +47,9 @@ namespace edutrack_academy_api.Services
 
             if (usuario.Rol == "docente")
             {
-                await SyncDocenteExtrasAsync(usuario.Id, dto.Asignaturas, dto.Asignaciones);
+                var (asignaturasSeleccionadas, gruposSeleccionados) = NormalizeDocenteSelections(dto.Asignaturas, dto.Asignaciones);
+                await SyncDocenteExtrasAsync(usuario.Id, asignaturasSeleccionadas, gruposSeleccionados);
+                await SyncDocenteCursoAsignaturasAsync(usuario.Id, asignaturasSeleccionadas, gruposSeleccionados);
             }
             return usuario;
         }
@@ -72,7 +74,9 @@ namespace edutrack_academy_api.Services
 
             if (usuario.Rol == "docente")
             {
-                await SyncDocenteExtrasAsync(usuario.Id, dto.Asignaturas, dto.Asignaciones);
+                var (asignaturasSeleccionadas, gruposSeleccionados) = NormalizeDocenteSelections(dto.Asignaturas, dto.Asignaciones);
+                await SyncDocenteExtrasAsync(usuario.Id, asignaturasSeleccionadas, gruposSeleccionados);
+                await SyncDocenteCursoAsignaturasAsync(usuario.Id, asignaturasSeleccionadas, gruposSeleccionados);
             }
             return usuario;
         }
@@ -146,20 +150,8 @@ namespace edutrack_academy_api.Services
             return lista;
         }
 
-        private async Task SyncDocenteExtrasAsync(int docenteId, IEnumerable<int>? asignaturas, IEnumerable<DocenteGrupoRequestDTO>? asignaciones)
+        private async Task SyncDocenteExtrasAsync(int docenteId, IReadOnlyCollection<int> asignaturasList, IReadOnlyCollection<(int GradoId, string Grupo)> gruposList)
         {
-            var asignaturasList = (asignaturas ?? Enumerable.Empty<int>())
-                .Where(id => id > 0)
-                .Distinct()
-                .ToList();
-
-            var gruposList = (asignaciones ?? Enumerable.Empty<DocenteGrupoRequestDTO>())
-                .Where(a => a.GradoId > 0 && !string.IsNullOrWhiteSpace(a.Grupo))
-                .Select(a => new { a.GradoId, Grupo = a.Grupo.Trim() })
-                .GroupBy(a => new { a.GradoId, a.Grupo })
-                .Select(g => (g.Key.GradoId, Grupo: g.Key.Grupo))
-                .ToList();
-
             var actualesAsignaturas = await _context.DocenteAsignaturas
                 .Where(d => d.DocenteId == docenteId)
                 .ToListAsync();
@@ -190,6 +182,111 @@ namespace edutrack_academy_api.Services
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        private (List<int> asignaturas, List<(int GradoId, string Grupo)> grupos) NormalizeDocenteSelections(IEnumerable<int>? asignaturas, IEnumerable<DocenteGrupoRequestDTO>? asignaciones)
+        {
+            var asignaturasList = (asignaturas ?? Enumerable.Empty<int>())
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            var gruposList = (asignaciones ?? Enumerable.Empty<DocenteGrupoRequestDTO>())
+                .Where(a => a.GradoId > 0 && !string.IsNullOrWhiteSpace(a.Grupo))
+                .Select(a => (a.GradoId, Grupo: a.Grupo.Trim()))
+                .GroupBy(x => (x.GradoId, Key: NormalizeGrupoKey(x.Grupo)))
+                .Select(g => (g.Key.GradoId, g.First().Grupo))
+                .ToList();
+
+            return (asignaturasList, gruposList);
+        }
+
+        private async Task SyncDocenteCursoAsignaturasAsync(int docenteId, IReadOnlyCollection<int> asignaturas, IReadOnlyCollection<(int GradoId, string Grupo)> grupos)
+        {
+            var targetCursoIds = new List<int>();
+
+            if (asignaturas.Count > 0 && grupos.Count > 0)
+            {
+                var gradoIds = grupos.Select(g => g.GradoId).Distinct().ToList();
+                if (gradoIds.Count > 0)
+                {
+                    var grupoKeySet = grupos
+                        .Select(g => (g.GradoId, Key: NormalizeGrupoKey(g.Grupo)))
+                        .ToHashSet();
+
+                    var cursos = await _context.Cursos
+                        .Where(c => c.GradoId.HasValue && gradoIds.Contains(c.GradoId.Value))
+                        .Select(c => new { c.Id, c.GradoId, c.Grupo })
+                        .ToListAsync();
+
+                    targetCursoIds = cursos
+                        .Where(c => c.GradoId.HasValue && grupoKeySet.Contains((c.GradoId.Value, NormalizeGrupoKey(c.Grupo ?? string.Empty))))
+                        .Select(c => c.Id)
+                        .Distinct()
+                        .ToList();
+                }
+            }
+
+            var cursosRelacionados = await _context.CursoAsignaturas
+                .Where(ca => ca.DocenteId == docenteId || targetCursoIds.Contains(ca.CursoId))
+                .ToListAsync();
+
+            var asignaturasSet = asignaturas.ToHashSet();
+            var cursoIdSet = targetCursoIds.ToHashSet();
+            var huboCambios = false;
+
+            var existentes = cursosRelacionados
+                .ToDictionary(ca => (ca.CursoId, ca.AsignaturaId), ca => ca);
+
+            foreach (var cursoId in cursoIdSet)
+            {
+                foreach (var asignaturaId in asignaturasSet)
+                {
+                    if (existentes.ContainsKey((cursoId, asignaturaId)))
+                        continue;
+
+                    var nuevo = new CursoAsignatura
+                    {
+                        CursoId = cursoId,
+                        AsignaturaId = asignaturaId,
+                        DocenteId = docenteId
+                    };
+                    _context.CursoAsignaturas.Add(nuevo);
+                    cursosRelacionados.Add(nuevo);
+                    huboCambios = true;
+                }
+            }
+
+            foreach (var registro in cursosRelacionados)
+            {
+                var debeAsignarse = cursoIdSet.Contains(registro.CursoId) && asignaturasSet.Contains(registro.AsignaturaId);
+
+                if (debeAsignarse)
+                {
+                    if (registro.DocenteId != docenteId)
+                    {
+                        registro.DocenteId = docenteId;
+                        huboCambios = true;
+                    }
+                }
+                else if (registro.DocenteId == docenteId)
+                {
+                    registro.DocenteId = null;
+                    huboCambios = true;
+                }
+            }
+
+            if (huboCambios)
+            {
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private static string NormalizeGrupoKey(string value)
+        {
+            return string.IsNullOrWhiteSpace(value)
+                ? string.Empty
+                : value.Trim().ToUpperInvariant();
         }
     }
 }

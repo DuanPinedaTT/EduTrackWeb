@@ -11,6 +11,7 @@ namespace edutrack_academy_api.Controllers
     {
         public int? Id { get; set; }
         public int CursoId { get; set; }
+        public int? CursoAsignaturaId { get; set; }
         public string Nombre { get; set; } = string.Empty;
         public int Orden { get; set; }
         public decimal Peso { get; set; }
@@ -21,6 +22,7 @@ namespace edutrack_academy_api.Controllers
     {
         public int EstudianteId { get; set; }
         public int NotaConfigId { get; set; }
+        public int? CursoAsignaturaId { get; set; }
         public decimal? Valor { get; set; }
     }
 
@@ -56,16 +58,32 @@ namespace edutrack_academy_api.Controllers
 
         // GET /api/Notas/curso/{cursoId}/config
         [HttpGet("curso/{cursoId}/config")]
-        public async Task<IActionResult> GetConfig(int cursoId)
+        public async Task<IActionResult> GetConfig(int cursoId, [FromQuery] int? cursoAsignaturaId)
         {
-            var configs = await _context.NotaConfigs
-                .Where(nc => nc.CursoId == cursoId)
+            var query = _context.NotaConfigs
+                .Where(nc => nc.CursoId == cursoId);
+
+            if (cursoAsignaturaId.HasValue)
+            {
+                var assignmentExists = await _context.CursoAsignaturas
+                    .AnyAsync(ca => ca.Id == cursoAsignaturaId.Value && ca.CursoId == cursoId);
+
+                if (!assignmentExists)
+                {
+                    return NotFound("La asignación no pertenece a este curso");
+                }
+
+                query = query.Where(nc => nc.CursoAsignaturaId == cursoAsignaturaId.Value);
+            }
+
+            var configs = await query
                 .OrderBy(nc => nc.Periodo)
                 .ThenBy(nc => nc.Orden)
                 .Select(nc => new NotaConfigDTO
                 {
                     Id = nc.Id,
                     CursoId = nc.CursoId,
+                    CursoAsignaturaId = nc.CursoAsignaturaId,
                     Nombre = nc.Nombre,
                     Orden = nc.Orden,
                     Peso = nc.Peso,
@@ -78,11 +96,21 @@ namespace edutrack_academy_api.Controllers
 
         // POST /api/Notas/curso/{cursoId}/config
         [HttpPost("curso/{cursoId}/config")]
-        public async Task<IActionResult> CreateConfig(int cursoId, [FromBody] NotaConfigDTO dto)
+        public async Task<IActionResult> CreateConfig(int cursoId, [FromQuery] int cursoAsignaturaId, [FromBody] NotaConfigDTO dto)
         {
+            var assignment = await _context.CursoAsignaturas
+                .Include(ca => ca.Curso)
+                .FirstOrDefaultAsync(ca => ca.Id == cursoAsignaturaId && ca.CursoId == cursoId);
+
+            if (assignment == null)
+            {
+                return NotFound("La asignatura seleccionada no pertenece al curso");
+            }
+
             var config = new NotaConfig
             {
                 CursoId = cursoId,
+                CursoAsignaturaId = cursoAsignaturaId,
                 Nombre = dto.Nombre,
                 Orden = dto.Orden,
                 Peso = dto.Peso,
@@ -96,6 +124,7 @@ namespace edutrack_academy_api.Controllers
             {
                 Id = config.Id,
                 CursoId = config.CursoId,
+                CursoAsignaturaId = config.CursoAsignaturaId,
                 Nombre = config.Nombre,
                 Orden = config.Orden,
                 Peso = config.Peso,
@@ -121,6 +150,7 @@ namespace edutrack_academy_api.Controllers
             {
                 Id = config.Id,
                 CursoId = config.CursoId,
+                CursoAsignaturaId = config.CursoAsignaturaId,
                 Nombre = config.Nombre,
                 Orden = config.Orden,
                 Peso = config.Peso,
@@ -149,8 +179,18 @@ namespace edutrack_academy_api.Controllers
 
         // GET /api/Notas/curso/{cursoId}
         [HttpGet("curso/{cursoId}")]
-        public async Task<IActionResult> GetNotas(int cursoId)
+        public async Task<IActionResult> GetNotas(int cursoId, [FromQuery] int? cursoAsignaturaId)
         {
+            if (cursoAsignaturaId.HasValue)
+            {
+                var assignmentExists = await _context.CursoAsignaturas
+                    .AnyAsync(ca => ca.Id == cursoAsignaturaId.Value && ca.CursoId == cursoId);
+                if (!assignmentExists)
+                {
+                    return NotFound("La asignación no pertenece a este curso");
+                }
+            }
+
             var estudiantes = await _context.Inscripciones
                 .Where(i => i.CursoId == cursoId)
                 .Include(i => i.Estudiante)
@@ -158,14 +198,14 @@ namespace edutrack_academy_api.Controllers
                 .ToListAsync();
 
             var configs = await _context.NotaConfigs
-                .Where(nc => nc.CursoId == cursoId)
+                .Where(nc => nc.CursoId == cursoId && (!cursoAsignaturaId.HasValue || nc.CursoAsignaturaId == cursoAsignaturaId.Value))
                 .OrderBy(nc => nc.Periodo)
                 .ThenBy(nc => nc.Orden)
                 .ToListAsync();
 
             var estudianteIds = estudiantes.Select(e => e.Id).ToList();
             var notas = await _context.Notas
-                .Where(n => estudianteIds.Contains(n.EstudianteId))
+                .Where(n => estudianteIds.Contains(n.EstudianteId) && (!cursoAsignaturaId.HasValue || n.CursoAsignaturaId == cursoAsignaturaId.Value))
                 .ToListAsync();
 
             var result = estudiantes.Select(est =>
@@ -230,12 +270,15 @@ namespace edutrack_academy_api.Controllers
             var existing = await _context.Notas
                 .FirstOrDefaultAsync(n => n.EstudianteId == dto.EstudianteId && n.NotaConfigId == dto.NotaConfigId);
 
+            var targetCursoAsignaturaId = notaConfig.CursoAsignaturaId;
+
             if (existing == null)
             {
                 var nuevaNota = new Nota
                 {
                     EstudianteId = dto.EstudianteId,
                     NotaConfigId = dto.NotaConfigId,
+                    CursoAsignaturaId = targetCursoAsignaturaId,
                     Valor = dto.Valor
                 };
                 _context.Notas.Add(nuevaNota);
@@ -243,6 +286,7 @@ namespace edutrack_academy_api.Controllers
             else
             {
                 existing.Valor = dto.Valor;
+                existing.CursoAsignaturaId = targetCursoAsignaturaId;
             }
 
             await _context.SaveChangesAsync();
@@ -294,8 +338,10 @@ namespace edutrack_academy_api.Controllers
             }
 
             var asignaturaNombre = notaConfig.Curso?.CursoAsignaturas?
-                .Select(ca => ca.Asignatura?.Nombre)
-                .FirstOrDefault(nombre => !string.IsNullOrWhiteSpace(nombre))
+                .FirstOrDefault(ca => ca.Id == targetCursoAsignaturaId)?.Asignatura?.Nombre
+                ?? notaConfig.Curso?.CursoAsignaturas?
+                    .Select(ca => ca.Asignatura?.Nombre)
+                    .FirstOrDefault(nombre => !string.IsNullOrWhiteSpace(nombre))
                 ?? notaConfig.Curso?.Nombre;
 
             var studentPayload = new NotificationPayload(
@@ -307,6 +353,7 @@ namespace edutrack_academy_api.Controllers
                     estudianteId = estudiante.Id,
                     estudianteNombre = estudiante.Nombre,
                     cursoId = notaConfig.CursoId,
+                    cursoAsignaturaId = targetCursoAsignaturaId,
                     curso = notaConfig.Curso?.Nombre,
                     cursoNombre = notaConfig.Curso?.Nombre,
                     asignaturaNombre,
@@ -355,6 +402,7 @@ namespace edutrack_academy_api.Controllers
                     Data: new
                     {
                         cursoId = notaConfig.CursoId,
+                        cursoAsignaturaId = targetCursoAsignaturaId,
                         cursoNombre = notaConfig.Curso?.Nombre,
                         asignaturaNombre,
                         notaConfigId = notaConfig.Id,

@@ -56,7 +56,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("notas/{estudianteId:int}")]
-        public async Task<IActionResult> GetNotas(int estudianteId, [FromQuery] int? periodo, [FromQuery] int? cursoId)
+        public async Task<IActionResult> GetNotas(int estudianteId, [FromQuery] int? periodo, [FromQuery] int? cursoId, [FromQuery] int? cursoAsignaturaId)
         {
             var tutorId = GetUserId();
             if (!await TutorPuedeVerEstudianteAsync(tutorId, estudianteId))
@@ -81,33 +81,51 @@ namespace edutrack_academy_api.Controllers
                 });
             }
 
-            var materiasRaw = await _context.Cursos
+            var cursos = await _context.Cursos
                 .Where(c => cursoIds.Contains(c.Id))
                 .Include(c => c.Grado)
                 .Include(c => c.CursoAsignaturas)
                     .ThenInclude(ca => ca.Asignatura)
-                .Select(c => new
-                {
-                    c.Id,
-                    c.Nombre,
-                    c.Grupo,
-                    Grado = c.Grado != null ? c.Grado.Nombre : null,
-                    Asignatura = c.CursoAsignaturas
-                        .Select(ca => ca.Asignatura != null ? ca.Asignatura.Nombre : null)
-                        .FirstOrDefault()
-                })
                 .ToListAsync();
 
-            var materias = materiasRaw
-                .Select(m => new
+            var materias = new List<MateriaItem>();
+
+            foreach (var curso in cursos)
+            {
+                if (curso.CursoAsignaturas != null && curso.CursoAsignaturas.Count > 0)
                 {
-                    Id = m.Id,
-                    Nombre = string.IsNullOrWhiteSpace(m.Asignatura) ? m.Nombre : m.Asignatura,
-                    Curso = m.Nombre,
-                    m.Grupo,
-                    m.Grado
-                })
+                    foreach (var asignacion in curso.CursoAsignaturas)
+                    {
+                        materias.Add(new MateriaItem
+                        {
+                            Id = asignacion.Id,
+                            CursoId = curso.Id,
+                            CursoAsignaturaId = asignacion.Id,
+                            Nombre = asignacion.Asignatura?.Nombre ?? curso.Nombre,
+                            Curso = curso.Nombre,
+                            Grupo = curso.Grupo,
+                            Grado = curso.Grado?.Nombre
+                        });
+                    }
+                }
+                else
+                {
+                    materias.Add(new MateriaItem
+                    {
+                        Id = curso.Id,
+                        CursoId = curso.Id,
+                        CursoAsignaturaId = null,
+                        Nombre = curso.Nombre,
+                        Curso = curso.Nombre,
+                        Grupo = curso.Grupo,
+                        Grado = curso.Grado?.Nombre
+                    });
+                }
+            }
+
+            materias = materias
                 .OrderBy(m => m.Nombre)
+                .ThenBy(m => m.Grupo)
                 .ToList();
 
             if (materias.Count == 0)
@@ -117,16 +135,33 @@ namespace edutrack_academy_api.Controllers
                     materias = Array.Empty<object>(),
                     columnas = Array.Empty<object>(),
                     promedio = (decimal?)null,
-                    cursoId = (int?)null
+                    cursoId = (int?)null,
+                    cursoAsignaturaId = (int?)null
                 });
             }
 
-            var cursoSeleccionadoId = cursoId.HasValue ? cursoId.Value : materias.First().Id;
+            MateriaItem? materiaSeleccionada = null;
 
-            if (!materias.Any(m => m.Id == cursoSeleccionadoId))
+            if (cursoAsignaturaId.HasValue)
             {
-                return BadRequest("No se encontraron notas asociadas a ese curso");
+                materiaSeleccionada = materias.FirstOrDefault(m => m.CursoAsignaturaId == cursoAsignaturaId.Value);
             }
+
+            if (materiaSeleccionada == null && cursoId.HasValue)
+            {
+                materiaSeleccionada = materias.FirstOrDefault(m => m.CursoId == cursoId.Value);
+            }
+
+            materiaSeleccionada ??= materias.First();
+
+            if (materiaSeleccionada == null)
+            {
+                return BadRequest("No se encontraron materias disponibles");
+            }
+
+            var cursoSeleccionadoId = materiaSeleccionada.CursoId;
+            var cursoAsignaturaSeleccionadaId = materiaSeleccionada.CursoAsignaturaId;
+            var cursoTieneAsignaciones = materias.Any(m => m.CursoId == cursoSeleccionadoId && m.CursoAsignaturaId != null);
 
             var configsQuery = _context.NotaConfigs
                 .Where(nc => nc.CursoId == cursoSeleccionadoId);
@@ -134,6 +169,15 @@ namespace edutrack_academy_api.Controllers
             if (periodo.HasValue)
             {
                 configsQuery = configsQuery.Where(nc => nc.Periodo == periodo.Value);
+            }
+
+            if (cursoAsignaturaSeleccionadaId.HasValue)
+            {
+                configsQuery = configsQuery.Where(nc => nc.CursoAsignaturaId == cursoAsignaturaSeleccionadaId.Value);
+            }
+            else if (cursoTieneAsignaciones)
+            {
+                configsQuery = configsQuery.Where(nc => nc.CursoAsignaturaId == null);
             }
 
             var configs = await configsQuery
@@ -147,15 +191,26 @@ namespace edutrack_academy_api.Controllers
                 {
                     materias,
                     cursoId = cursoSeleccionadoId,
+                    cursoAsignaturaId = cursoAsignaturaSeleccionadaId,
                     columnas = Array.Empty<object>(),
                     promedio = (decimal?)null
                 });
             }
 
             var configIds = configs.Select(c => c.Id).ToList();
-            var notas = await _context.Notas
-                .Where(n => n.EstudianteId == estudianteId && configIds.Contains(n.NotaConfigId))
-                .ToListAsync();
+            var notasQuery = _context.Notas
+                .Where(n => n.EstudianteId == estudianteId && configIds.Contains(n.NotaConfigId));
+
+            if (cursoAsignaturaSeleccionadaId.HasValue)
+            {
+                notasQuery = notasQuery.Where(n => n.CursoAsignaturaId == cursoAsignaturaSeleccionadaId.Value);
+            }
+            else if (cursoTieneAsignaciones)
+            {
+                notasQuery = notasQuery.Where(n => n.CursoAsignaturaId == null);
+            }
+
+            var notas = await notasQuery.ToListAsync();
 
             var columnas = configs.Select(cfg => new
             {
@@ -182,11 +237,23 @@ namespace edutrack_academy_api.Controllers
             return Ok(new
             {
                 cursoId = cursoSeleccionadoId,
+                cursoAsignaturaId = cursoAsignaturaSeleccionadaId,
                 periodo,
                 materias,
                 columnas,
                 promedio
             });
+        }
+
+        private sealed class MateriaItem
+        {
+            public required int Id { get; init; }
+            public required int CursoId { get; init; }
+            public int? CursoAsignaturaId { get; init; }
+            public required string Nombre { get; init; }
+            public string? Curso { get; init; }
+            public string? Grado { get; init; }
+            public string? Grupo { get; init; }
         }
 
         [HttpGet("asistencias/{estudianteId:int}")]

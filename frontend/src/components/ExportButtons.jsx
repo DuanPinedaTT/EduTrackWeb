@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Button, ButtonGroup } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
-export default function ExportButtons({ courseId }) {
+export default function ExportButtons({ courseId, cursoAsignaturaId = null }) {
   const { user } = useAuth();
 
   const docenteLabel = useMemo(() => {
@@ -14,8 +14,15 @@ export default function ExportButtons({ courseId }) {
 
   const download = (type) => {
     const token = localStorage.getItem("token");
-    const query = docenteLabel ? `?docente=${encodeURIComponent(docenteLabel)}` : "";
-    const url = `/api/Exports/course/${courseId}/${type}${query}`;
+    const params = new URLSearchParams();
+    if (cursoAsignaturaId != null) {
+      params.set("cursoAsignaturaId", String(cursoAsignaturaId));
+    }
+    if (docenteLabel) {
+      params.set("docente", docenteLabel);
+    }
+    const query = params.toString();
+    const url = `/api/Exports/course/${courseId}/${type}${query ? `?${query}` : ""}`;
     fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`

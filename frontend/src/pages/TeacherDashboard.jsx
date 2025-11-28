@@ -38,6 +38,18 @@ const PASSING_SCORE = 3.5;
 const formatCourseLabel = (grado, grupo) =>
   [grado || "Sin grado", grupo ? `Grupo ${grupo}` : null].filter(Boolean).join(" · ");
 
+const resolveAssignmentId = (assignment) => {
+  if (!assignment) return null;
+  const rawId =
+    assignment.id ??
+    assignment.Id ??
+    assignment.cursoAsignaturaId ??
+    assignment.CursoAsignaturaId ??
+    assignment.cursoAsignaturaID ??
+    assignment.CursoAsignaturaID;
+  return rawId != null ? Number(rawId) : null;
+};
+
 const GroupComparisonTooltip = ({ active, payload }) => {
   if (!active || !payload || payload.length === 0) return null;
   const data = payload[0].payload;
@@ -63,7 +75,7 @@ export default function TeacherDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState(1);
   const [courseMeta, setCourseMeta] = useState({});
   const [metaLoading, setMetaLoading] = useState(false);
-  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
   const [courseDetail, setCourseDetail] = useState({ configs: [], students: [] });
   const [courseDetailLoading, setCourseDetailLoading] = useState(false);
   const [courseDetailError, setCourseDetailError] = useState(null);
@@ -77,6 +89,7 @@ export default function TeacherDashboard() {
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [detailRefreshKey, setDetailRefreshKey] = useState(0);
   const assignmentsRef = useRef([]);
+  const selectedAssignmentIdRef = useRef(null);
   const selectedCourseIdRef = useRef(null);
   const { subscribe } = useNotifications();
 
@@ -107,10 +120,28 @@ export default function TeacherDashboard() {
     return map;
   }, [courseAssignments]);
 
+  const selectedAssignment = useMemo(() => {
+    if (selectedAssignmentId == null) return null;
+    return courseAssignments.find(
+      (assignment) => resolveAssignmentId(assignment) === selectedAssignmentId
+    ) || null;
+  }, [courseAssignments, selectedAssignmentId]);
+
+  const selectedCourseId = selectedAssignment?.cursoId ?? null;
+
   useEffect(() => {
-    if (!selectedCourseId) {
+    if (!selectedAssignment) {
       setCourseDetail({ configs: [], students: [] });
       setCourseDetailError(null);
+      setCourseDetailLoading(false);
+      return;
+    }
+
+    const cursoAsignaturaId = resolveAssignmentId(selectedAssignment);
+    if (cursoAsignaturaId == null) {
+      setCourseDetail({ configs: [], students: [] });
+      setCourseDetailError("No se pudo identificar la asignación seleccionada.");
+      setCourseDetailLoading(false);
       return;
     }
 
@@ -119,9 +150,10 @@ export default function TeacherDashboard() {
       setCourseDetailLoading(true);
       setCourseDetailError(null);
       try {
+        const params = { params: { cursoAsignaturaId } };
         const [configsRes, studentsRes] = await Promise.all([
-          api.get(`/Notas/curso/${selectedCourseId}/config`),
-          api.get(`/Notas/curso/${selectedCourseId}`)
+          api.get(`/Notas/curso/${selectedAssignment.cursoId}/config`, params),
+          api.get(`/Notas/curso/${selectedAssignment.cursoId}`, params)
         ]);
 
         if (!cancel) {
@@ -145,14 +177,10 @@ export default function TeacherDashboard() {
     return () => {
       cancel = true;
     };
-  }, [selectedCourseId, detailRefreshKey]);
+  }, [selectedAssignment, detailRefreshKey]);
 
   const subjectList = useMemo(() => Object.keys(subjectGroups).sort((a, b) => a.localeCompare(b)), [subjectGroups]);
   const selectedCourses = selectedAsignatura ? subjectGroups[selectedAsignatura] || [] : [];
-  const selectedCourse = useMemo(
-    () => selectedCourses.find((c) => c.cursoId === selectedCourseId) || null,
-    [selectedCourses, selectedCourseId]
-  );
 
   const getSubjectTotals = (nombre) => {
     const listado = subjectGroups[nombre] || [];
@@ -166,9 +194,9 @@ export default function TeacherDashboard() {
     };
   };
 
-  const selectedCourseMeta = selectedCourseId ? courseMeta[selectedCourseId] : null;
+  const selectedAssignmentMeta = selectedCourseId ? courseMeta[selectedCourseId] : null;
 
-  const periodSummarySelectedCourse = useMemo(() => {
+  const periodSummarySelectedAssignment = useMemo(() => {
     const summary = {};
     periodos.forEach((p) => {
       const cfgs = courseDetail.configs.filter((cfg) => Number(cfg.periodo) === p.id);
@@ -234,19 +262,24 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     if (!selectedAsignatura) {
-      setSelectedCourseId(null);
+      if (selectedAssignmentId !== null) setSelectedAssignmentId(null);
       return;
     }
 
     if (selectedCourses.length === 0) {
-      setSelectedCourseId(null);
+      if (selectedAssignmentId !== null) setSelectedAssignmentId(null);
       return;
     }
 
-    if (!selectedCourseId || !selectedCourses.some((c) => c.cursoId === selectedCourseId)) {
-      setSelectedCourseId(selectedCourses[0].cursoId);
+    const hasSelected = selectedCourses.some(
+      (assignment) => resolveAssignmentId(assignment) === selectedAssignmentId
+    );
+
+    if (!selectedAssignmentId || !hasSelected) {
+      const firstId = resolveAssignmentId(selectedCourses[0]);
+      setSelectedAssignmentId(firstId ?? null);
     }
-  }, [selectedAsignatura, selectedCourses, selectedCourseId]);
+  }, [selectedAsignatura, selectedCourses, selectedAssignmentId]);
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -279,13 +312,19 @@ export default function TeacherDashboard() {
     const loadMeta = async () => {
       setMetaLoading(true);
       try {
-        const entries = await Promise.all(
+        const entries = (await Promise.all(
           courseAssignments.map(async (course) => {
             const courseId = course.cursoId;
+            if (!courseId) {
+              return null;
+            }
+            const cursoAsignaturaId = resolveAssignmentId(course);
             try {
               const [studentsRes, configsRes] = await Promise.all([
                 api.get(`/Cursos/${courseId}/students`),
-                api.get(`/Notas/curso/${courseId}/config`)
+                api.get(`/Notas/curso/${courseId}/config`,
+                  cursoAsignaturaId != null ? { params: { cursoAsignaturaId } } : undefined
+                )
               ]);
 
               const studentsCount = Array.isArray(studentsRes.data) ? studentsRes.data.length : 0;
@@ -305,7 +344,7 @@ export default function TeacherDashboard() {
               return [courseId, { studentCount: 0, periodSummary: {} }];
             }
           })
-        );
+        )).filter(Boolean);
 
         if (!cancel) {
           const mapped = Object.fromEntries(entries);
@@ -344,8 +383,10 @@ export default function TeacherDashboard() {
 
         for (const curso of cursosDelMismoNombre) {
           try {
-            const notasRes = await api.get(`/notas/curso/${curso.cursoId}`);
-            const configsRes = await api.get(`/notas/curso/${curso.cursoId}/config`);
+            const cursoAsignaturaId = resolveAssignmentId(curso);
+            const requestConfig = cursoAsignaturaId != null ? { params: { cursoAsignaturaId } } : undefined;
+            const notasRes = await api.get(`/notas/curso/${curso.cursoId}`, requestConfig);
+            const configsRes = await api.get(`/notas/curso/${curso.cursoId}/config`, requestConfig);
 
             const notasData = Array.isArray(notasRes.data) ? notasRes.data : [];
             const configsData = Array.isArray(configsRes.data) ? configsRes.data : [];
@@ -468,6 +509,10 @@ export default function TeacherDashboard() {
   }, [courseAssignments]);
 
   useEffect(() => {
+    selectedAssignmentIdRef.current = selectedAssignmentId;
+  }, [selectedAssignmentId]);
+
+  useEffect(() => {
     selectedCourseIdRef.current = selectedCourseId;
   }, [selectedCourseId]);
 
@@ -477,13 +522,28 @@ export default function TeacherDashboard() {
     const unsubscribe = subscribe("nota-curso", (payload) => {
       const data = pickProp(payload, "Data") ?? pickProp(payload, "data") ?? {};
       const cursoIdValue = pickProp(data, "CursoId") ?? pickProp(data, "cursoId");
-      if (cursoIdValue == null) return;
-      const cursoId = Number(cursoIdValue);
-      if (Number.isNaN(cursoId)) return;
-      const assignedIds = assignmentsRef.current.map((assignment) => assignment.cursoId);
-      if (!assignedIds.includes(cursoId)) return;
+      const cursoAsignaturaValue = pickProp(data, "CursoAsignaturaId") ?? pickProp(data, "cursoAsignaturaId");
+      const cursoId = cursoIdValue != null ? Number(cursoIdValue) : null;
+      const cursoAsignaturaId = cursoAsignaturaValue != null ? Number(cursoAsignaturaValue) : null;
+      const hasCourse = cursoId != null && !Number.isNaN(cursoId);
+      const hasAssignment = cursoAsignaturaId != null && !Number.isNaN(cursoAsignaturaId);
+      if (!hasCourse && !hasAssignment) return;
+
+      const matchesAssignment = assignmentsRef.current.some((assignment) => {
+        const assignmentId = resolveAssignmentId(assignment);
+        if (hasAssignment) {
+          return assignmentId === cursoAsignaturaId;
+        }
+        const assignmentCourseId = Number(assignment.cursoId);
+        return hasCourse && assignmentCourseId === cursoId;
+      });
+
+      if (!matchesAssignment) return;
       setStatsRefreshKey((prev) => prev + 1);
-      if (selectedCourseIdRef.current === cursoId) {
+      const shouldRefreshDetail =
+        (hasAssignment && selectedAssignmentIdRef.current === cursoAsignaturaId) ||
+        (!hasAssignment && hasCourse && selectedCourseIdRef.current === cursoId);
+      if (shouldRefreshDetail) {
         setDetailRefreshKey((prev) => prev + 1);
       }
     });
@@ -491,9 +551,16 @@ export default function TeacherDashboard() {
     return unsubscribe;
   }, [subscribe]);
 
-  const handleOpenCourse = (cursoId, periodoId) => {
-    const query = periodoId ? `?period=${periodoId}` : "";
-    navigate(`/teacher/course/${cursoId}${query}`);
+  const handleOpenCourse = (assignment, periodoId) => {
+    if (!assignment) return;
+    const courseId = assignment.cursoId;
+    if (!courseId) return;
+    const query = new URLSearchParams();
+    if (periodoId) query.set("period", periodoId);
+    const assignmentId = resolveAssignmentId(assignment);
+    if (assignmentId != null) query.set("cursoAsignaturaId", assignmentId);
+    const queryString = query.toString();
+    navigate(`/teacher/course/${courseId}${queryString ? `?${queryString}` : ""}`);
   };
 
   if (loading) return <LoadingSpinner message="Cargando estadísticas..." />;
@@ -658,14 +725,15 @@ export default function TeacherDashboard() {
                     </div>
                     <div className="d-flex flex-wrap gap-2 mt-2">
                       {selectedCourses.map((course) => {
-                        const isActive = selectedCourseId === course.cursoId;
+                        const assignmentId = resolveAssignmentId(course);
+                        const isActive = selectedAssignmentId === assignmentId;
                         return (
                           <Button
                             key={course.id || course.cursoId}
                             size="sm"
                             variant="light"
                             className={`pill-button ${isActive ? "active" : ""}`}
-                            onClick={() => setSelectedCourseId(course.cursoId)}
+                            onClick={() => setSelectedAssignmentId(assignmentId ?? null)}
                           >
                             {(course.gradoNombre || "Sin grado")} · {course.grupo || "Sin grupo"}
                           </Button>
@@ -674,22 +742,22 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
 
-                  {!selectedCourse ? (
+                  {!selectedAssignment ? (
                     <Alert variant="light">Selecciona un grupo para ver sus notas.</Alert>
                   ) : (
                     <Card className="glass-card border-0 teacher-course-card">
                       <Card.Body>
                         <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
                           <div>
-                            <h5 className="mb-1">{selectedCourse.gradoNombre || "Sin grado"}</h5>
+                            <h5 className="mb-1">{selectedAssignment.gradoNombre || "Sin grado"}</h5>
                             <div className="text-muted small">
-                              Grupo {selectedCourse.grupo || "Sin grupo"} · Aula #{selectedCourse.cursoId}
+                              Grupo {selectedAssignment.grupo || "Sin grupo"} · Aula #{selectedAssignment.cursoId}
                             </div>
                           </div>
                           <div className="text-end">
                             <small className="text-muted d-block">Estudiantes asignados</small>
                             <span className="chip">
-                              {selectedCourseMeta?.studentCount ?? courseDetail.students.length}
+                              {selectedAssignmentMeta?.studentCount ?? courseDetail.students.length}
                             </span>
                           </div>
                         </div>
@@ -702,11 +770,11 @@ export default function TeacherDashboard() {
 
                         <div className="d-flex flex-wrap gap-2 mt-3">
                           {periodos.map((periodo) => {
-                            const summary = periodSummarySelectedCourse[periodo.id] || { peso: 0, columnas: 0 };
+                            const summary = periodSummarySelectedAssignment[periodo.id] || { peso: 0, columnas: 0 };
                             const isActive = selectedPeriod === periodo.id;
                             return (
                               <Button
-                                key={`${selectedCourse.cursoId}-${periodo.id}`}
+                                key={`${selectedAssignment.cursoId}-${periodo.id}`}
                                 variant="light"
                                 size="sm"
                                 className={`pill-button ${isActive ? "active" : ""}`}
@@ -747,7 +815,7 @@ export default function TeacherDashboard() {
                                   size="sm"
                                   variant="light"
                                   className="pill-button"
-                                  onClick={() => handleOpenCourse(selectedCourse.cursoId, selectedPeriod)}
+                                  onClick={() => handleOpenCourse(selectedAssignment, selectedPeriod)}
                                 >
                                   Abrir vista completa
                                 </Button>

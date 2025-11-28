@@ -40,6 +40,31 @@ const pickProp = (obj, prop) => {
   return undefined;
 };
 
+const getMateriaKey = (materia) => {
+  if (!materia) return null;
+  const cursoAsignaturaId = pickProp(materia, "CursoAsignaturaId") ?? pickProp(materia, "cursoAsignaturaId");
+  if (cursoAsignaturaId != null) {
+    const numeric = Number(cursoAsignaturaId);
+    return Number.isNaN(numeric) ? null : `ca-${numeric}`;
+  }
+  const cursoId = pickProp(materia, "CursoId") ?? pickProp(materia, "cursoId") ?? pickProp(materia, "Id") ?? pickProp(materia, "id");
+  if (cursoId == null) return null;
+  const normalized = Number(cursoId);
+  return Number.isNaN(normalized) ? null : `c-${normalized}`;
+};
+
+const buildMateriaKeyFromResponse = (cursoId, cursoAsignaturaId) => {
+  if (cursoAsignaturaId != null) {
+    const normalized = Number(cursoAsignaturaId);
+    return Number.isNaN(normalized) ? null : `ca-${normalized}`;
+  }
+  if (cursoId != null) {
+    const normalized = Number(cursoId);
+    return Number.isNaN(normalized) ? null : `c-${normalized}`;
+  }
+  return null;
+};
+
 export default function StudentDashboard() {
   const [resumen, setResumen] = useState(null);
   const [loadingResumen, setLoadingResumen] = useState(true);
@@ -55,7 +80,7 @@ export default function StudentDashboard() {
   const [notas, setNotas] = useState({ columnas: [], promedio: null });
   const [loadingNotas, setLoadingNotas] = useState(false);
   const [materias, setMaterias] = useState([]);
-  const [selectedMateria, setSelectedMateria] = useState(null);
+  const [selectedMateriaKey, setSelectedMateriaKey] = useState(null);
 
   const [asistencias, setAsistencias] = useState([]);
   const [comunicaciones, setComunicaciones] = useState([]);
@@ -83,27 +108,41 @@ export default function StudentDashboard() {
     }
   };
 
-  const loadNotas = async (periodoValue = selectedPeriod, materiaId = selectedMateria) => {
+  const loadNotas = async (periodoValue = selectedPeriod, materiaKey = selectedMateriaKey) => {
     try {
       setLoadingNotas(true);
       setError(null);
-      const res = await PortalEstudiante.notas(periodoValue, materiaId);
+
+      const requestOptions = {};
+      if (materiaKey && materias.length > 0) {
+        const matched = materias.find((m) => getMateriaKey(m) === materiaKey);
+        if (matched) {
+          const cursoAsignatura = pickProp(matched, "CursoAsignaturaId") ?? pickProp(matched, "cursoAsignaturaId");
+          const cursoValue = pickProp(matched, "CursoId") ?? pickProp(matched, "cursoId") ?? pickProp(matched, "Id") ?? pickProp(matched, "id");
+          if (cursoAsignatura != null) {
+            const numeric = Number(cursoAsignatura);
+            if (!Number.isNaN(numeric)) {
+              requestOptions.cursoAsignaturaId = numeric;
+            }
+          }
+          if (cursoValue != null) {
+            const numericCurso = Number(cursoValue);
+            if (!Number.isNaN(numericCurso)) {
+              requestOptions.cursoId = numericCurso;
+            }
+          }
+        }
+      }
+
+      const res = await PortalEstudiante.notas(periodoValue, requestOptions);
       const materiasList = Array.isArray(res.data?.materias) ? res.data.materias : [];
       setMaterias(materiasList);
 
-      const firstMateriaId = materiasList.length
-        ? pickProp(materiasList[0], "Id") ?? pickProp(materiasList[0], "id")
-        : null;
-      const resolvedMateriaRaw = res.data?.cursoId ?? materiaId ?? firstMateriaId ?? null;
-      const resolvedMateria =
-        resolvedMateriaRaw === null || resolvedMateriaRaw === undefined
-          ? null
-          : Number(resolvedMateriaRaw);
+      const serverKey = buildMateriaKeyFromResponse(res.data?.cursoId ?? null, res.data?.cursoAsignaturaId ?? null)
+        ?? (materiasList.length ? getMateriaKey(materiasList[0]) : null);
 
-      const normalizedMateria = Number.isNaN(resolvedMateria) ? null : resolvedMateria;
-
-      if (normalizedMateria !== selectedMateria) {
-        setSelectedMateria(normalizedMateria);
+      if (serverKey !== selectedMateriaKey) {
+        setSelectedMateriaKey(serverKey);
       }
 
       const normalizedPeriodo = periodoValue ?? null;
@@ -114,12 +153,12 @@ export default function StudentDashboard() {
       setNotas({
         columnas: res.data?.columnas || [],
         promedio: res.data?.promedio ?? null,
-        cursoId: normalizedMateria
+        cursoId: res.data?.cursoId ?? null,
+        cursoAsignaturaId: res.data?.cursoAsignaturaId ?? null
       });
     } catch (err) {
       setError(err.response?.data || "No se pudo cargar las notas");
-      const fallbackMateria = materiaId == null ? null : Number(materiaId);
-      setNotas({ columnas: [], promedio: null, cursoId: Number.isNaN(fallbackMateria) ? null : fallbackMateria });
+      setNotas({ columnas: [], promedio: null, cursoId: null, cursoAsignaturaId: null });
     } finally {
       setLoadingNotas(false);
     }
@@ -148,7 +187,7 @@ export default function StudentDashboard() {
       loadResumen,
       loadNotas,
       selectedPeriod,
-      selectedMateria
+      selectedMateria: selectedMateriaKey
     };
   });
 
@@ -275,15 +314,9 @@ export default function StudentDashboard() {
   const showingSinglePeriod = selectedPeriod !== null;
   const periodoResumenLabel = selectedPeriod ? `Periodo ${selectedPeriod}` : "Todos los periodos";
   const selectedMateriaInfo = useMemo(() => {
-    if (!selectedMateria) return null;
-    return (
-      materias.find((m) => {
-        const idValue = pickProp(m, "Id") ?? pickProp(m, "id");
-        const numericId = idValue == null ? null : Number(idValue);
-        return numericId === selectedMateria;
-      }) || null
-    );
-  }, [materias, selectedMateria]);
+    if (!selectedMateriaKey) return null;
+    return materias.find((m) => getMateriaKey(m) === selectedMateriaKey) || null;
+  }, [materias, selectedMateriaKey]);
   const materiaDescripcion = selectedMateriaInfo
     ? `${pickProp(selectedMateriaInfo, "Nombre") || pickProp(selectedMateriaInfo, "Curso") || "Materia"}${pickProp(selectedMateriaInfo, "Grado") ? ` • ${pickProp(selectedMateriaInfo, "Grado")}` : ""}${pickProp(selectedMateriaInfo, "Grupo") ? ` (${pickProp(selectedMateriaInfo, "Grupo")})` : ""}`
     : "Selecciona una asignatura";
@@ -306,17 +339,15 @@ export default function StudentDashboard() {
     }
   };
 
-  const handleMateriaClick = (cursoId) => {
-    if (cursoId == null) return;
-    const normalizedId = Number(cursoId);
-    if (Number.isNaN(normalizedId)) return;
-    setSelectedMateria(normalizedId);
-    loadNotas(selectedPeriod, normalizedId);
+  const handleMateriaClick = (materiaKey) => {
+    if (!materiaKey) return;
+    setSelectedMateriaKey(materiaKey);
+    loadNotas(selectedPeriod, materiaKey);
   };
 
   const handlePeriodoClick = (periodoId) => {
     setSelectedPeriod(periodoId);
-    loadNotas(periodoId, selectedMateria);
+    loadNotas(periodoId, selectedMateriaKey);
   };
 
   const dismissToast = (toastId) => {
@@ -491,21 +522,20 @@ export default function StudentDashboard() {
 
               {materias.length > 0 && (
                 <div className="d-flex gap-2 flex-wrap mb-3 subject-tabs">
-                  {materias.map((materia) => {
-                    const idValue = pickProp(materia, "Id") ?? pickProp(materia, "id");
-                    if (idValue == null) return null;
-                    const numericId = Number(idValue);
+                  {materias.map((materia, idx) => {
+                    const materiaKey = getMateriaKey(materia);
+                    if (!materiaKey) return null;
                     const nombre = pickProp(materia, "Nombre") || pickProp(materia, "Curso") || "Materia";
                     const grado = pickProp(materia, "Grado");
                     const grupo = pickProp(materia, "Grupo");
-                    const isActive = numericId === selectedMateria;
+                    const isActive = materiaKey === selectedMateriaKey;
                     return (
                       <Button
-                        key={`${nombre}-${numericId}`}
+                        key={materiaKey || `${nombre}-${idx}`}
                         size="sm"
                         variant="light"
                         className={`pill-button ${isActive ? "active" : ""}`}
-                        onClick={() => handleMateriaClick(numericId)}
+                        onClick={() => handleMateriaClick(materiaKey)}
                       >
                         {nombre}
                         {grado ? ` • ${grado}` : ""}

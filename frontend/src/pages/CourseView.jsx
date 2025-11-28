@@ -34,6 +34,14 @@ const resolvePeriodFromSearch = (search) => {
   return VALID_PERIOD_IDS.includes(raw) ? raw : VALID_PERIOD_IDS[0];
 };
 
+const resolveAssignmentIdFromSearch = (search) => {
+  const params = new URLSearchParams(search);
+  const rawValue = params.get("cursoAsignaturaId") || params.get("cursoAsignaturaID");
+  if (!rawValue) return null;
+  const parsed = Number(rawValue);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
 export default function CourseView() {
   const { id } = useParams();
   const location = useLocation();
@@ -49,6 +57,7 @@ export default function CourseView() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingConfig, setEditingConfig] = useState(null);
   const [activePeriod, setActivePeriod] = useState(() => resolvePeriodFromSearch(location.search));
+  const cursoAsignaturaId = resolveAssignmentIdFromSearch(location.search);
 
   const originalGradesRef = useRef(new Map());
   const dirtyGradesRef = useRef(new Map());
@@ -76,10 +85,12 @@ export default function CourseView() {
       setLoading(true);
       setError(null);
 
+      const assignmentQuery = cursoAsignaturaId != null ? { params: { cursoAsignaturaId } } : undefined;
+
       const [coursesRes, configsRes, studentsRes] = await Promise.all([
         api.get("/cursos"),
-        api.get(`/Notas/curso/${id}/config`),
-        api.get(`/Notas/curso/${id}`)
+        api.get(`/Notas/curso/${id}/config`, assignmentQuery),
+        api.get(`/Notas/curso/${id}`, assignmentQuery)
       ]);
 
       const c = coursesRes.data.find((x) => x.id === Number(id));
@@ -105,7 +116,7 @@ export default function CourseView() {
 
   useEffect(() => {
     loadAll();
-  }, [id]);
+  }, [id, cursoAsignaturaId]);
 
   const handleAddColumn = async () => {
     if (!newColumn.nombre || !newColumn.peso) {
@@ -119,12 +130,21 @@ export default function CourseView() {
         ? Math.max(...configsInPeriod.map((c) => c.orden)) 
         : 0;
 
-      await api.post(`/Notas/curso/${id}/config`, {
-        nombre: newColumn.nombre,
-        orden: maxOrden + 1,
-        peso: Number(newColumn.peso),
-        periodo: activePeriod
-      });
+      if (cursoAsignaturaId == null) {
+        alert("No se pudo identificar la asignación del curso. Regresa al panel del docente e ingresa nuevamente.");
+        return;
+      }
+
+      await api.post(
+        `/Notas/curso/${id}/config`,
+        {
+          nombre: newColumn.nombre,
+          orden: maxOrden + 1,
+          peso: Number(newColumn.peso),
+          periodo: activePeriod
+        },
+        { params: { cursoAsignaturaId } }
+      );
 
       setNewColumn({ nombre: "", peso: "", periodo: activePeriod });
       setShowAddModal(false);
@@ -141,12 +161,16 @@ export default function CourseView() {
     }
 
     try {
-      await api.put(`/Notas/config/${editingConfig.id}`, {
-        nombre: editingConfig.nombre,
-        orden: editingConfig.orden,
-        peso: Number(editingConfig.peso),
-        periodo: editingConfig.periodo
-      });
+      await api.put(
+        `/Notas/config/${editingConfig.id}`,
+        {
+          nombre: editingConfig.nombre,
+          orden: editingConfig.orden,
+          peso: Number(editingConfig.peso),
+          periodo: editingConfig.periodo
+        },
+        cursoAsignaturaId != null ? { params: { cursoAsignaturaId } } : undefined
+      );
 
       setShowEditModal(false);
       setEditingConfig(null);
@@ -160,7 +184,10 @@ export default function CourseView() {
     if (!window.confirm("¿Eliminar esta columna y todas sus notas?")) return;
 
     try {
-      await api.delete(`/Notas/config/${configId}`);
+      await api.delete(
+        `/Notas/config/${configId}`,
+        cursoAsignaturaId != null ? { params: { cursoAsignaturaId } } : undefined
+      );
       await loadAll();
     } catch (err) {
       setError(err.response?.data || "Error eliminando columna");
@@ -302,7 +329,7 @@ export default function CourseView() {
           )}
         </Col>
         <Col xs="auto">
-          <ExportButtons courseId={id} />
+          <ExportButtons courseId={id} cursoAsignaturaId={cursoAsignaturaId} />
         </Col>
       </Row>
 

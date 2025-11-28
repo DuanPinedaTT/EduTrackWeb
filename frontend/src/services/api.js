@@ -56,10 +56,19 @@ export const Cursos = {
 
 export const PortalEstudiante = {
   resumen: () => api.get('/PortalEstudiante/resumen'),
-  notas: (periodo, cursoId) => {
+  notas: (periodo, options) => {
     const params = {};
     if (periodo != null) params.periodo = periodo;
-    if (cursoId != null) params.cursoId = cursoId;
+
+    if (options != null) {
+      if (typeof options === "number") {
+        params.cursoId = options;
+      } else {
+        if (options.cursoId != null) params.cursoId = options.cursoId;
+        if (options.cursoAsignaturaId != null) params.cursoAsignaturaId = options.cursoAsignaturaId;
+      }
+    }
+
     const config = Object.keys(params).length > 0 ? { params } : undefined;
     return api.get('/PortalEstudiante/notas', config);
   },
@@ -70,10 +79,19 @@ export const PortalEstudiante = {
 
 export const PortalTutor = {
   hijos: () => api.get('/PortalTutor/hijos'),
-  notas: (estudianteId, periodo, cursoId) => {
+  notas: (estudianteId, periodo, options) => {
     const params = {};
     if (periodo != null) params.periodo = periodo;
-    if (cursoId != null) params.cursoId = cursoId;
+
+    if (options != null) {
+      if (typeof options === "number") {
+        params.cursoId = options;
+      } else {
+        if (options.cursoId != null) params.cursoId = options.cursoId;
+        if (options.cursoAsignaturaId != null) params.cursoAsignaturaId = options.cursoAsignaturaId;
+      }
+    }
+
     const config = Object.keys(params).length > 0 ? { params } : undefined;
     return api.get(`/PortalTutor/notas/${estudianteId}`, config);
   },

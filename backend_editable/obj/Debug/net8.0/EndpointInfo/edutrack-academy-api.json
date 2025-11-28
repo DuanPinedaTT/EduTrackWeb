@@ -290,6 +290,50 @@
         }
       }
     },
+    "/api/CursoAsignaturas/{id}": {
+      "get": {
+        "tags": [
+          "CursoAsignaturas"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "CursoAsignaturas"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/CursoAsignaturas": {
       "get": {
         "tags": [
@@ -349,29 +393,6 @@
         "parameters": [
           {
             "name": "docenteId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/CursoAsignaturas/{id}": {
-      "delete": {
-        "tags": [
-          "CursoAsignaturas"
-        ],
-        "parameters": [
-          {
-            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -710,6 +731,14 @@
             }
           },
           {
+            "name": "cursoAsignaturaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
             "name": "docente",
             "in": "query",
             "schema": {
@@ -734,6 +763,14 @@
             "name": "courseId",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursoAsignaturaId",
+            "in": "query",
             "schema": {
               "type": "integer",
               "format": "int32"
@@ -954,6 +991,14 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "cursoAsignaturaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -971,6 +1016,14 @@
             "name": "cursoId",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursoAsignaturaId",
+            "in": "query",
             "schema": {
               "type": "integer",
               "format": "int32"
@@ -1080,6 +1133,14 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "cursoAsignaturaId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -1148,6 +1209,14 @@
           },
           {
             "name": "cursoId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursoAsignaturaId",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -1264,6 +1333,14 @@
           },
           {
             "name": "cursoId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursoAsignaturaId",
             "in": "query",
             "schema": {
               "type": "integer",
@@ -1692,6 +1769,11 @@
           "notaConfigId": {
             "type": "integer",
             "format": "int32"
+          },
+          "cursoAsignaturaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "valor": {
             "type": "number",
@@ -2394,6 +2476,11 @@
             "type": "integer",
             "format": "int32"
           },
+          "cursoAsignaturaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "valor": {
             "type": "number",
             "format": "double",
@@ -2404,6 +2491,9 @@
           },
           "notaConfig": {
             "$ref": "#/components/schemas/NotaConfig"
+          },
+          "cursoAsignatura": {
+            "$ref": "#/components/schemas/CursoAsignatura"
           }
         },
         "additionalProperties": false
@@ -2418,6 +2508,11 @@
           "cursoId": {
             "type": "integer",
             "format": "int32"
+          },
+          "cursoAsignaturaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "nombre": {
             "type": "string",
@@ -2437,6 +2532,9 @@
           },
           "curso": {
             "$ref": "#/components/schemas/Curso"
+          },
+          "cursoAsignatura": {
+            "$ref": "#/components/schemas/CursoAsignatura"
           }
         },
         "additionalProperties": false
@@ -2452,6 +2550,11 @@
           "cursoId": {
             "type": "integer",
             "format": "int32"
+          },
+          "cursoAsignaturaId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "nombre": {
             "type": "string",
