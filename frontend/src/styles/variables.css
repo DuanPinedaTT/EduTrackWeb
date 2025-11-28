@@ -10,6 +10,8 @@
   --brand-500: #6366f1;
   --brand-600: #4f46e5;
   --brand-700: #4338ca;
+  --brand-navy: #203f75;
+  --brand-sky: #6ab4dd;
   --accent-500: #f472b6;
   --accent-600: #ec4899;
   --teal-500: #14b8a6;
@@ -24,9 +26,10 @@
   --slate-200: #e2e8f0;
   --white: #ffffff;
 
-  --app-background: radial-gradient(circle at top, rgba(99,102,241,0.18), transparent 55%),
-    radial-gradient(circle at 20% 20%, rgba(236,72,153,0.18), transparent 45%),
-    #f8f9ff;
+  --app-background:
+    radial-gradient(circle at 18% 18%, rgba(244, 114, 182, 0.22), transparent 48%),
+    radial-gradient(circle at 82% 0%, rgba(106, 180, 221, 0.15), transparent 55%),
+    linear-gradient(180deg, #f9fbff 0%, #fdf2ff 45%, #f7fbff 100%);
   --surface-primary: rgba(255, 255, 255, 0.9);
   --surface-muted: rgba(255, 255, 255, 0.65);
   --surface-dark: rgba(15, 23, 42, 0.85);

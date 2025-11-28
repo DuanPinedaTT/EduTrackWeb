@@ -22,6 +22,7 @@ import TeacherCommunications from "./pages/TeacherCommunications.jsx";
 import TeacherAsistencias from "./pages/TeacherAsistencias.jsx";
 
 import Navbar from "./components/Navbar.jsx";
+import SurfaceAccents from "./components/SurfaceAccents.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
 
 function PrivateRoute({ children, roles }) {
@@ -41,6 +42,7 @@ export default function App() {
     <AuthProvider>
       <NotificationProvider>
         <BrowserRouter>
+          <SurfaceAccents />
           <Navbar onLoginClick={openLoginModal} />
           <Routes>
           <Route
