@@ -10,7 +10,7 @@ namespace edutrack_academy_api.Controllers
     public class EstadisticasController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private const decimal PassingScore = 3.0m;
+        private const decimal PassingScore = 3.5m; // Mantener sincronizado con PASSING_SCORE del dashboard
 
         public EstadisticasController(AppDbContext context)
         {

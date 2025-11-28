@@ -86,6 +86,17 @@ namespace edutrack_academy_api.Controllers
             var (grado, grupoNormalizado, validationError) = await ValidateGradoYGrupo(dto.GradoId, dto.Grupo);
             if (validationError != null) return BadRequest(validationError);
 
+            var documentoNormalizado = NormalizeDocumentoInput(dto.Documento);
+            if (string.IsNullOrWhiteSpace(documentoNormalizado))
+            {
+                return BadRequest("Debes ingresar el documento del estudiante");
+            }
+
+            if (await DocumentoExisteAsync(documentoNormalizado))
+            {
+                return Conflict("Ya existe un estudiante registrado con ese documento");
+            }
+
             var desiredUser = string.IsNullOrWhiteSpace(dto.UsuarioPortal)
                 ? null
                 : dto.UsuarioPortal.Trim();
@@ -96,7 +107,7 @@ namespace edutrack_academy_api.Controllers
             var estudiante = new Estudiante
             {
                 Nombre = dto.Nombre,
-                Documento = dto.Documento,
+                Documento = documentoNormalizado,
                 GradoId = grado?.Id,
                 Grupo = grupoNormalizado
             };
@@ -114,6 +125,7 @@ namespace edutrack_academy_api.Controllers
 
             dto.Id = estudiante.Id;
             dto.GradoNombre = grado?.Nombre;
+            dto.Documento = documentoNormalizado;
             dto.Grupo = grupoNormalizado;
             return Ok(new
             {
@@ -137,13 +149,25 @@ namespace edutrack_academy_api.Controllers
             var (grado, grupoNormalizado, validationError) = await ValidateGradoYGrupo(dto.GradoId, dto.Grupo);
             if (validationError != null) return BadRequest(validationError);
 
+            var documentoNormalizado = NormalizeDocumentoInput(dto.Documento);
+            if (string.IsNullOrWhiteSpace(documentoNormalizado))
+            {
+                return BadRequest("Debes ingresar el documento del estudiante");
+            }
+
+            if (await DocumentoExisteAsync(documentoNormalizado, id))
+            {
+                return Conflict("Ya existe un estudiante registrado con ese documento");
+            }
+
             estudiante.Nombre = dto.Nombre;
-            estudiante.Documento = dto.Documento;
+            estudiante.Documento = documentoNormalizado;
             estudiante.GradoId = grado?.Id;
             estudiante.Grupo = grupoNormalizado;
             await _context.SaveChangesAsync();
             await EnsureGrupoInscripcionAsync(estudiante, grupoNormalizado);
             dto.GradoNombre = grado?.Nombre;
+            dto.Documento = documentoNormalizado;
             dto.Grupo = grupoNormalizado;
             await _context.Entry(estudiante).Reference(e => e.Usuario).LoadAsync();
             var desiredUser = string.IsNullOrWhiteSpace(dto.UsuarioPortal)
@@ -252,6 +276,22 @@ namespace edutrack_academy_api.Controllers
             _context.Estudiantes.Remove(estudiante);
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        private static string NormalizeDocumentoInput(string? documento)
+        {
+            return (documento ?? string.Empty).Trim();
+        }
+
+        private async Task<bool> DocumentoExisteAsync(string documentoNormalizado, int? excluirId = null)
+        {
+            var normalizedLookup = documentoNormalizado.ToUpperInvariant();
+            return await _context.Estudiantes
+                .AsNoTracking()
+                .AnyAsync(e =>
+                    e.Documento != null &&
+                    e.Documento.Trim().ToUpper() == normalizedLookup &&
+                    (!excluirId.HasValue || e.Id != excluirId.Value));
         }
     }
 }
