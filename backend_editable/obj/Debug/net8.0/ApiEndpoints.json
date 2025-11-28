@@ -442,6 +442,11 @@
         "Name": "courseId",
         "Type": "System.Int32",
         "IsRequired": true
+      },
+      {
+        "Name": "docente",
+        "Type": "System.String",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []

@@ -1,11 +1,21 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Button, ButtonGroup } from "react-bootstrap";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 export default function ExportButtons({ courseId }) {
+  const { user } = useAuth();
+
+  const docenteLabel = useMemo(() => {
+    if (!user) return "";
+    const fullName = [user.nombre, user.apellido].filter(Boolean).join(" ").trim();
+    if (fullName) return fullName;
+    return user.user || user.username || "";
+  }, [user]);
+
   const download = (type) => {
     const token = localStorage.getItem("token");
-    // endpoint en backend: /api/Exports/course/{courseId}/{type}
-    const url = `/api/Exports/course/${courseId}/${type}`;
+    const query = docenteLabel ? `?docente=${encodeURIComponent(docenteLabel)}` : "";
+    const url = `/api/Exports/course/${courseId}/${type}${query}`;
     fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`

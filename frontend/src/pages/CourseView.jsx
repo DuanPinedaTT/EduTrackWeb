@@ -17,6 +17,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 const PERIODOS = [
   { id: 1, nombre: "Periodo 1" },
@@ -37,6 +38,7 @@ export default function CourseView() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [course, setCourse] = useState(null);
   const [configs, setConfigs] = useState([]);
   const [students, setStudents] = useState([]);
@@ -226,7 +228,14 @@ export default function CourseView() {
   };
 
   const handleExport = () => {
-    window.open(`/api/Exports/course/${id}/xlsx`, "_blank");
+    const candidate = [user?.nombre, user?.apellido]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    const fallback = user?.user || user?.username || "";
+    const docentLabel = candidate || fallback;
+    const query = docentLabel ? `?docente=${encodeURIComponent(docentLabel)}` : "";
+    window.open(`/api/Exports/course/${id}/xlsx${query}`, "_blank");
   };
 
   const getGradeColor = (grade) => {

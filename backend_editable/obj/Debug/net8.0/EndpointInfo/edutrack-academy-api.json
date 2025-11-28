@@ -708,6 +708,13 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "docente",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
