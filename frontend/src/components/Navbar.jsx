@@ -16,11 +16,19 @@ export default function Navbar({ onLoginClick }) {
     <BsNavbar className="app-navbar" expand="md" sticky="top">
       <Container className="d-flex justify-content-between align-items-center">
         <BsNavbar.Brand as={Link} to="/" className="brand">
-          <div className="logo-box">⚡️</div>
+          <img
+            src="/logo-relleno-azul.png"
+            alt="EduTrack Academy"
+            className="logo-hero"
+          />
           <div className="d-flex flex-column">
-            <span>EduTrack Academy</span>
+            <span className="brand-title">
+              <span className="brand-title-primary">Edu</span>
+              <span className="brand-title-highlight">Track</span>
+              <span className="brand-title-primary"> Academy</span>
+            </span>
             <small className="text-muted" style={{ fontSize: "0.75rem", letterSpacing: "0.08em" }}>
-              Gestión académica inteligente
+              Gestión académica integral
             </small>
           </div>
         </BsNavbar.Brand>
