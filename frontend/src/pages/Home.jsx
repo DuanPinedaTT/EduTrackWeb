@@ -2,6 +2,7 @@ import React from "react";
 import { Container, Row, Col, Button, Modal, Card, Badge } from "react-bootstrap";
 import Login from "./Login.jsx";
 
+// Landing principal; presenta beneficios y expone accesos por rol.
 export default function Home({ showLogin, onOpenLogin, onCloseLogin }) {
   const accesoRoles = [
     {
@@ -34,6 +35,7 @@ export default function Home({ showLogin, onOpenLogin, onCloseLogin }) {
     }
   ];
 
+  // Tarjetas breves que refuerzan funciones destacadas.
   const highlights = [
     { label: "Planillas configurables", detail: "Pesos dinámicos por periodo" },
     { label: "Analytics en vivo", detail: "Comparativas por grupo" },

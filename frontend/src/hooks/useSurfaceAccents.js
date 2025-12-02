@@ -75,6 +75,7 @@ const TARGETS = [
   }
 ];
 
+// Aplica gradientes y bordes combinando la paleta seleccionada con la configuración del target.
 const decorate = (element, palette, options) => {
   const { radius, background, borderWidth = "2px", extraStyles } = options;
 
@@ -93,6 +94,7 @@ const decorate = (element, palette, options) => {
   }
 };
 
+// Hook visual que pinta bordes/accentos adaptativos en tarjetas y superficies.
 export default function useSurfaceAccents() {
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -125,6 +127,7 @@ export default function useSurfaceAccents() {
       });
     };
 
+    // Agrupa múltiples cambios en el mismo frame para evitar repaints innecesarios.
     const schedule = () => {
       if (frame) return;
       frame = requestAnimationFrame(applyAccents);

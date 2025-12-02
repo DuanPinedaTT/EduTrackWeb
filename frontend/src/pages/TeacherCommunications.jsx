@@ -5,6 +5,7 @@ import api, { Comunicaciones } from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 
+// Centro docente de comunicaciones; redacta mensajes segmentados y revisa historial.
 const MENSAJE_TIPOS = [
   { id: "general", label: "General" },
   { id: "academico", label: "Académico" },
@@ -44,6 +45,7 @@ export default function TeacherCommunications() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [expandedHistoryId, setExpandedHistoryId] = useState(null);
 
+  // Carga las asignaciones del docente y preselecciona el primer curso.
   useEffect(() => {
     if (!user?.id) return;
 
@@ -67,6 +69,7 @@ export default function TeacherCommunications() {
     loadAssignments();
   }, [user?.id]);
 
+  // Cuando cambia el curso se consulta la lista de estudiantes y se marcan todos por defecto.
   useEffect(() => {
     if (!selectedCourseId) {
       setCourseStudents([]);
@@ -105,6 +108,7 @@ export default function TeacherCommunications() {
     };
   }, [selectedCourseId]);
 
+  // Historial inicial de comunicaciones enviadas.
   useEffect(() => {
     const loadHistory = async () => {
       try {
@@ -122,6 +126,7 @@ export default function TeacherCommunications() {
     loadHistory();
   }, []);
 
+  // Si el alcance vuelve a ser todo el curso, se resetea la selección manual.
   useEffect(() => {
     if (form.alcance === "curso" && courseStudents.length > 0) {
       setSelectedStudents(new Set(courseStudents.map((s) => s.id)));
@@ -153,6 +158,7 @@ export default function TeacherCommunications() {
     form.mensaje.trim().length >= 10 &&
     destinatariosCount > 0;
 
+  // Envía la comunicación y recarga el historial.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formValid) return;

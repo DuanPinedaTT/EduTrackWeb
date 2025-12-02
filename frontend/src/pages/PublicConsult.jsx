@@ -15,6 +15,7 @@ import {
 import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 
+// Consulta pública; permite buscar estudiantes y cursos sin autenticación.
 export default function PublicConsult() {
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
@@ -26,6 +27,7 @@ export default function PublicConsult() {
   const [selectedCourse, setSelectedCourse] = useState("");
   const [viewMode, setViewMode] = useState("table"); // "table" o "cards"
 
+  // Carga inicial: estudiantes, cursos e inscripciones para habilitar filtros.
   useEffect(() => {
     const load = async () => {
       try {
@@ -55,6 +57,7 @@ export default function PublicConsult() {
     load();
   }, []);
 
+  // Reaplica filtros cada vez que cambian los criterios de búsqueda.
   useEffect(() => {
     let result = students;
 
@@ -76,6 +79,7 @@ export default function PublicConsult() {
     setFilteredStudents(result);
   }, [searchTerm, selectedCourse, students]);
 
+  // Traduce IDs en nombres legibles dentro de ambas vistas.
   const getCursoNombre = (cursoId) => {
     if (!cursoId) return "Sin asignar";
     const curso = courses.find((c) => c.id === cursoId);

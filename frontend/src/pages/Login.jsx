@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
+// Formulario compacto para autenticar y redirigir según el rol.
 export default function Login({ onSuccess }) {
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
@@ -12,6 +13,7 @@ export default function Login({ onSuccess }) {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  // Traduce el rol del backend en la ruta correspondiente.
   const getDashboardRoute = (rol) => {
     if (!rol) return "/";
     if (rol === "admin") return "/admin";
@@ -21,6 +23,7 @@ export default function Login({ onSuccess }) {
     return "/";
   };
 
+  // Autentica contra el backend, guarda token y redirige al panel adecuado.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);

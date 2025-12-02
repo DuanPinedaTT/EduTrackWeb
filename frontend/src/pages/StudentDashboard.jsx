@@ -5,6 +5,7 @@ import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { PortalEstudiante } from "../services/api.js";
 import { useNotifications } from "../contexts/NotificationContext.jsx";
 
+// Portal estudiantil; muestra resumen, notas, asistencia y comunicaciones en tiempo real.
 const PERIODOS = [
   { id: null, nombre: "Todos" },
   { id: 1, nombre: "Periodo 1" },
@@ -86,6 +87,7 @@ export default function StudentDashboard() {
   const [comunicaciones, setComunicaciones] = useState([]);
   const [markingId, setMarkingId] = useState(null);
 
+  // Trae el resumen general del estudiante; puede ejecutarse en modo silencioso.
   const loadResumen = async (options = {}) => {
     const silent = options.silent ?? false;
     try {
@@ -108,6 +110,7 @@ export default function StudentDashboard() {
     }
   };
 
+  // Consulta notas según periodo y materia seleccionados.
   const loadNotas = async (periodoValue = selectedPeriod, materiaKey = selectedMateriaKey) => {
     try {
       setLoadingNotas(true);
@@ -164,6 +167,7 @@ export default function StudentDashboard() {
     }
   };
 
+  // Recupera el historial de asistencia del portal estudiantil.
   const loadAsistencias = async () => {
     try {
       const res = await PortalEstudiante.asistencias();
@@ -173,6 +177,7 @@ export default function StudentDashboard() {
     }
   };
 
+  // Descarga mensajes dirigidos al estudiante.
   const loadComunicaciones = async () => {
     try {
       const res = await PortalEstudiante.comunicaciones();
@@ -182,6 +187,7 @@ export default function StudentDashboard() {
     }
   };
 
+  // Mantiene referencias frescas para refrescar datos al recibir notificaciones.
   useEffect(() => {
     notificationRefs.current = {
       loadResumen,
@@ -191,6 +197,7 @@ export default function StudentDashboard() {
     };
   });
 
+  // Suscripción a notas nuevas: refresca resumen/notas y muestra un toast.
   useEffect(() => {
     loadResumen();
     loadAsistencias();
@@ -198,6 +205,7 @@ export default function StudentDashboard() {
     loadNotas(null, null);
   }, []);
 
+  // Suscripción a nuevas comunicaciones: inserta el mensaje en el panel.
   useEffect(() => {
     if (!location.hash) return;
     const target = document.querySelector(location.hash);
@@ -206,6 +214,7 @@ export default function StudentDashboard() {
     }
   }, [location.hash]);
 
+  // Suscripción a comunicaciones leídas desde otros dispositivos.
   useEffect(() => {
     if (typeof subscribe !== "function") return undefined;
 
@@ -321,6 +330,7 @@ export default function StudentDashboard() {
     ? `${pickProp(selectedMateriaInfo, "Nombre") || pickProp(selectedMateriaInfo, "Curso") || "Materia"}${pickProp(selectedMateriaInfo, "Grado") ? ` • ${pickProp(selectedMateriaInfo, "Grado")}` : ""}${pickProp(selectedMateriaInfo, "Grupo") ? ` (${pickProp(selectedMateriaInfo, "Grupo")})` : ""}`
     : "Selecciona una asignatura";
 
+  // Marca comunicaciones como leídas y avisa al centro de notificaciones.
   const handleMarcarLeido = async (destinoId) => {
     try {
       setMarkingId(destinoId);

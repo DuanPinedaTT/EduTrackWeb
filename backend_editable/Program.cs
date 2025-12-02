@@ -9,18 +9,21 @@ using System.Linq;
 using System.Text;
 
 var seedOnlyFlag = "--seed-demo";
+// Permite ejecutar `dotnet run -- --seed-demo` para poblar datos sin montar la API completa.
 var seedOnly = args.Any(a => a.Equals(seedOnlyFlag, StringComparison.OrdinalIgnoreCase));
 var filteredArgs = args.Where(a => !a.Equals(seedOnlyFlag, StringComparison.OrdinalIgnoreCase)).ToArray();
 
 var builder = WebApplication.CreateBuilder(filteredArgs);
 
+// Bootstrap central: configura EF, autenticación JWT, SignalR y seeding opcional.
+
 // Add services to the container.
 
-// DbContext
+// DbContext que expone las entidades académicas principales.
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("AcademiaConnection")));
 
-// Servicios
+// Servicios de dominio inyectados en controladores y hubs.
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IGrupoSyncService, GrupoSyncService>();
 builder.Services.AddScoped<IPortalCredentialService, PortalCredentialService>();
@@ -70,7 +73,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middlewares base + Swagger solo para entornos de desarrollo.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -89,11 +92,13 @@ using (var scope = app.Services.CreateScope())
 {
     if (seedOnly)
     {
+        // Modo semilla: carga datos demo y termina sin levantar el web host.
         var seeder = scope.ServiceProvider.GetRequiredService<DemoDataSeeder>();
         seeder.SeedAsync(force: true).GetAwaiter().GetResult();
         return;
     }
 
+    // Sincroniza cursos automáticamente para que cada grado tenga sus grupos configurados al arranque.
     var syncService = scope.ServiceProvider.GetRequiredService<IGrupoSyncService>();
     syncService.EnsureCursosForAllGradosAsync().GetAwaiter().GetResult();
 }

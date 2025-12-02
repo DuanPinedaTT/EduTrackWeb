@@ -9,6 +9,7 @@ namespace edutrack_academy_api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "estudiante")]
+    // Expone los endpoints consumidos por el portal del estudiante dentro de la app
     public class PortalEstudianteController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,6 +19,7 @@ namespace edutrack_academy_api.Controllers
             _context = context;
         }
 
+        // Obtiene el identificador del usuario autenticado desde el token JWT
         private int GetUserId()
         {
             var raw = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -29,6 +31,7 @@ namespace edutrack_academy_api.Controllers
             return int.Parse(raw);
         }
 
+        // Resuelve el registro de estudiante asociado al usuario logueado
         private async Task<Models.Estudiante?> GetCurrentStudentAsync()
         {
             var userId = GetUserId();
@@ -38,6 +41,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("resumen")]
+        // Dashboard principal que mezcla datos académicos, asistencias y comunicaciones recientes
         public async Task<IActionResult> GetResumen()
         {
             var estudiante = await GetCurrentStudentAsync();
@@ -148,6 +152,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("notas")]
+        // Devuelve la grilla de notas mostrando columnas configuradas y promedio ponderado
         public async Task<IActionResult> GetNotas([FromQuery] int? periodo, [FromQuery] int? cursoId, [FromQuery] int? cursoAsignaturaId)
         {
             var estudiante = await GetCurrentStudentAsync();
@@ -338,6 +343,7 @@ namespace edutrack_academy_api.Controllers
             });
         }
 
+        // DTO interno para simplificar la construcción de la lista de materias en las vistas del portal
         private sealed class MateriaItem
         {
             public required int Id { get; init; }
@@ -350,6 +356,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("asistencias")]
+        // Histórico paginado de asistencias con filtros de fecha opcionales
         public async Task<IActionResult> GetAsistencias([FromQuery] DateTime? desde, [FromQuery] DateTime? hasta)
         {
             var estudiante = await GetCurrentStudentAsync();
@@ -389,6 +396,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("comunicaciones")]
+        // Lista todas las comunicaciones enviadas al estudiante con estado de lectura
         public async Task<IActionResult> GetComunicaciones()
         {
             var estudiante = await GetCurrentStudentAsync();
@@ -420,6 +428,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpPost("comunicaciones/{destinoId:int}/leido")]
+        // Permite que el portal marque un mensaje como leído y registre la fecha
         public async Task<IActionResult> MarcarComunicacionLeida(int destinoId)
         {
             var estudiante = await GetCurrentStudentAsync();

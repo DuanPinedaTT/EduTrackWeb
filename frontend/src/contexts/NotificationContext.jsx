@@ -41,6 +41,7 @@ const createListenerId = () => {
   return `${Date.now()}-${Math.random()}`;
 };
 
+// Administra la conexión SignalR y entrega utilidades de notificaciones en toda la app.
 export function NotificationProvider({ children }) {
   const { token, user } = useAuth();
   const [status, setStatus] = useState("disconnected");
@@ -114,10 +115,12 @@ export function NotificationProvider({ children }) {
     deliverToListeners(normalizedType, payload);
   }, [deliverToListeners]);
 
+  // Limpia listeners inválidos para evitar ejecuciones fantasma.
   useEffect(() => {
     listenersRef.current = listenersRef.current.filter((listener) => typeof listener?.handler === "function");
   });
 
+  // Maneja el ciclo de vida de la conexión SignalR según el token disponible.
   useEffect(() => {
     let isCancelled = false;
 
@@ -186,6 +189,7 @@ export function NotificationProvider({ children }) {
     };
   }, [token, dispatch]);
 
+  // Permite a componentes suscribirse a un tipo específico (o todos) y devuelve un unsubscribe.
   const subscribe = useCallback((typeOrHandler, maybeHandler) => {
     const type = typeof typeOrHandler === "string" ? typeOrHandler.toLowerCase() : null;
     const handler = typeof typeOrHandler === "function" ? typeOrHandler : maybeHandler;
@@ -207,6 +211,7 @@ export function NotificationProvider({ children }) {
     };
   }, []);
 
+  // Quita notificaciones del inbox local y dispara eventos "comunicacion-leida" para otros paneles.
   const markAsRead = useCallback((key, options = {}) => {
     if (!key) return;
     let emitPayload = null;
@@ -228,6 +233,7 @@ export function NotificationProvider({ children }) {
     }
   }, [emitLocalEvent]);
 
+  // Elimina cualquier notificación vinculada a un destino específico (ej. cuando se lee desde otro lugar).
   const dismissByDestino = useCallback((destinoId) => {
     if (destinoId == null) return;
     setInbox((prev) =>
@@ -239,6 +245,7 @@ export function NotificationProvider({ children }) {
     );
   }, []);
 
+  // Pre-carga el inbox con comunicaciones no leídas cuando el usuario es estudiante/tutor.
   const seedInboxFromApi = useCallback(async () => {
     if (seededInboxRef.current) return;
     if (!token) return;

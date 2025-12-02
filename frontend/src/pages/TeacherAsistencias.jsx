@@ -16,6 +16,7 @@ import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 
+// Registro docente de asistencias; permite marcar por curso, periodo y fecha.
 const ATTENDANCE_STATES = [
   { value: "Presente", label: "Presente", variant: "success" },
   { value: "Tarde", label: "Tarde", variant: "warning" },
@@ -108,6 +109,7 @@ export default function TeacherAsistencias() {
       ) || null
     : null;
 
+  // Trae las asignaturas del docente y preselecciona la primera disponible.
   useEffect(() => {
     if (!user?.id) return;
 
@@ -132,6 +134,7 @@ export default function TeacherAsistencias() {
     loadAssignments();
   }, [user?.id]);
 
+  // Mantiene seleccionada una asignatura válida aun cuando cambie la data.
   useEffect(() => {
     if (assignments.length === 0) {
       if (selectedAssignmentId !== null) {
@@ -146,6 +149,7 @@ export default function TeacherAsistencias() {
     }
   }, [assignments, selectedAssignmentId]);
 
+  // Cada vez que cambia el curso seleccionado se vuelve a cargar la lista de estudiantes.
   useEffect(() => {
     if (!selectedCourseId) {
       setStudents([]);
@@ -189,6 +193,7 @@ export default function TeacherAsistencias() {
     };
   }, [selectedCourseId]);
 
+  // Consulta los registros previos para mostrar el historial del curso.
   const loadHistory = useCallback(
     async (courseId, asignaturaId, periodoFilter) => {
       if (!courseId) {
@@ -214,6 +219,7 @@ export default function TeacherAsistencias() {
     []
   );
 
+  // Actualiza historial cuando cambia curso, asignatura o periodo.
   useEffect(() => {
     if (!selectedCourseId || !selectedAsignaturaId) {
       setHistory([]);
@@ -263,6 +269,7 @@ export default function TeacherAsistencias() {
 
   const canSubmit = Boolean(selectedCourseId && selectedAsignaturaId && studentCount > 0 && !submitting);
 
+  // Envía el parte de asistencia actual al backend y refresca el historial.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!canSubmit) return;

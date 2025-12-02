@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// Cliente HTTP base apuntando al backend; todos los helpers se montan sobre este axios.
 const api = axios.create({
   baseURL: "/api"
 });
@@ -54,6 +55,7 @@ export const Cursos = {
   students: (id) => api.get(`/cursos/${id}/students`)
 };
 
+// Wrapper para el portal del estudiante (resumen, notas, comunicaciones, etc.).
 export const PortalEstudiante = {
   resumen: () => api.get('/PortalEstudiante/resumen'),
   notas: (periodo, options) => {
@@ -77,6 +79,7 @@ export const PortalEstudiante = {
   marcarComunicacionLeida: (destinoId) => api.post(`/PortalEstudiante/comunicaciones/${destinoId}/leido`)
 };
 
+// Endpoints específicos para tutores: hijos, notas filtradas y comunicaciones.
 export const PortalTutor = {
   hijos: () => api.get('/PortalTutor/hijos'),
   notas: (estudianteId, periodo, options) => {
@@ -100,6 +103,7 @@ export const PortalTutor = {
   marcarComunicacionLeida: (destinoId) => api.post(`/PortalTutor/comunicaciones/${destinoId}/leido`)
 };
 
+// Utilidades comunes a docentes para crear/consultar comunicaciones emitidas.
 export const Comunicaciones = {
   crear: (payload) => api.post('/Comunicaciones', payload),
   emitidas: () => api.get('/Comunicaciones/emitidas')

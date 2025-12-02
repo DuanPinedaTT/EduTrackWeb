@@ -7,9 +7,11 @@ import {
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
+// Barra pública: solo aparece cuando no hay sesión iniciada.
 export default function Navbar({ onLoginClick }) {
   const { user } = useAuth();
 
+  // Usuarios autenticados obtienen navegación interna distinta.
   if (user) return null;
 
   return (

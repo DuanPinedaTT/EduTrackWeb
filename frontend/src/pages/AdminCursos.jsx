@@ -15,6 +15,7 @@ import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 
+// Tablero maestro de cursos; arma salones, define responsables y vigila aforos.
 export default function AdminCursos() {
   const [teachers, setTeachers] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -36,6 +37,7 @@ export default function AdminCursos() {
 
   const navigate = useNavigate();
 
+  // Cargas separadas; evita que un servicio lento bloquee al resto.
   const loadTeachers = async () => {
     try {
       setLoadingTeachers(true);
@@ -80,6 +82,7 @@ export default function AdminCursos() {
     }
   };
 
+  // Conteo rápido de estudiantes; evita abrir cada curso para conocer su aforo.
   const loadStudentCounts = async (courseList) => {
     try {
       setLoadingCounts(true);
@@ -124,6 +127,7 @@ export default function AdminCursos() {
     return g?.grupos || [];
   };
 
+  // Para volver a vaciar el curso.
   const resetCourseForm = () => {
     setEditingCourseId(null);
     setFormCourse({
@@ -134,6 +138,7 @@ export default function AdminCursos() {
     });
   };
 
+  // Crear o actualizar en un solo paso; evita duplicar formularios.
   const handleCreateOrUpdateCourse = async (e) => {
     e.preventDefault();
     try {

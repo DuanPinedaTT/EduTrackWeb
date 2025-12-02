@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import api from "../services/api.js";
 import NotificationBell from "../components/NotificationBell.jsx";
 
+// Layout base de los portales internos; arma topbar, sidebar según rol y contenido central.
 export default function DashboardLayout({ children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -19,6 +20,7 @@ export default function DashboardLayout({ children }) {
   const [assignments, setAssignments] = useState([]);
   const [showAssignments, setShowAssignments] = useState(true);
 
+  // Para docentes cargamos las asignaciones y alimentamos el submenú "Mis asignaturas".
   useEffect(() => {
     if (!isDocente || !user?.id) {
       setAssignments([]);
@@ -120,6 +122,7 @@ export default function DashboardLayout({ children }) {
     </ListGroup>
   );
 
+  // Menú con bloques fijos más la sección plegable de cursos asignados.
   const renderTeacherMenu = () => (
     <>
       <ListGroup variant="flush" className="border-0">

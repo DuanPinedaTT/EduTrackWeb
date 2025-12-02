@@ -15,12 +15,14 @@ import {
   CartesianGrid
 } from "recharts";
 
+// Panel ejecutivo con métricas en vivo para supervisar matrículas, cursos y desempeño docente.
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Carga única de estadísticas; evita múltiples viajes al backend.
     const loadStats = async () => {
       try {
         setLoading(true);
@@ -73,6 +75,7 @@ export default function AdminDashboard() {
   const cursosConMejorPromedio = stats?.cursosConMejorPromedio ?? [];
   const cursosConPeorPromedio = stats?.cursosConPeorPromedio ?? [];
 
+  // Listado textual cuando no justifica renderizar otra gráfica.
   const renderCursoPerformance = (items, emptyMessage) => {
     if (!items.length) return <ChartPlaceholder message={emptyMessage} />;
 
@@ -290,7 +293,7 @@ export default function AdminDashboard() {
         <Col>
           <Card className="glass-card border-0">
             <Card.Body className="p-4">
-              <h5 className="mb-3">Siguiente paso</h5>
+              <h5 className="mb-3">Mas opciones</h5>
               <p className="text-muted mb-0">
                 Usa los filtros del menú lateral para profundizar en grupos específicos.
                 Estos tableros se actualizan conforme se registran inscripciones, calificaciones y asignaciones.

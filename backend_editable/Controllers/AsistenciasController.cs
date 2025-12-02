@@ -11,6 +11,7 @@ namespace edutrack_academy_api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "admin,docente")]
+    // Controlador que permite registrar y consultar asistencias por curso/asignatura.
     public class AsistenciasController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -52,6 +53,7 @@ namespace edutrack_academy_api.Controllers
             public string? Observacion { get; set; }
         }
 
+        // Registra o actualiza asistencias para un curso, periodo y asignatura específicos.
         [HttpPost]
         public async Task<IActionResult> RegistrarAsistencia([FromBody] RegistrarAsistenciaDTO dto)
         {
@@ -120,6 +122,7 @@ namespace edutrack_academy_api.Controllers
             return Ok();
         }
 
+        // Devuelve el historial filtrado de asistencias para dashboards docentes.
         [HttpGet("curso/{cursoId:int}")]
         public async Task<IActionResult> GetAsistenciasCurso(
             int cursoId,

@@ -2,9 +2,11 @@ import React from "react";
 import { Card, Button, Badge } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
+// Tarjeta compacta para listar cursos y saltar a su vista detallada.
 export default function CourseCard({ course, basePath = "/teacher" }) {
   const navigate = useNavigate();
 
+  // Navega al detalle del curso respetando el prefijo base.
   const handleView = () => {
     navigate(`${basePath}/course/${course.id}`);
   };

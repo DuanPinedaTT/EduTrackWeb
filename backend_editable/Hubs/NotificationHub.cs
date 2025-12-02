@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace edutrack_academy_api.Hubs
 {
     [Authorize]
+    // Centraliza las conexiones SignalR y asigna a cada cliente los grupos necesarios para notificaciones dirigidas.
     public class NotificationHub : Hub
     {
         private readonly AppDbContext _context;
@@ -17,6 +18,7 @@ namespace edutrack_academy_api.Hubs
             _context = context;
         }
 
+        // Cada vez que un cliente se conecta se le agrega a grupos como user-*, student-* o course-* según su rol.
         public override async Task OnConnectedAsync()
         {
             var userIdClaim = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -35,6 +37,7 @@ namespace edutrack_academy_api.Hubs
 
             if (string.Equals(role, "estudiante", StringComparison.OrdinalIgnoreCase))
             {
+                // Los estudiantes reciben notificaciones por usuario, por estudiante y por cada curso relacionado.
                 var data = await _context.Estudiantes
                     .Where(e => e.UsuarioId == userId)
                     .Select(e => new
@@ -56,6 +59,7 @@ namespace edutrack_academy_api.Hubs
 
             if (string.Equals(role, "tutor", StringComparison.OrdinalIgnoreCase))
             {
+                // Los tutores quedan suscritos a eventos de sus estudiantes y cursos para replicar avisos.
                 groupTasks.Add(Groups.AddToGroupAsync(Context.ConnectionId, $"tutor-{userId}"));
 
                 var cursoIds = await _context.TutorEstudiantes

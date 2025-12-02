@@ -33,12 +33,14 @@ const formatRelativeTime = (value) => {
   return target.toLocaleDateString();
 };
 
+// Campana de notificaciones en vivo; adapta el flujo según el rol activo.
 export default function NotificationBell() {
   const { inbox, markAsRead } = useNotifications();
   const { user } = useAuth();
   const isTeacher = user?.rol === "docente";
   const [loadingKey, setLoadingKey] = useState(null);
 
+  // Orden cronológico inverso para mostrar las alertas más recientes primero.
   const ordered = useMemo(
     () => [...inbox].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
     [inbox]
@@ -46,6 +48,7 @@ export default function NotificationBell() {
 
   const unreadCount = ordered.length;
 
+  // Marca la notificación como leída y sincroniza con portales cuando aplica.
   const handleMarkRead = async (item) => {
     if (!item) return;
     const destinoId = pickProp(item.data, "DestinoId") ?? pickProp(item.data, "destinoId");

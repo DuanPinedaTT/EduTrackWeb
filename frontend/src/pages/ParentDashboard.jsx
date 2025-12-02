@@ -5,6 +5,7 @@ import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { PortalTutor } from "../services/api.js";
 import { useNotifications } from "../contexts/NotificationContext.jsx";
 
+// Portal de familias; resume notas, asistencias y comunicaciones por cada estudiante a cargo.
 const PERIODOS = [
   { id: null, nombre: "Todos" },
   { id: 1, nombre: "Periodo 1" },
@@ -92,6 +93,7 @@ export default function ParentDashboard() {
   const [comunicaciones, setComunicaciones] = useState([]);
   const [markingId, setMarkingId] = useState(null);
 
+  // Trae los estudiantes asociados al tutor y selecciona el primero por defecto.
   const loadHijos = async () => {
     try {
       setLoadingHijos(true);
@@ -109,6 +111,7 @@ export default function ParentDashboard() {
     }
   };
 
+  // Consulta notas y columnas según periodo y asignatura elegida.
   const loadNotas = async (studentIdParam = selectedChildId, periodoValue = selectedPeriod, materiaKey = selectedMateriaKey) => {
     if (!studentIdParam) return;
     try {
@@ -166,6 +169,7 @@ export default function ParentDashboard() {
     }
   };
 
+  // Descarga la asistencia histórica del estudiante seleccionado.
   const loadAsistencias = async (studentId) => {
     if (!studentId) return;
     try {
@@ -176,6 +180,7 @@ export default function ParentDashboard() {
     }
   };
 
+  // Recupera mensajes enviados al tutor y los muestra en el panel.
   const loadComunicaciones = async () => {
     try {
       const res = await PortalTutor.comunicaciones();
@@ -185,6 +190,7 @@ export default function ParentDashboard() {
     }
   };
 
+  // Mantiene referencias actualizadas para que las notificaciones puedan refrescar datos.
   useEffect(() => {
     notificationRefs.current = {
       loadNotas,
@@ -195,11 +201,13 @@ export default function ParentDashboard() {
     };
   });
 
+  // Evento en tiempo real: nuevas notas generan toast y refresco si el hijo está abierto.
   useEffect(() => {
     loadHijos();
     loadComunicaciones();
   }, []);
 
+  // Evento en tiempo real: nuevas comunicaciones se agregan al listado.
   useEffect(() => {
     if (!selectedChildId) return;
     setSelectedPeriod(null);
@@ -210,6 +218,7 @@ export default function ParentDashboard() {
     loadAsistencias(selectedChildId);
   }, [selectedChildId]);
 
+  // Evento en tiempo real: confirma comunicaciones leídas desde otros dispositivos.
   useEffect(() => {
     if (!location.hash) return;
     const target = document.querySelector(location.hash);
@@ -344,6 +353,7 @@ export default function ParentDashboard() {
     ? `${pickProp(selectedMateriaInfo, "Nombre") || pickProp(selectedMateriaInfo, "Curso") || "Materia"}${pickProp(selectedMateriaInfo, "Grado") ? ` • ${pickProp(selectedMateriaInfo, "Grado")}` : ""}${pickProp(selectedMateriaInfo, "Grupo") ? ` (${pickProp(selectedMateriaInfo, "Grupo")})` : ""}`
     : "Selecciona una asignatura";
 
+  // Marca la comunicación como leída tanto en back como en el centro de notificaciones.
   const handleMarcarLeido = async (destinoId) => {
     try {
       setMarkingId(destinoId);

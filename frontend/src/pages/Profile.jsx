@@ -3,6 +3,7 @@ import { Container, Row, Col, Card, Form, Button, Alert } from "react-bootstrap"
 import { useAuth } from "../contexts/AuthContext.jsx";
 import api from "../services/api.js";
 
+// Perfil personal; permite actualizar datos básicos y credenciales.
 export default function Profile() {
   const { user, updateUser } = useAuth();
   const [form, setForm] = useState({
@@ -22,6 +23,7 @@ export default function Profile() {
     setForm((f) => ({ ...f, [name]: value }));
   };
 
+  // Persiste los cambios en el backend y sincroniza el contexto local.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);

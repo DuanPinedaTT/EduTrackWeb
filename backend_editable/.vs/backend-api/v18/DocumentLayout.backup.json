@@ -3,6 +3,14 @@
   "WorkspaceRootPath": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\dalbi\\documents\\github\\edutrackweb\\backend_editable\\hubs\\notificationhub.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:hubs\\notificationhub.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\dalbi\\documents\\github\\edutrackweb\\backend_editable\\controllers\\cursoasignaturascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:controllers\\cursoasignaturascontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\dalbi\\documents\\github\\edutrackweb\\backend_editable\\controllers\\usuarioscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:controllers\\usuarioscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -23,6 +31,31 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "NotificationHub.cs",
+              "DocumentMoniker": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Hubs\\NotificationHub.cs",
+              "RelativeDocumentMoniker": "Hubs\\NotificationHub.cs",
+              "ToolTip": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Hubs\\NotificationHub.cs",
+              "RelativeToolTip": "Hubs\\NotificationHub.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAYwFEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-02T18:01:14.441Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "CursoAsignaturasController.cs",
+              "DocumentMoniker": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\CursoAsignaturasController.cs",
+              "RelativeDocumentMoniker": "Controllers\\CursoAsignaturasController.cs",
+              "ToolTip": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\CursoAsignaturasController.cs",
+              "RelativeToolTip": "Controllers\\CursoAsignaturasController.cs",
+              "ViewState": "AgIAAEcAAAAAAAAAAAAgwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-02T18:00:55.261Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
               "Title": "UsuariosController.cs",
               "DocumentMoniker": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\UsuariosController.cs",
               "RelativeDocumentMoniker": "Controllers\\UsuariosController.cs",
@@ -30,12 +63,11 @@
               "RelativeToolTip": "Controllers\\UsuariosController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-02T15:39:13.89Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-02T15:39:13.89Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 3,
               "Title": "ComunicacionesController.cs",
               "DocumentMoniker": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\ComunicacionesController.cs",
               "RelativeDocumentMoniker": "Controllers\\ComunicacionesController.cs",
@@ -43,8 +75,7 @@
               "RelativeToolTip": "Controllers\\ComunicacionesController.cs",
               "ViewState": "AgIAAPkAAAAAAAAAAAAcwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-12-02T15:38:57.214Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-12-02T15:38:57.214Z"
             }
           ]
         }

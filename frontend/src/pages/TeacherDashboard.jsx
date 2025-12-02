@@ -23,6 +23,7 @@ import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 import { useNotifications } from "../contexts/NotificationContext.jsx";
 
+// Panel docente; agrupa asignaciones, detalle de cursos y análisis de desempeño.
 const pickProp = (obj, prop) => {
   if (!obj) return undefined;
   const lower = prop.charAt(0).toLowerCase() + prop.slice(1);
@@ -129,6 +130,7 @@ export default function TeacherDashboard() {
 
   const selectedCourseId = selectedAssignment?.cursoId ?? null;
 
+  // Cada vez que cambia la asignación seleccionada se descarga el detalle del curso.
   useEffect(() => {
     if (!selectedAssignment) {
       setCourseDetail({ configs: [], students: [] });
@@ -243,12 +245,14 @@ export default function TeacherDashboard() {
     });
   }, [courseDetail.students, configsForSelectedPeriod, selectedPeriod]);
 
+  // Agrupa asignaciones por docente y arma la lista inicial.
   useEffect(() => {
     if (selectedCourseId) {
       setSelectedPeriod(1);
     }
   }, [selectedCourseId]);
 
+  // Para cada curso asignado se consultan metadatos (número de estudiantes y pesos por periodo).
   useEffect(() => {
     if (subjectList.length === 0) {
       if (selectedAsignatura) setSelectedAsignatura("");
@@ -363,7 +367,7 @@ export default function TeacherDashboard() {
     };
   }, [courseAssignments]);
 
-  // recalcular estadísticas cuando cambie el curso seleccionado o el periodo
+  // Recalcula las estadísticas visuales cuando cambia la asignatura o el periodo.
   useEffect(() => {
     const computeStats = async () => {
       if (!selectedAsignatura) {

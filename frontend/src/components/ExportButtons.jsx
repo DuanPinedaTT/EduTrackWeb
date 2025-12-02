@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Button, ButtonGroup } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
+// Botonera para descargar planillas del curso en Excel o PDF.
 export default function ExportButtons({ courseId, cursoAsignaturaId = null }) {
   const { user } = useAuth();
 
@@ -12,6 +13,7 @@ export default function ExportButtons({ courseId, cursoAsignaturaId = null }) {
     return user.user || user.username || "";
   }, [user]);
 
+  // Construye la URL de export con token y abre la descarga.
   const download = (type) => {
     const token = localStorage.getItem("token");
     const params = new URLSearchParams();

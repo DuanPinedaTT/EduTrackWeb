@@ -4,6 +4,8 @@ import api, { Asignaturas, CursoAsignaturas, Grados, Cursos } from "../services/
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 
+// Cruce centralizado de cursos, asignaturas y docentes; evita perderse con las combinaciones.
+
 export default function AdminCursoAsignaturas() {
   const [courses, setCourses] = useState([]);
   const [grados, setGrados] = useState([]);
@@ -19,6 +21,7 @@ export default function AdminCursoAsignaturas() {
   const [form, setForm] = useState({ asignaturaId: "", docenteId: "" });
   const [editingId, setEditingId] = useState(null);
 
+  // Carga inicial completa; los selectores quedan listos sin esperas posteriores.
   const loadAll = async () => {
     try {
       setLoading(true);
@@ -46,6 +49,7 @@ export default function AdminCursoAsignaturas() {
 
   const currentAssignments = assignments.filter(a => String(a.cursoId) === String(selectedCourse));
 
+  // Modal se abre limpio; evita valores rezagados.
   const openAdd = () => {
     setEditingId(null);
     setForm({ asignaturaId: "", docenteId: "" });
@@ -58,6 +62,7 @@ export default function AdminCursoAsignaturas() {
     setShowModal(true);
   };
 
+  // Guardado único para altas y cambios; reduce llamadas duplicadas.
   const handleSave = async () => {
     try {
       setError(null);

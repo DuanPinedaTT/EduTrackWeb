@@ -16,6 +16,7 @@ const COLOR_TOKENS = {
   }
 };
 
+// Tarjeta de métricas rápidas con esquema cromático configurable.
 export default function StatsCard({ title, value, icon, color = "primary", loading = false }) {
   const palette = COLOR_TOKENS[color] || COLOR_TOKENS.primary;
 

@@ -18,8 +18,7 @@ namespace edutrack_academy_api.Controllers
             _context = context;
         }
 
-        // GET: api/Cursos
-        //[Authorize] // admin o docente
+        // Listado básico de cursos con docente y grado para llenar tablas del panel.
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetCursos()
         {
@@ -42,8 +41,7 @@ namespace edutrack_academy_api.Controllers
             return Ok(cursos);
         }
 
-        // POST: api/Cursos
-        //[Authorize(Roles = "admin")]
+        // Crea un curso nuevo (solo admins) y devuelve los datos principales.
         [HttpPost]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> CrearCurso(CursoDTO dto)
@@ -69,8 +67,7 @@ namespace edutrack_academy_api.Controllers
             });
         }
 
-        // PUT: api/Cursos/5
-        //[Authorize(Roles = "admin")]
+        // Actualiza nombre, grado, grupo y docente del curso indicado.
         [HttpPut("{id:int}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> ActualizarCurso(int id, CursoDTO dto)
@@ -94,8 +91,7 @@ namespace edutrack_academy_api.Controllers
             });
         }
 
-        // DELETE: api/Cursos/5
-        //[Authorize(Roles = "admin")]
+        // Elimina por completo el curso y sus vínculos de inscripción.
         [HttpDelete("{id:int}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> EliminarCurso(int id)
@@ -110,8 +106,7 @@ namespace edutrack_academy_api.Controllers
             return NoContent();
         }
 
-        // GET: api/Cursos/5/students
-        //[Authorize] // admin o docente
+        // Devuelve los estudiantes inscritos para poblar listados en frontend.
         [HttpGet("{id:int}/students")]
         public async Task<IActionResult> GetEstudiantesCurso(int id)
         {

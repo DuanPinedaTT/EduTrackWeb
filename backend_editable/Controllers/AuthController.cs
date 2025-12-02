@@ -19,6 +19,7 @@ namespace edutrack_academy_api.Controllers
             _jwt = jwt;
         }
 
+        // Recibe credenciales básicas y devuelve token + datos del usuario autenticado.
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login(LoginDTO dto)

@@ -19,6 +19,7 @@ import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 
+// Consola integral de estudiantes; combina matrículas, credenciales portal y seguimiento académico.
 const PERIOD_OPTIONS = [
   { id: 1, label: "Periodo 1" },
   { id: 2, label: "Periodo 2" },
@@ -89,6 +90,7 @@ export default function AdminEstudiantes() {
       .slice(0, 5);
   }, [tutorStudentQuery, estudiantes, tutorForm.hijos]);
 
+  // Descarga base de estudiantes e inscripciones para alimentar filtros y resúmenes.
   const loadEstudiantes = async () => {
     try {
       setLoadingEst(true);
@@ -113,6 +115,7 @@ export default function AdminEstudiantes() {
     }
   };
 
+  // Catálogo de cursos; ayuda a traducir IDs en nombres y grados.
   const loadCursos = async () => {
     try {
       setLoadingCursos(true);
@@ -135,6 +138,7 @@ export default function AdminEstudiantes() {
     }
   };
 
+  // Sincroniza tutores disponibles antes de asignar responsables.
   const loadTutores = async () => {
     try {
       setLoadingTutores(true);
@@ -151,6 +155,7 @@ export default function AdminEstudiantes() {
     Promise.all([loadEstudiantes(), loadCursos(), loadGrados(), loadTutores()]);
   }, []);
 
+  // Búsqueda directa por documento; resalta la fila encontrada.
   const handleSearchByDocumento = () => {
     const query = searchDocumento.trim();
     if (!query) {
@@ -174,6 +179,7 @@ export default function AdminEstudiantes() {
     }, 200);
   };
 
+  // Reaplica filtros combinados cada vez que cambian los criterios activos.
   useEffect(() => {
     let result = estudiantes;
 
@@ -202,6 +208,7 @@ export default function AdminEstudiantes() {
     setFilteredEstudiantes(result);
   }, [selectedCursoFilter, selectedGradoFilter, documentFilter, estudiantes, cursos, inscripcionesByStudent]);
 
+  // Administra dependencias del formulario (grado→grupos y sugerencias de usuario).
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "gradoId") {
@@ -230,12 +237,14 @@ export default function AdminEstudiantes() {
     }));
   };
 
+  // Limpieza total del formulario y estados auxiliares.
   const resetForm = () => {
     setEditingId(null);
     setStudentUserDirty(false);
     setForm({ ...initialStudentForm });
   };
 
+  // Alta o edición del perfil junto a las credenciales del portal.
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -292,6 +301,7 @@ export default function AdminEstudiantes() {
     }
   };
 
+  // Precarga datos en el formulario y lleva la vista al inicio.
   const handleEdit = (est) => {
     setEditingId(est.id);
     setStudentUserDirty(true);
@@ -317,6 +327,7 @@ export default function AdminEstudiantes() {
     }
   };
 
+  // Traduce IDs de curso a nombres amigables usando el catálogo cargado.
   const getCursoNombre = (cursoId) => {
     // cursoId is actually not stored on student; we look up inscripciones
     if (!cursoId) return "Sin asignar";
@@ -337,6 +348,7 @@ export default function AdminEstudiantes() {
       .replace(/[^a-z0-9]/g, "")
       .slice(0, 20);
 
+  // Genera un usuario predictivo con prefijo est- a partir del documento.
   const buildStudentUserSuggestion = (documento) => {
     const normalizedDoc = normalizePortalUser(documento);
     if (!normalizedDoc) return "";
@@ -358,6 +370,7 @@ export default function AdminEstudiantes() {
     return grado?.grupos || [];
   };
 
+  // Resumen modal que compila notas, configuraciones y docentes por curso.
   const handleViewStudentSummary = async (student) => {
     const inscripciones = inscripcionesByStudent[student.id] || [];
     setSummaryModal({ show: true, loading: true, student, courses: [], error: null, period: 1 });

@@ -19,6 +19,7 @@ import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import ExportButtons from "../components/ExportButtons.jsx";
 import { FiEdit2, FiTrash2 } from "react-icons/fi";
 
+// Consola de calificaciones por curso; gestiona columnas, pesos y notas por periodo.
 const PERIODOS = [
   { id: 1, nombre: "Periodo 1" },
   { id: 2, nombre: "Periodo 2" },
@@ -80,6 +81,7 @@ export default function CourseView() {
     return courseData.nombre || "Curso";
   };
 
+  // Descarga curso, configuraciones y notas en paralelo para mantener todo sincronizado.
   const loadAll = async () => {
     try {
       setLoading(true);
@@ -118,6 +120,7 @@ export default function CourseView() {
     loadAll();
   }, [id, cursoAsignaturaId]);
 
+  // Alta de columnas ponderadas para el periodo activo.
   const handleAddColumn = async () => {
     if (!newColumn.nombre || !newColumn.peso) {
       alert("Completa todos los campos");
@@ -154,6 +157,7 @@ export default function CourseView() {
     }
   };
 
+  // Ajuste del peso/nombre de una columna existente.
   const handleEditWeight = async () => {
     if (!editingConfig || !editingConfig.peso || !editingConfig.nombre) {
       alert("Completa todos los campos");
@@ -180,6 +184,7 @@ export default function CourseView() {
     }
   };
 
+  // Elimina la columna y todas las notas asociadas; requiere confirmación explícita.
   const handleDeleteColumn = async (configId) => {
     if (!window.confirm("¿Eliminar esta columna y todas sus notas?")) return;
 
@@ -194,6 +199,7 @@ export default function CourseView() {
     }
   };
 
+  // Actualiza la nota en memoria y marca la celda como sucia si difiere del snapshot.
   const handleGradeChange = (estudianteId, notaConfigId, valor) => {
     const normalized = valor === "" || valor === null ? null : Number(valor);
 
@@ -222,6 +228,7 @@ export default function CourseView() {
     }
   };
 
+  // Envía únicamente las celdas modificadas para evitar sobreescrituras innecesarias.
   const handleSaveAll = async () => {
     const dirtyEntries = Array.from(dirtyGradesRef.current.entries());
     if (dirtyEntries.length === 0) {

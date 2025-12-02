@@ -2,6 +2,7 @@ import React from "react";
 import { Table, Form } from "react-bootstrap";
 import GradeCell from "./GradeCell.jsx";
 
+// Renderiza planillas de notas usando el esquema de columnas configuradas.
 export default function StudentsTable({ students, config, valoresPorEstudiante, onChangeNota }) {
   return (
     <div className="table-responsive">

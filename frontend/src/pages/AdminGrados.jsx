@@ -4,6 +4,7 @@ import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 
+// Administrador de grados; define códigos y lista de grupos por nivel.
 export default function AdminGrados() {
   const [grados, setGrados] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,6 +12,7 @@ export default function AdminGrados() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ codigo: "", nombre: "", grupos: "" });
 
+  // Consulta rápida del catálogo de grados; se reutiliza tras cada cambio.
   const load = async () => {
     try {
       setLoading(true);
@@ -27,6 +29,7 @@ export default function AdminGrados() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  // Un mismo flujo maneja altas y actualizaciones de grados/grupos.
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -48,6 +51,7 @@ export default function AdminGrados() {
     }
   };
 
+  // Precarga el formulario con el grado seleccionado y sube la vista.
   const handleEdit = (g) => {
     setEditing(g.id);
     setForm({ codigo: g.codigo || "", nombre: g.nombre || "", grupos: (g.grupos || []).join(', ') });

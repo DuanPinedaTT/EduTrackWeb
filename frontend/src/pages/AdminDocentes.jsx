@@ -14,6 +14,7 @@ import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 
+// Catálogo integral de docentes; centraliza cuentas, asignaturas y grupos asignados.
 export default function AdminDocentes() {
   const [teachers, setTeachers] = useState([]);
   const [asignaturas, setAsignaturas] = useState([]);
@@ -34,7 +35,7 @@ export default function AdminDocentes() {
 
   const [form, setForm] = useState(() => ({ ...initialFormState }));
 
-  // include asignaturas and asignaciones (grado+grupo)
+  // Carga paralela de asignaturas y grados para poblar selectores sin bloqueos.
   useEffect(() => {
     const loadExtras = async () => {
       try {
@@ -48,6 +49,7 @@ export default function AdminDocentes() {
     loadExtras();
   }, []);
 
+  // Consulta principal de docentes; reutilizada tras cada operación.
   const loadTeachers = async () => {
     try {
       setLoading(true);
@@ -72,6 +74,7 @@ export default function AdminDocentes() {
     });
   };
 
+  // Permite prender/apagar cada asignatura sin inputs adicionales.
   const toggleAsignatura = (asignaturaId) => {
     setForm((prev) => {
       const key = String(asignaturaId);
@@ -85,6 +88,7 @@ export default function AdminDocentes() {
     });
   };
 
+  // Marca los salones (grado+grupo) que atenderá cada docente.
   const toggleAsignacion = (gradoId, grupo) => {
     const key = `${gradoId}__${grupo}`;
     setForm((prev) => {
@@ -101,11 +105,13 @@ export default function AdminDocentes() {
   const selectedAsignaturas = form.asignaturas || [];
   const selectedAsignaciones = form.asignaciones || [];
 
+  // Limpieza total del formulario; también sale del modo edición.
   const resetForm = () => {
     setEditingId(null);
     setForm({ ...initialFormState });
   };
 
+  // Alta y edición comparten este flujo para no duplicar formularios.
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -136,6 +142,7 @@ export default function AdminDocentes() {
     }
   };
 
+  // Carga datos del docente en el formulario y sube la vista para editar enseguida.
   const handleEdit = (teacher) => {
     setEditingId(teacher.id);
     setForm({

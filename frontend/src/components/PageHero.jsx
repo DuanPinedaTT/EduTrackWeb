@@ -1,5 +1,6 @@
 import React from "react";
 
+// Encabezado reutilizable con contexto, métricas rápidas y acciones.
 export default function PageHero({ eyebrow, title, description, stats = [], action }) {
   return (
     <div className="glass-card border-0 p-4 d-flex flex-wrap gap-4 align-items-center">

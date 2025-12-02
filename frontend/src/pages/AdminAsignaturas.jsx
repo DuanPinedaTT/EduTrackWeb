@@ -4,6 +4,8 @@ import api from "../services/api.js";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import PageHero from "../components/PageHero.jsx";
 
+// Catálogo ágil de asignaturas; mantiene la lista depurada y lista para asignar.
+
 export default function AdminAsignaturas() {
   const [asignaturas, setAsignaturas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,6 +13,7 @@ export default function AdminAsignaturas() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ codigo: "", nombre: "" });
 
+  // Carga centralizada; reutilizable después de cada operación.
   const load = async () => {
     try {
       setLoading(true);
@@ -27,6 +30,7 @@ export default function AdminAsignaturas() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  // Alta y edición comparten este flujo para evitar duplicar formularios.
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -47,6 +51,7 @@ export default function AdminAsignaturas() {
     }
   };
 
+  // Al editar se fuerza el scroll al inicio para mostrar el formulario de inmediato.
   const handleEdit = (a) => {
     setEditing(a.id);
     setForm({ codigo: a.codigo || "", nombre: a.nombre || "" });
