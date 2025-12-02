@@ -1,12 +1,54 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\dalbi\\documents\\github\\edutrackweb\\backend_editable\\controllers\\usuarioscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:controllers\\usuarioscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|c:\\users\\dalbi\\documents\\github\\edutrackweb\\backend_editable\\controllers\\comunicacionescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{081CB3A5-D5AC-C2B7-9810-9742E36C5949}|edutrack-academy-api.csproj|solutionrelative:controllers\\comunicacionescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "UsuariosController.cs",
+              "DocumentMoniker": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\UsuariosController.cs",
+              "RelativeDocumentMoniker": "Controllers\\UsuariosController.cs",
+              "ToolTip": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\UsuariosController.cs",
+              "RelativeToolTip": "Controllers\\UsuariosController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-02T15:39:13.89Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ComunicacionesController.cs",
+              "DocumentMoniker": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\ComunicacionesController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ComunicacionesController.cs",
+              "ToolTip": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\Controllers\\ComunicacionesController.cs",
+              "RelativeToolTip": "Controllers\\ComunicacionesController.cs",
+              "ViewState": "AgIAAPkAAAAAAAAAAAAcwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-12-02T15:38:57.214Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

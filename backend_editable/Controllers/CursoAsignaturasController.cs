@@ -1,5 +1,6 @@
 using edutrack_academy_api.Data;
 using edutrack_academy_api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> GetById(int id)
         {
             var assignment = await _context.CursoAsignaturas
@@ -48,6 +50,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Get([FromQuery] int? cursoId)
         {
             var query = _context.CursoAsignaturas.AsQueryable();
@@ -72,6 +75,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpGet("docente/{docenteId:int}")]
+        [Authorize(Roles = "docente,admin")]
         public async Task<IActionResult> GetByDocente(int docenteId)
         {
             var list = await _context.CursoAsignaturas
@@ -97,6 +101,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Create([FromBody] CursoAsignatura dto)
         {
             // Validations
@@ -114,6 +119,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var ca = await _context.CursoAsignaturas.FindAsync(id);

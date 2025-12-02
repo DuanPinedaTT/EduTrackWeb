@@ -1,6 +1,7 @@
 ﻿using edutrack_academy_api.JWT;
 using edutrack_academy_api.Models;
 using edutrack_academy_api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace edutrack_academy_api.Controllers
@@ -19,6 +20,7 @@ namespace edutrack_academy_api.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginDTO dto)
         {
             var usuario = await _usuarioService.LoginAsync(dto.User, dto.Password);

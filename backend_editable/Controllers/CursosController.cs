@@ -8,6 +8,7 @@ namespace edutrack_academy_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "admin,docente")]
     public class CursosController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -44,6 +45,7 @@ namespace edutrack_academy_api.Controllers
         // POST: api/Cursos
         //[Authorize(Roles = "admin")]
         [HttpPost]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> CrearCurso(CursoDTO dto)
         {
             var curso = new Curso
@@ -70,6 +72,7 @@ namespace edutrack_academy_api.Controllers
         // PUT: api/Cursos/5
         //[Authorize(Roles = "admin")]
         [HttpPut("{id:int}")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> ActualizarCurso(int id, CursoDTO dto)
         {
             var curso = await _context.Cursos.FindAsync(id);
@@ -94,6 +97,7 @@ namespace edutrack_academy_api.Controllers
         // DELETE: api/Cursos/5
         //[Authorize(Roles = "admin")]
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> EliminarCurso(int id)
         {
             var curso = await _context.Cursos.FindAsync(id);

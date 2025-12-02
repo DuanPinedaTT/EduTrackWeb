@@ -1,5 +1,6 @@
 ﻿using edutrack_academy_api.Data;
 using edutrack_academy_api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ClosedXML.Excel;
@@ -13,6 +14,7 @@ namespace edutrack_academy_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "admin,docente")]
     public class ExportsController : ControllerBase
     {
         private readonly AppDbContext _context;

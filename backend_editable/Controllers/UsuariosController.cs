@@ -7,7 +7,7 @@ namespace edutrack_academy_api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize(Roles = "admin")]
+    [Authorize(Roles = "admin")]
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioService _usuarioService;
