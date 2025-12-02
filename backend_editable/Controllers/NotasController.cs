@@ -107,6 +107,12 @@ namespace edutrack_academy_api.Controllers
                 return NotFound("La asignatura seleccionada no pertenece al curso");
             }
 
+            var pesoError = await ValidatePesoDisponibleAsync(cursoId, dto.Periodo, dto.Peso);
+            if (pesoError != null)
+            {
+                return BadRequest(pesoError);
+            }
+
             var config = new NotaConfig
             {
                 CursoId = cursoId,
@@ -138,6 +144,12 @@ namespace edutrack_academy_api.Controllers
         {
             var config = await _context.NotaConfigs.FindAsync(id);
             if (config == null) return NotFound("Configuración de nota no encontrada");
+
+            var pesoError = await ValidatePesoDisponibleAsync(config.CursoId, dto.Periodo, dto.Peso, config.Id);
+            if (pesoError != null)
+            {
+                return BadRequest(pesoError);
+            }
 
             config.Nombre = dto.Nombre;
             config.Peso = dto.Peso;
@@ -420,6 +432,40 @@ namespace edutrack_academy_api.Controllers
             }
 
             return Ok();
+        }
+
+        private async Task<string?> ValidatePesoDisponibleAsync(int cursoId, int periodo, decimal nuevoPeso, int? excluirConfigId = null)
+        {
+            if (nuevoPeso <= 0)
+            {
+                return "El peso debe ser mayor que 0%.";
+            }
+
+            if (nuevoPeso > 100)
+            {
+                return "El peso de una columna no puede superar el 100%.";
+            }
+
+            var query = _context.NotaConfigs
+                .Where(nc => nc.CursoId == cursoId && nc.Periodo == periodo);
+
+            if (excluirConfigId.HasValue)
+            {
+                query = query.Where(nc => nc.Id != excluirConfigId.Value);
+            }
+
+            var sumaExistente = await query.SumAsync(nc => (decimal?)nc.Peso) ?? 0m;
+            var disponible = 100m - sumaExistente;
+
+            if (nuevoPeso > disponible)
+            {
+                var restante = Math.Max(0m, disponible);
+                return restante == 0m
+                    ? $"El periodo {periodo} ya completó el 100% de peso. Ajusta otra columna antes de agregar más."
+                    : $"Solo quedan {restante:0.##}% disponibles en el periodo {periodo}.";
+            }
+
+            return null;
         }
     }
 }

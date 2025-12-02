@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections.Generic;
+using System.Globalization;
 using edutrack_academy_api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -90,6 +91,7 @@ namespace edutrack_academy_api.Controllers
                     {
                         n.EstudianteId,
                         CursoId = n.NotaConfig!.CursoId,
+                        CursoAsignaturaId = n.CursoAsignaturaId ?? n.NotaConfig!.CursoAsignaturaId,
                         CursoNombre = n.NotaConfig!.Curso != null ? n.NotaConfig!.Curso.Nombre : "Curso",
                         GradoNombre = n.NotaConfig!.Curso != null && n.NotaConfig!.Curso.Grado != null
                             ? n.NotaConfig!.Curso.Grado.Nombre
@@ -99,49 +101,88 @@ namespace edutrack_academy_api.Controllers
                     })
                     .ToListAsync();
 
-                var cursoPromedios = notaData
-                    .GroupBy(x => new { x.CursoId, x.CursoNombre, x.GradoNombre })
-                    .Select(g =>
+                var cursoPromedios = new List<CursoRendimiento>();
+                var estudiantesEnRiesgoSet = new HashSet<int>();
+
+                foreach (var cursoGroup in notaData.GroupBy(x => new { x.CursoId, x.CursoNombre, x.GradoNombre }))
+                {
+                    var studentSummaries = new List<StudentCourseSummary>();
+
+                    foreach (var studentGroup in cursoGroup.GroupBy(item => item.EstudianteId))
                     {
-                        var studentAverages = g
-                            .GroupBy(n => n.EstudianteId)
-                            .Select(studentGroup =>
+                        var totalPeso = studentGroup.Sum(item => item.Peso);
+                        if (totalPeso <= 0)
+                        {
+                            continue;
+                        }
+
+                        var overallAverage = Math.Round(
+                            studentGroup.Sum(item => item.Valor * item.Peso) / totalPeso,
+                            2,
+                            MidpointRounding.AwayFromZero
+                        );
+
+                        var assignmentAverages = studentGroup
+                            .GroupBy(item => item.CursoAsignaturaId ?? -1)
+                            .Select(assignmentGroup =>
                             {
-                                var totalPeso = studentGroup.Sum(item => item.Peso);
-                                if (totalPeso <= 0)
+                                var assignmentPeso = assignmentGroup.Sum(n => n.Peso);
+                                if (assignmentPeso <= 0)
                                 {
                                     return (decimal?)null;
                                 }
 
-                                var average = studentGroup.Sum(item => item.Valor * item.Peso) / totalPeso;
-                                return Math.Round(average, 2, MidpointRounding.AwayFromZero);
+                                var assignmentAverage = assignmentGroup.Sum(n => n.Valor * n.Peso) / assignmentPeso;
+                                return Math.Round(assignmentAverage, 2, MidpointRounding.AwayFromZero);
                             })
                             .Where(avg => avg.HasValue)
                             .Select(avg => avg!.Value)
                             .ToList();
 
-                        var promedio = studentAverages.Count > 0
-                            ? Math.Round(studentAverages.Average(), 2, MidpointRounding.AwayFromZero)
-                            : (decimal?)null;
+                        var isRisk = assignmentAverages.Any(avg => avg < PassingScore);
 
-                        return new CursoRendimiento
+                        var summary = new StudentCourseSummary
                         {
-                            CursoId = g.Key.CursoId,
-                            Curso = g.Key.CursoNombre,
-                            Grado = g.Key.GradoNombre,
-                            Promedio = promedio,
-                            EstudiantesEvaluados = studentAverages.Count,
-                            EstudiantesEnRiesgo = studentAverages.Count(score => score < PassingScore)
+                            EstudianteId = studentGroup.Key,
+                            Average = overallAverage,
+                            IsRisk = isRisk
                         };
-                    })
-                    .Where(x => x.Promedio.HasValue)
-                    .ToList();
+
+                        if (isRisk)
+                        {
+                            estudiantesEnRiesgoSet.Add(studentGroup.Key);
+                        }
+
+                        studentSummaries.Add(summary);
+                    }
+
+                    if (studentSummaries.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var promedio = Math.Round(
+                        studentSummaries.Average(s => s.Average),
+                        2,
+                        MidpointRounding.AwayFromZero
+                    );
+
+                    cursoPromedios.Add(new CursoRendimiento
+                    {
+                        CursoId = cursoGroup.Key.CursoId,
+                        Curso = cursoGroup.Key.CursoNombre,
+                        Grado = cursoGroup.Key.GradoNombre,
+                        Promedio = promedio,
+                        EstudiantesEvaluados = studentSummaries.Count,
+                        EstudiantesEnRiesgo = studentSummaries.Count(s => s.IsRisk)
+                    });
+                }
 
                 var promedioGeneral = cursoPromedios.Count > 0
                     ? Math.Round(cursoPromedios.Average(x => x.Promedio!.Value), 2, MidpointRounding.AwayFromZero)
                     : (decimal?)null;
 
-                var estudiantesEnRiesgo = cursoPromedios.Sum(x => x.EstudiantesEnRiesgo);
+                var estudiantesEnRiesgo = estudiantesEnRiesgoSet.Count;
 
                 var cursosConMejorPromedio = cursoPromedios
                     .OrderByDescending(x => x.Promedio)
@@ -187,6 +228,13 @@ namespace edutrack_academy_api.Controllers
             public decimal? Promedio { get; set; }
             public int EstudiantesEvaluados { get; set; }
             public int EstudiantesEnRiesgo { get; set; }
+        }
+
+        private sealed class StudentCourseSummary
+        {
+            public int EstudianteId { get; set; }
+            public decimal Average { get; set; }
+            public bool IsRisk { get; set; }
         }
     }
 }
