@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj": {}
+    "C:\\Users\\ASUS\\Documents\\WorkSpaceVisual\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj": {}
   },
   "projects": {
-    "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj": {
+    "C:\\Users\\ASUS\\Documents\\WorkSpaceVisual\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj",
+        "projectUniqueName": "C:\\Users\\ASUS\\Documents\\WorkSpaceVisual\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj",
         "projectName": "edutrack-academy-api",
-        "projectPath": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj",
-        "packagesPath": "C:\\Users\\dalbi\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\dalbi\\Documents\\GitHub\\EduTrackWeb\\backend_editable\\obj\\",
+        "projectPath": "C:\\Users\\ASUS\\Documents\\WorkSpaceVisual\\EduTrackWeb\\backend_editable\\edutrack-academy-api.csproj",
+        "packagesPath": "C:\\Users\\ASUS\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\ASUS\\Documents\\WorkSpaceVisual\\EduTrackWeb\\backend_editable\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\dalbi\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ASUS\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -104,7 +104,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.100/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.307/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

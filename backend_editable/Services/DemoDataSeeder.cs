@@ -76,7 +76,22 @@ namespace edutrack_academy_api.Services
 			}
 
 			var adminUser = await _context.Usuarios.FirstOrDefaultAsync(u => u.Rol == "admin", ct);
-			var adminIds = adminUser != null ? new[] { adminUser.Id } : Array.Empty<int>();
+			if (adminUser == null)
+			{
+				adminUser = new Usuario
+				{
+					User = "admin",
+					PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+					Nombre = "Administrador",
+					Apellido = "General",
+					Email = "admin@edutrack.com",
+					Rol = "admin"
+				};
+				_context.Usuarios.Add(adminUser);
+				await _context.SaveChangesAsync(ct);
+			}
+
+			var adminIds = new[] { adminUser.Id };
 
 			await ClearExistingDataAsync(adminIds, ct);
 

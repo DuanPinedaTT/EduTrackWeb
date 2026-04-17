@@ -9,12 +9,12 @@ export default defineConfig({
     proxy: {
       "/api": {
         // backend
-        target: "https://localhost:7180",
+        target: "http://localhost:5126",
         changeOrigin: true,
         secure: false
       },
       "/hubs": {
-        target: "https://localhost:7180",
+        target: "http://localhost:5126",
         changeOrigin: true,
         secure: false,
         ws: true
