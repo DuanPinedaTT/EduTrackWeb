@@ -46,6 +46,15 @@ namespace edutrack_academy_api.Controllers
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> CrearCurso(CursoDTO dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Nombre) || dto.Nombre.Length < 3)
+            {
+                return BadRequest("El nombre del curso debe tener al menos 3 caracteres.");
+            }
+            if (dto.GradoId <= 0)
+            {
+                return BadRequest("Grado inválido.");
+            }
+
             var curso = new Curso
             {
                 Nombre = dto.Nombre,

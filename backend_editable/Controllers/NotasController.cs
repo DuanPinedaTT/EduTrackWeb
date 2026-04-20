@@ -262,6 +262,11 @@ namespace edutrack_academy_api.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateNota([FromBody] ActualizarNotaDTO dto)
         {
+            if (dto.Valor.HasValue && (dto.Valor.Value < 0 || dto.Valor.Value > 5))
+            {
+                return BadRequest("El valor de la nota debe estar entre 0.0 y 5.0");
+            }
+
             var notaConfig = await _context.NotaConfigs
                 .Include(nc => nc.Curso)
                     .ThenInclude(c => c.CursoAsignaturas)
