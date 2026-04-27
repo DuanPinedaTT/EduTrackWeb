@@ -320,7 +320,6 @@ C:\Users\pc\OneDrive\Documentos\GitHub\EduTrackWeb\backend_editable\obj\Debug\ne
 C:\Users\pc\OneDrive\Documentos\GitHub\EduTrackWeb\backend_editable\obj\Debug\net8.0\edutrack-academy-api.pdb
 C:\Users\pc\OneDrive\Documentos\GitHub\EduTrackWeb\backend_editable\obj\Debug\net8.0\edutrack-academy-api.genruntimeconfig.cache
 C:\Users\pc\OneDrive\Documentos\GitHub\EduTrackWeb\backend_editable\obj\Debug\net8.0\ref\edutrack-academy-api.dll
-C:\Users\pc\OneDrive\Documentos\GitHub\EduTrackWeb\backend_editable\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\dalbi\Documents\GitHub\EduTrackWeb\backend_editable\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\dalbi\Documents\GitHub\EduTrackWeb\backend_editable\bin\Debug\net8.0\appsettings.json
 C:\Users\dalbi\Documents\GitHub\EduTrackWeb\backend_editable\bin\Debug\net8.0\edutrack-academy-api.staticwebassets.endpoints.json
