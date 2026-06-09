@@ -1,0 +1,57 @@
+%%{init: {"theme": "default", "themeVariables": {"fontFamily": "Arial", "fontSize": "18px", "background": "#ffffff", "primaryColor": "#1f6feb", "secondaryColor": "#2d9cdb", "tertiaryColor": "#4c6ef5", "primaryTextColor": "#032b4b", "secondaryTextColor": "#05486a", "lineColor": "#0b2545", "edgeLabelBackground": "#ffffff", "clusterBkg": "#f7fbff", "nodeBorder": "#0b2545"}}}%%
+graph LR
+  %% Interfaces
+  subgraph Interfaces
+    IUsuarioService[[IUsuarioService]]
+    IGrupoSyncService[[IGrupoSyncService]]
+    IPortalCredentialService[[IPortalCredentialService]]
+    INotificationDispatcher[[INotificationDispatcher]]
+  end
+
+  %% Clases / Implementaciones / Controladores / Modelos
+  subgraph Clases
+    UsuarioService[UsuarioService]
+    GrupoSyncService[GrupoSyncService]
+    PortalCredentialService[PortalCredentialService]
+    NotificationDispatcher[NotificationDispatcher]
+
+    UsuariosController[UsuariosController]
+    NotasController[NotasController]
+    Servicios[Servicios]
+    DomainModels[(DomainModels)]
+  end
+
+  %% Datos / Infra
+  subgraph Datos
+    AppDbContext[AppDbContext]
+    SQLServer[(SQLServer)]
+    NotificationHub[NotificationHub]
+    JwtModule[JwtModule]
+  end
+
+  %% Relaciones (implementación/uso)
+  IUsuarioService -->|implementado por| UsuarioService
+  IGrupoSyncService -->|implementado por| GrupoSyncService
+  IPortalCredentialService -->|implementado por| PortalCredentialService
+  INotificationDispatcher -->|implementado por| NotificationDispatcher
+
+  UsuariosController -->|usa| IUsuarioService
+  NotasController -->|usa| IUsuarioService
+  UsuariosController -->|usa| INotificationDispatcher
+  Servicios -->|usa| IUsuarioService
+  Servicios -->|usa| IGrupoSyncService
+  Servicios -->|usa| IPortalCredentialService
+
+  UsuarioService -->|usa| AppDbContext
+  GrupoSyncService -->|usa| AppDbContext
+  PortalCredentialService -->|usa| AppDbContext
+  NotificationDispatcher -->|publica en| NotificationHub
+
+  AppDbContext -->|persiste| SQLServer
+  DomainModels -->|mapeado por| AppDbContext
+
+  UsuariosController -->|autentica con| JwtModule
+  NotasController -->|autentica con| JwtModule
+
+  NotificationHub -->|conecta con| UsuariosController
+  NotificationHub -->|envía a| UI[Frontend]
